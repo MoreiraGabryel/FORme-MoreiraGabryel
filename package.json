@@ -1,0 +1,36 @@
+{
+  "name": "moreiragabryel-portfolio",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "dev:fresh": "node scripts/dev-fresh.cjs",
+    "dev:stop": "node scripts/stop-dev.cjs",
+    "build": "next build",
+    "build:fresh": "node scripts/build-fresh.cjs",
+    "start": "next start",
+    "lint": "next lint",
+    "prebuild": "node scripts/patch-next-readlink.cjs",
+    "postinstall": "node scripts/patch-next-readlink.cjs"
+  },
+  "dependencies": {
+    "@gsap/react": "^2.1.2",
+    "@studio-freight/lenis": "^1.0.42",
+    "gsap": "^3.12.5",
+    "next": "^14.2.23",
+    "next-intl": "^3.26.3",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.17.12",
+    "@types/react": "^18.3.18",
+    "@types/react-dom": "^18.3.5",
+    "autoprefixer": "^10.4.20",
+    "eslint": "^8.57.1",
+    "eslint-config-next": "^14.2.23",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.7.2"
+  }
+}
