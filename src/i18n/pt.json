@@ -1,0 +1,15 @@
+{
+  "hero": {
+    "location": "GUARULHOS, SÃO PAULO",
+    "title": "Desenvolvedor Full Stack",
+    "subtitle": "Automações, SaaS & Produtos Digitais",
+    "scroll": "Role para explorar"
+  },
+  "technologies": {
+    "heading": "Tecnologias"
+  },
+  "footer": {
+    "cta": "Vamos trabalhar juntos?",
+    "copy": "© MoreiraGabryel"
+  }
+}
