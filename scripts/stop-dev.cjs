@@ -50,7 +50,7 @@ function getCommandLine(pid) {
 
 function isSafeToKill(pid) {
   const commandLine = getCommandLine(pid);
-  return commandLine.includes('next') || commandLine.includes('node');
+  return commandLine.includes('vite') || commandLine.includes('node');
 }
 
 try {
@@ -65,7 +65,7 @@ try {
 
   for (const pid of pids) {
     if (!isSafeToKill(pid)) {
-      throw new Error(`A porta ${port} está ocupada pelo PID ${pid}, que não parece ser Node/Next. Abortei por segurança.`);
+      throw new Error(`A porta ${port} está ocupada pelo PID ${pid}, que não parece ser Node/Vite. Abortei por segurança.`);
     }
 
     const killed = run('taskkill', ['/PID', String(pid), '/T', '/F']);
