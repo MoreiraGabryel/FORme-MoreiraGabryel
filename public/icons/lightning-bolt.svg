@@ -1,20 +1,36 @@
-<svg width="160" height="320" viewBox="0 0 160 320" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <path
-    d="M96 8L34 138H78L58 312L126 170H84L96 8Z"
-    fill="#E8FF00"
-    stroke="#F6FF8A"
-    stroke-linejoin="round"
-    stroke-width="10"
-  />
-  <path
-    d="M93 25L47 126H88L73 255L113 164H74L93 25Z"
-    fill="url(#boltShade)"
-    opacity="0.28"
-  />
+<svg width="196" height="360" viewBox="0 0 196 360" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="boltShade" x1="80" y1="8" x2="80" y2="312" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#FFFFFF" />
-      <stop offset="1" stop-color="#C8D900" />
+    <linearGradient id="bolt-core" x1="96" y1="18" x2="104" y2="332" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFFFF"/>
+      <stop offset="0.18" stop-color="#FFFCCB"/>
+      <stop offset="0.58" stop-color="#F3FF7B"/>
+      <stop offset="1" stop-color="#D9FF2B"/>
     </linearGradient>
+    <linearGradient id="bolt-edge" x1="42" y1="44" x2="152" y2="316" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F8FFD8"/>
+      <stop offset="1" stop-color="#CFFF15"/>
+    </linearGradient>
+    <filter id="bolt-glow" x="-76" y="-76" width="348" height="512" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="20" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
   </defs>
+
+  <g filter="url(#bolt-glow)">
+    <path
+      d="M111.708 18L52 150.925H103.599L73.7385 342L144 197.648H95.9493L111.708 18Z"
+      fill="url(#bolt-core)"
+      stroke="url(#bolt-edge)"
+      stroke-linejoin="round"
+      stroke-width="10"
+    />
+    <path
+      d="M110.375 48L77.2889 125.225H117.302L102.998 236L129.125 177.894H92.5849L110.375 48Z"
+      fill="#FFFFFF"
+      opacity="0.2"
+    />
+  </g>
 </svg>
