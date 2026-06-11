@@ -7,7 +7,7 @@
     "dev": "vite",
     "dev:fresh": "node scripts/dev-fresh.cjs",
     "dev:stop": "node scripts/stop-dev.cjs",
-    "build": "tsc -b && vite build",
+    "build": "node scripts/build-fresh.cjs",
     "preview": "vite preview --host 127.0.0.1 --port 4173"
   },
   "dependencies": {

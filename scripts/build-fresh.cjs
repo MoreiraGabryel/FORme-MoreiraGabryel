@@ -24,8 +24,16 @@ try {
     console.log('[build:fresh] dist não existe; nada para limpar');
   }
 
-  const result = run('npm', ['run', 'build']);
-  process.exit(typeof result.status === 'number' ? result.status : 1);
+  const tscBin = path.join(projectRoot, 'node_modules', 'typescript', 'bin', 'tsc');
+  const viteBin = path.join(projectRoot, 'node_modules', 'vite', 'bin', 'vite.js');
+
+  const typecheck = run(process.execPath, [tscBin, '-b']);
+  if (typecheck.status !== 0) {
+    process.exit(typeof typecheck.status === 'number' ? typecheck.status : 1);
+  }
+
+  const build = run(process.execPath, [viteBin, 'build']);
+  process.exit(typeof build.status === 'number' ? build.status : 1);
 } catch (error) {
   console.error(`[build:fresh] erro: ${error.message}`);
   process.exit(1);

@@ -7,7 +7,7 @@
   --color-primary: #FFFFFF;
   --color-muted: #555555;
 
-  --font-display: 'Space Grotesk', sans-serif;
+  --font-display: 'Inter Tight', sans-serif;
   --font-sans: 'Inter', sans-serif;
 }
 
@@ -83,16 +83,16 @@ button {
 }
 
 .section-frame {
+  contain: paint;
   position: relative;
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background:
     radial-gradient(circle at top, rgba(255, 255, 255, 0.035), transparent 48%),
-    rgba(17, 17, 17, 0.88);
+    rgba(17, 17, 17, 0.94);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.04),
     0 32px 80px rgba(0, 0, 0, 0.38);
-  backdrop-filter: blur(10px);
 }
 
 .display-font {
@@ -117,10 +117,12 @@ button {
 
 .float-soft {
   animation: float 5.6s ease-in-out infinite;
+  will-change: transform;
 }
 
 .float-soft-delayed {
   animation: float 6.4s ease-in-out 0.7s infinite;
+  will-change: transform;
 }
 
 .lightning-pulse {
