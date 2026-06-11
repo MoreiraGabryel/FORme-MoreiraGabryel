@@ -1,157 +1,36 @@
-<svg width="420" height="820" viewBox="0 0 420 820" fill="none" xmlns="http://www.w3.org/2000/svg">
+<svg width="620" height="220" viewBox="0 0 620 220" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <filter id="glow-heavy" x="-160" y="-160" width="740" height="1140" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
-      <feGaussianBlur stdDeviation="18" result="blur1"/>
-      <feGaussianBlur in="SourceGraphic" stdDeviation="34" result="blur2"/>
+    <linearGradient id="network-core" x1="82" y1="110" x2="538" y2="110" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F1FF73"/>
+      <stop offset="0.48" stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#E6FF45"/>
+    </linearGradient>
+    <linearGradient id="network-branch" x1="154" y1="58" x2="468" y2="164" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FAFFD6"/>
+      <stop offset="1" stop-color="#DDFF2E"/>
+    </linearGradient>
+    <filter id="network-glow" x="18" y="10" width="584" height="200" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="6" result="blur1"/>
+      <feGaussianBlur in="SourceGraphic" stdDeviation="11" result="blur2"/>
       <feMerge>
         <feMergeNode in="blur2"/>
         <feMergeNode in="blur1"/>
         <feMergeNode in="SourceGraphic"/>
       </feMerge>
     </filter>
-    <filter id="glow-light" x="-120" y="-120" width="660" height="1060" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
-      <feGaussianBlur stdDeviation="8" result="blur"/>
-      <feMerge>
-        <feMergeNode in="blur"/>
-        <feMergeNode in="SourceGraphic"/>
-      </feMerge>
-    </filter>
-    <linearGradient id="core" x1="210" y1="0" x2="210" y2="820" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#FFF9B6"/>
-      <stop offset="0.22" stop-color="#FFF06B"/>
-      <stop offset="0.55" stop-color="#FFE100"/>
-      <stop offset="1" stop-color="#FFD000"/>
-    </linearGradient>
-    <linearGradient id="branch" x1="40" y1="80" x2="380" y2="740" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#FFF4A8"/>
-      <stop offset="0.5" stop-color="#FFE436"/>
-      <stop offset="1" stop-color="#FFD000"/>
-    </linearGradient>
   </defs>
 
-  <g filter="url(#glow-heavy)" opacity="0.95">
-    <path
-      d="M226 10L232 64L206 138L240 208L214 286L228 354L184 446L218 546L194 644L214 808"
-      stroke="#FFD400"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-      stroke-width="30"
-    />
-  </g>
-
-  <g filter="url(#glow-light)">
-    <path
-      d="M226 10L232 64L206 138L240 208L214 286L228 354L184 446L218 546L194 644L214 808"
-      stroke="url(#core)"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-      stroke-width="12"
-    />
-
-    <path
-      d="M208 132L120 98L62 110L28 146"
-      stroke="url(#branch)"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-      stroke-width="5"
-    />
-    <path
-      d="M202 140L150 164L124 194L82 210L56 246"
-      stroke="url(#branch)"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-      stroke-width="4"
-    />
-    <path
-      d="M236 208L304 178L356 148L392 108"
-      stroke="url(#branch)"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-      stroke-width="5"
-    />
-    <path
-      d="M220 286L136 282L98 310L64 356"
-      stroke="url(#branch)"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-      stroke-width="4"
-    />
-    <path
-      d="M224 290L302 294L354 314L396 356"
-      stroke="url(#branch)"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-      stroke-width="4"
-    />
-    <path
-      d="M228 352L286 402L312 448L298 496"
-      stroke="url(#branch)"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-      stroke-width="4"
-    />
-    <path
-      d="M186 446L118 470L74 520L52 578"
-      stroke="url(#branch)"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-      stroke-width="5"
-    />
-    <path
-      d="M214 546L280 564L334 610L366 666"
-      stroke="url(#branch)"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-      stroke-width="4"
-    />
-    <path
-      d="M194 644L142 668L118 706L126 756"
-      stroke="url(#branch)"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-      stroke-width="4"
-    />
-    <path
-      d="M198 78L176 108L148 116"
-      stroke="url(#branch)"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-      stroke-width="3"
-    />
-    <path
-      d="M244 180L266 154L286 150"
-      stroke="url(#branch)"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-      stroke-width="3"
-    />
-    <path
-      d="M216 354L182 388L154 396"
-      stroke="url(#branch)"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-      stroke-width="3"
-    />
-    <path
-      d="M184 446L208 486L206 522"
-      stroke="url(#branch)"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-      stroke-width="3"
-    />
-    <path
-      d="M218 546L194 574L196 610"
-      stroke="url(#branch)"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-      stroke-width="3"
-    />
-    <path
-      d="M214 286L246 248L246 214"
-      stroke="url(#branch)"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-      stroke-width="3"
-    />
+  <g filter="url(#network-glow)" opacity="0.96">
+    <path d="M82 110H202L248 82L310 138L372 84L418 110H538" stroke="url(#network-core)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M202 110L164 74L132 62" stroke="url(#network-branch)" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M202 110L166 142L136 154" stroke="url(#network-branch)" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M248 82L236 50L248 30" stroke="url(#network-branch)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M248 82L286 58L306 34" stroke="url(#network-branch)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M310 138L292 170L300 188" stroke="url(#network-branch)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M310 138L348 158L372 182" stroke="url(#network-branch)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M372 84L410 58L438 36" stroke="url(#network-branch)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M372 84L406 122L436 136" stroke="url(#network-branch)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M418 110L452 102L486 88" stroke="url(#network-branch)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M418 110L454 118L488 134" stroke="url(#network-branch)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
   </g>
 </svg>
