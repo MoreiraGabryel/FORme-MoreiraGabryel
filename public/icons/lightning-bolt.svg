@@ -1,36 +1,40 @@
-<svg width="196" height="360" viewBox="0 0 196 360" fill="none" xmlns="http://www.w3.org/2000/svg">
+<svg width="160" height="360" viewBox="0 0 160 360" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="bolt-core" x1="96" y1="18" x2="104" y2="332" gradientUnits="userSpaceOnUse">
+    <linearGradient id="plasma-core" x1="80" y1="16" x2="80" y2="340" gradientUnits="userSpaceOnUse">
       <stop stop-color="#FFFFFF"/>
-      <stop offset="0.18" stop-color="#FFFCCB"/>
-      <stop offset="0.58" stop-color="#F3FF7B"/>
-      <stop offset="1" stop-color="#D9FF2B"/>
+      <stop offset="0.24" stop-color="#F8FFE8"/>
+      <stop offset="0.62" stop-color="#E2FFB0"/>
+      <stop offset="1" stop-color="#C9FF79"/>
     </linearGradient>
-    <linearGradient id="bolt-edge" x1="42" y1="44" x2="152" y2="316" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#F8FFD8"/>
-      <stop offset="1" stop-color="#CFFF15"/>
+    <linearGradient id="plasma-edge" x1="36" y1="34" x2="122" y2="318" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FCFFF4"/>
+      <stop offset="1" stop-color="#D6FF8A"/>
     </linearGradient>
-    <filter id="bolt-glow" x="-76" y="-76" width="348" height="512" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
-      <feGaussianBlur stdDeviation="20" result="blur"/>
+    <filter id="plasma-glow" x="-80" y="-80" width="320" height="520" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="18" result="blur1"/>
+      <feGaussianBlur in="SourceGraphic" stdDeviation="6" result="blur2"/>
       <feMerge>
-        <feMergeNode in="blur"/>
+        <feMergeNode in="blur1"/>
+        <feMergeNode in="blur2"/>
         <feMergeNode in="SourceGraphic"/>
       </feMerge>
     </filter>
   </defs>
 
-  <g filter="url(#bolt-glow)">
+  <g filter="url(#plasma-glow)">
     <path
-      d="M111.708 18L52 150.925H103.599L73.7385 342L144 197.648H95.9493L111.708 18Z"
-      fill="url(#bolt-core)"
-      stroke="url(#bolt-edge)"
+      d="M88 16L56 124H83L60 220H92L54 344L112 210H83L108 116H80L88 16Z"
+      fill="url(#plasma-core)"
+      stroke="url(#plasma-edge)"
+      stroke-width="7"
       stroke-linejoin="round"
-      stroke-width="10"
     />
     <path
-      d="M110.375 48L77.2889 125.225H117.302L102.998 236L129.125 177.894H92.5849L110.375 48Z"
+      d="M86 44L68 112H90L76 176H93L72 260L102 184H84L100 112H82L86 44Z"
       fill="#FFFFFF"
-      opacity="0.2"
+      opacity="0.26"
     />
+    <path d="M78 70L70 92" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round" opacity="0.7"/>
+    <path d="M91 145L82 170" stroke="#F6FFE3" stroke-width="4" stroke-linecap="round" opacity="0.56"/>
   </g>
 </svg>
