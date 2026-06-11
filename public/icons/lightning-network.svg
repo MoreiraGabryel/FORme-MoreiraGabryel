@@ -1,17 +1,19 @@
-<svg width="620" height="220" viewBox="0 0 620 220" fill="none" xmlns="http://www.w3.org/2000/svg">
+<svg width="760" height="220" viewBox="0 0 760 220" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="network-core" x1="82" y1="110" x2="538" y2="110" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#F1FF73"/>
-      <stop offset="0.48" stop-color="#FFFFFF"/>
-      <stop offset="1" stop-color="#E6FF45"/>
+    <linearGradient id="filament-core" x1="94" y1="110" x2="666" y2="110" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#D8FF9A"/>
+      <stop offset="0.18" stop-color="#F6FFE3"/>
+      <stop offset="0.5" stop-color="#FFFFFF"/>
+      <stop offset="0.82" stop-color="#F2FFD8"/>
+      <stop offset="1" stop-color="#CCFF73"/>
     </linearGradient>
-    <linearGradient id="network-branch" x1="154" y1="58" x2="468" y2="164" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#FAFFD6"/>
-      <stop offset="1" stop-color="#DDFF2E"/>
+    <linearGradient id="filament-branch" x1="182" y1="54" x2="578" y2="166" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F8FFF0"/>
+      <stop offset="1" stop-color="#D3FF87"/>
     </linearGradient>
-    <filter id="network-glow" x="18" y="10" width="584" height="200" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
-      <feGaussianBlur stdDeviation="6" result="blur1"/>
-      <feGaussianBlur in="SourceGraphic" stdDeviation="11" result="blur2"/>
+    <filter id="filament-glow" x="18" y="22" width="724" height="176" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="5" result="blur1"/>
+      <feGaussianBlur in="SourceGraphic" stdDeviation="10" result="blur2"/>
       <feMerge>
         <feMergeNode in="blur2"/>
         <feMergeNode in="blur1"/>
@@ -20,17 +22,18 @@
     </filter>
   </defs>
 
-  <g filter="url(#network-glow)" opacity="0.96">
-    <path d="M82 110H202L248 82L310 138L372 84L418 110H538" stroke="url(#network-core)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
-    <path d="M202 110L164 74L132 62" stroke="url(#network-branch)" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
-    <path d="M202 110L166 142L136 154" stroke="url(#network-branch)" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
-    <path d="M248 82L236 50L248 30" stroke="url(#network-branch)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-    <path d="M248 82L286 58L306 34" stroke="url(#network-branch)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-    <path d="M310 138L292 170L300 188" stroke="url(#network-branch)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-    <path d="M310 138L348 158L372 182" stroke="url(#network-branch)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-    <path d="M372 84L410 58L438 36" stroke="url(#network-branch)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-    <path d="M372 84L406 122L436 136" stroke="url(#network-branch)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-    <path d="M418 110L452 102L486 88" stroke="url(#network-branch)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-    <path d="M418 110L454 118L488 134" stroke="url(#network-branch)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <g filter="url(#filament-glow)" opacity="0.96">
+    <path d="M94 110H220L266 90L320 130L382 78L440 128L494 92L548 110H666" stroke="url(#filament-core)" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M220 110L194 82L172 72" stroke="url(#filament-branch)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"/>
+    <path d="M220 110L192 140L168 150" stroke="url(#filament-branch)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" opacity="0.82"/>
+    <path d="M266 90L252 60L260 42" stroke="url(#filament-branch)" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" opacity="0.8"/>
+    <path d="M320 130L304 160L314 182" stroke="url(#filament-branch)" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" opacity="0.78"/>
+    <path d="M382 78L404 50L430 36" stroke="url(#filament-branch)" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" opacity="0.82"/>
+    <path d="M440 128L458 152L482 166" stroke="url(#filament-branch)" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" opacity="0.78"/>
+    <path d="M494 92L520 66L546 54" stroke="url(#filament-branch)" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" opacity="0.78"/>
+    <path d="M548 110L582 102L612 92" stroke="url(#filament-branch)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" opacity="0.84"/>
+    <path d="M548 110L580 118L612 132" stroke="url(#filament-branch)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" opacity="0.76"/>
+    <path d="M320 130L346 118L364 102" stroke="url(#filament-branch)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" opacity="0.68"/>
+    <path d="M440 128L412 114L390 102" stroke="url(#filament-branch)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" opacity="0.68"/>
   </g>
 </svg>
