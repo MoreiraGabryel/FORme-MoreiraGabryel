@@ -1,71 +1,137 @@
-import {useState} from 'react';
+import {startTransition, useEffect, useRef, useState} from 'react';
+import type {CSSProperties} from 'react';
 import {LoadingScreen} from './components/sections/LoadingScreen';
+import {HeroIntro} from './components/sections/HeroIntro';
+import {ScrollTransitionStage} from './components/sections/ScrollTransitionStage';
+import {HOME_COPY} from './config/homeContent';
+import {useTranslation} from './i18n/useTranslation';
 
-const featurePreview = [
-  'Paleta global aplicada',
-  'Tipografia Inter + Inter Tight',
-  'Keyframes base preparados',
-];
+function clamp(value: number, min: number, max: number) {
+  return Math.min(Math.max(value, min), max);
+}
 
 export default function App() {
   const [loaded, setLoaded] = useState(false);
+  const {locale, setLocale} = useTranslation();
+  const copy = HOME_COPY[locale];
+  const [phraseIndex, setPhraseIndex] = useState(0);
+  const [heroProgress, setHeroProgress] = useState(0);
+  const [stageProgress, setStageProgress] = useState(0);
+  const transitionSectionRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    setPhraseIndex(0);
+  }, [locale]);
+
+  useEffect(() => {
+    const phraseCount = copy.phrases.length;
+    const intervalId = window.setInterval(() => {
+      startTransition(() => {
+        setPhraseIndex((current) => {
+          if (phraseCount <= 1) return current;
+
+          let next = current;
+          while (next === current) {
+            next = Math.floor(Math.random() * phraseCount);
+          }
+
+          return next;
+        });
+      });
+    }, 3600);
+
+    return () => window.clearInterval(intervalId);
+  }, [copy.phrases]);
+
+  useEffect(() => {
+    const section = transitionSectionRef.current;
+    if (!section) return;
+
+    let frame = 0;
+
+    const updateProgress = () => {
+      const viewportHeight = Math.max(window.innerHeight, 1);
+      const rawHero = window.scrollY / (viewportHeight * 0.92);
+      setHeroProgress(clamp(rawHero, 0, 1));
+
+      const rect = section.getBoundingClientRect();
+      const sectionTop = window.scrollY + rect.top;
+      const introOffset = viewportHeight * 0.22;
+      const available = Math.max(section.offsetHeight - window.innerHeight - introOffset, 1);
+      const raw = (window.scrollY - (sectionTop + introOffset)) / available;
+      setStageProgress(clamp(raw, 0, 1));
+    };
+
+    const requestUpdate = () => {
+      window.cancelAnimationFrame(frame);
+      frame = window.requestAnimationFrame(updateProgress);
+    };
+
+    updateProgress();
+    window.addEventListener('scroll', requestUpdate, {passive: true});
+    window.addEventListener('resize', requestUpdate);
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.removeEventListener('scroll', requestUpdate);
+      window.removeEventListener('resize', requestUpdate);
+    };
+  }, []);
+
+  const stageVideoReveal = clamp((stageProgress - 0.04) / 0.38, 0, 1);
+  const stageImageFade = clamp(1 - stageVideoReveal * 0.9, 0.1, 1);
 
   return (
     <>
       {!loaded && <LoadingScreen onDone={() => setLoaded(true)} />}
-      <main className="app-shell px-4 py-6 text-white sm:px-6 lg:px-8">
-        <section className="section-frame hero-noise fade-in-soft mx-auto flex min-h-[calc(100vh-3rem)] w-full max-w-6xl flex-col justify-between rounded-[2rem] px-6 py-8 sm:px-10 sm:py-10 lg:px-14 lg:py-14">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3 text-xs uppercase tracking-[0.35em] text-[#555555] sm:text-sm">
-              <span className="accent-dot lightning-pulse" />
-              Bloco 2
-            </div>
-            <div className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-[0.65rem] uppercase tracking-[0.3em] text-white/70 sm:text-xs">
-              Base visual global
-            </div>
-          </div>
+      <main className="site-shell">
+        <HeroIntro
+          copy={copy}
+          locale={locale}
+          setLocale={setLocale}
+          phraseIndex={phraseIndex}
+          heroProgress={heroProgress}
+          imageStyle={{
+            opacity: 0.34 - heroProgress * 0.16,
+            transform: `translate3d(0, ${heroProgress * 7}vh, 0) scale(${1.02 + heroProgress * 0.12})`,
+            filter: `saturate(${0.84 + heroProgress * 0.22}) brightness(${0.48 - heroProgress * 0.08}) contrast(${1.06 + heroProgress * 0.08})`,
+          }}
+          overlayStyle={{
+            opacity: 1 - heroProgress * 0.18,
+          }}
+          introStyle={{
+            opacity: 1 - heroProgress * 0.92,
+            transform: `translate3d(0, ${heroProgress * -10}vh, 0) scale(${1 - heroProgress * 0.05})`,
+            filter: `blur(${heroProgress * 7}px)`,
+          }}
+          footerStyle={{
+            opacity: 1 - heroProgress * 0.94,
+            transform: `translate3d(0, ${heroProgress * -4}vh, 0)`,
+          }}
+        />
 
-          <div className="grid gap-10 lg:grid-cols-[1.2fr_0.8fr] lg:items-end">
-            <div className="max-w-3xl">
-              <p className="mb-4 text-xs uppercase tracking-[0.45em] text-[#555555] sm:text-sm">
-                Guarulhos, São Paulo
-              </p>
-              <h1 className="display-font text-4xl font-bold tracking-[-0.04em] sm:text-6xl lg:text-7xl">
-                Fundação visual pronta para o portfolio.
-              </h1>
-              <p className="body-muted mt-6 max-w-2xl text-base leading-7 sm:text-lg">
-                Este bloco prepara a atmosfera escura, a paleta definitiva, a tipografia e os keyframes que vão sustentar
-                loading, hero, ícones flutuantes e transições dos próximos blocos.
-              </p>
-              <div className="mt-8 flex flex-wrap gap-3">
-                <span className="rounded-full border border-[#E8FF00]/20 bg-[#E8FF00]/10 px-4 py-2 text-xs uppercase tracking-[0.3em] text-[#E8FF00]">
-                  Background #0A0A0A
-                </span>
-                <span className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs uppercase tracking-[0.3em] text-white/75">
-                  Surface #111111
-                </span>
-                <span className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs uppercase tracking-[0.3em] text-white/75">
-                  Primary #FFFFFF
-                </span>
-              </div>
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-1">
-              {featurePreview.map((item, index) => (
-                <article
-                  key={item}
-                  className={`section-frame rounded-[1.5rem] px-5 py-6 ${index % 2 === 0 ? 'float-soft' : 'float-soft-delayed'}`}
-                >
-                  <p className="text-[0.7rem] uppercase tracking-[0.32em] text-[#555555]">Preview</p>
-                  <h2 className="display-font mt-4 text-xl font-semibold text-white">{item}</h2>
-                  <p className="body-muted mt-3 text-sm leading-6">
-                    Bloco visual pronto para receber loading, hero com raios e seção de tecnologias sem retrabalho de
-                    base.
-                  </p>
-                </article>
-              ))}
-            </div>
-          </div>
+        <section ref={transitionSectionRef}>
+          <ScrollTransitionStage
+            copy={copy}
+            stageProgress={stageProgress}
+            stageStyle={{'--stage-progress': `${stageProgress}`} as CSSProperties}
+            mediaShellStyle={{
+              inset: `${14 - stageProgress * 8}vh ${8 - stageProgress * 3.2}vw ${10 - stageProgress * 5}vh ${8 - stageProgress * 3.2}vw`,
+              borderRadius: `${2.25 - stageProgress * 1.7}rem`,
+              transform: `translate3d(0, ${(1 - stageProgress) * 4.5}vh, 0) scale(${0.94 + stageProgress * 0.06})`,
+              boxShadow: `0 ${24 - stageProgress * 8}px ${70 - stageProgress * 10}px rgba(0, 0, 0, ${0.3 - stageProgress * 0.06})`,
+            }}
+            imageStyle={{
+              opacity: stageImageFade,
+              transform: `translate3d(0, ${stageProgress * 2.2}vh, 0) scale(${1.08 + stageProgress * 0.1})`,
+              filter: `saturate(${0.88 + stageProgress * 0.1}) brightness(${0.38 - stageProgress * 0.02}) contrast(${1.04 + stageProgress * 0.05})`,
+            }}
+            videoStyle={{
+              opacity: stageVideoReveal * 0.58,
+              transform: `translate3d(0, ${stageProgress * -0.7}vh, 0) scale(${1.08 + stageProgress * 0.06})`,
+              filter: `saturate(${0.86 + stageProgress * 0.1}) brightness(${0.34 + stageVideoReveal * 0.1}) contrast(${1.08 + stageProgress * 0.04})`,
+            }}
+          />
         </section>
       </main>
     </>

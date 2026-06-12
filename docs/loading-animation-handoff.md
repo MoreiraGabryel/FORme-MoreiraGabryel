@@ -4,9 +4,9 @@ Data: `2026-06-11`
 
 ## Objetivo
 
-Este documento existe para orientar a proxima IA ou pessoa responsavel pela animacao do loading do portfolio.
+Este documento orienta a proxima pessoa/IA responsavel por manter ou refinar a animacao de loading do portfolio.
 
-O design no Canva ja foi usado para definir a sequencia visual estatica. A proxima etapa deve **apenas usar esses frames como referencia para animar no site**, sem redesenhar a ideia-base.
+A direcao atual ja nao usa mais o conceito literal de raio. O loading foi traduzido para uma linguagem mais premium/optica, mantendo a ideia de energia nascendo no `i` e se espalhando pelo nome.
 
 ## Fonte de verdade visual
 
@@ -16,111 +16,128 @@ O design no Canva ja foi usado para definir a sequencia visual estatica. A proxi
 
 ## Regra principal
 
-O Canva define a narrativa visual.
+O Canva continua definindo a narrativa visual geral, mas a implementacao atual traduz essa narrativa para uma solucao original de motion design.
 
 A implementacao no site deve:
 
-- preservar a ordem dos frames;
-- preservar o papel do raio no lugar da letra `i`;
-- preservar o glow/flash antes da abertura do site;
-- preservar a sensacao de energia percorrendo o lettering;
-- usar esses slides como referencia de keyframes visuais.
+- preservar a ordem dos beats visuais;
+- preservar o `i` como ponto de ruptura e origem da energia;
+- preservar a sensacao de glow/flash antes da abertura do site;
+- preservar a energia percorrendo o lettering;
+- usar os slides como storyboard, nao como copia literal.
 
 Nao fazer nesta etapa:
 
-- nao reinventar a composicao;
-- nao trocar a identidade visual do loading;
-- nao substituir o conceito do raio por outro simbolo;
-- nao simplificar a sequencia para uma animacao generica.
+- nao voltar para um raio literal ou clipart;
+- nao copiar tipografia, composicao ou assinatura visual de referencia externa;
+- nao simplificar a sequencia para uma animacao generica;
+- nao desconectar os efeitos de energia do lettering.
 
 ## Sequencia aprovada
 
-### Frame 1
+### Beat 1
 
-`MoreiraGabryel` normal, centralizado.
-
-Leitura:
-
-- tela inicial limpa;
-- foco total no nome;
-- base antes da energia aparecer.
-
-### Frame 2
-
-A letra `i` vira um raio.
+`MoreiraGabryel` aparece como protagonista, escrito letra por letra, com trilho de progresso e status tecnico.
 
 Leitura:
 
-- o raio ocupa o lugar do `i`;
-- o nome continua legivel;
-- primeiro evento visual de transformacao.
+- tela inicial limpa e controlada;
+- loading com sensacao de sistema premium;
+- foco total no nome.
 
-### Frame 3
+### Beat 2
 
-O raio energiza o nome.
-
-Leitura:
-
-- sensacao de eletricidade correndo pelas letras;
-- nome em estado energizado;
-- glow/amarelo mais presente.
-
-### Frame 4
-
-As letras sobem.
+O `i` deixa de ser apenas caractere e entra em transmutacao.
 
 Leitura:
 
-- o lettering sai da posicao central;
-- o efeito aponta para transicao de encerramento do loading;
-- o raio ainda e a origem visual da energia.
+- o `i` perde solidez tipografica;
+- surge um conjunto optico/luminoso no mesmo slot;
+- esse e o primeiro evento especial da sequencia.
 
-### Frame 5
+### Beat 3
 
-Zoom do raio + luz expandida + abertura para entrada do site.
+O novo `i` prismático energiza o restante do lettering.
 
 Leitura:
 
-- raio cresce;
-- glow central abre;
-- o frame deve preparar a troca do loading para a interface principal;
-- esse e o ultimo frame estatico antes da animacao revelar o site.
+- a energia nasce no `i`;
+- o brilho se propaga para as letras vizinhas por proximidade;
+- o nome entra em estado energizado sem perder legibilidade.
 
-## Assets relevantes
+### Beat 4
 
-Arquivos locais ja criados para apoio:
+O palco inteiro entra em tensao para o payoff final.
 
-- [lightning-bolt.svg](F:/Repositório-Pessoal/public/icons/lightning-bolt.svg)
-- [lightning-network.svg](F:/Repositório-Pessoal/public/icons/lightning-network.svg)
+Leitura:
 
-Uso esperado:
+- glow de palco aumenta;
+- o wordmark ganha presenca e micro aproximacao;
+- o status/trilho cedem protagonismo para o reveal.
 
-- `lightning-bolt.svg`: raio principal no lugar da letra `i`
-- `lightning-network.svg`: ramificacoes eletricas e reforco de energia/glow
+### Beat 5
+
+Flash, abertura luminosa e saida para a interface principal.
+
+Leitura:
+
+- o prisma do `i` faz o ultimo bloom;
+- o aperture abre a transicao;
+- o loading entrega a tela principal com sensacao cinematica/premium.
+
+## Implementacao atual
+
+Arquivo principal:
+
+- `F:/Repositório-Pessoal/src/components/sections/LoadingScreen.tsx`
+
+Estruturas-chave do `i` na versao atual:
+
+- `iFocusRef`: halo focal suave
+- `iCoreRef`: ponto luminoso central
+- `iStemRef`: haste vertical energizada
+- `iPrismRef`: prisma facetado principal
+- `iEchoRef`: anel/eco de energia
+
+Outras pecas importantes:
+
+- escrita letra por letra com `writeHeadRef`
+- trilho/progresso com `trackRef`, `fillRef` e `beamRef`
+- glow de palco com `stageGlowRef`
+- payoff final com `flashRef` e `apertureRef`
 
 ## Direcao de animacao
 
-Quando a proxima IA implementar no site, a animacao deve seguir esta logica:
+Quando alguem for refinar esta sequencia, a logica deve continuar assim:
 
-1. mostrar o nome limpo;
-2. transformar o `i` em raio;
-3. disparar energia pelas letras;
-4. elevar o lettering;
-5. ampliar o raio e o glow;
-6. fazer a transicao para revelar o site.
+1. mostrar o status e o nome sendo escrito lentamente;
+2. destacar o `i` como pivot narrativo;
+3. transmutar o `i` em um objeto luminoso/prismatico;
+4. propagar energia do `i` para o restante do nome;
+5. intensificar glow, foco e tensao de palco;
+6. fazer o reveal final para entrada do site.
 
 ## Observacoes tecnicas
 
-- Pensar em GSAP como ferramenta principal de coreografia.
-- O SVG deve continuar vetorial e separado do maximo possivel.
-- O efeito precisa parecer premium e controlado, nao um efeito aleatorio.
-- O timing deve ser progressivo: transformacao, energia, elevacao, explosao de luz, reveal.
+- GSAP continua sendo a ferramenta principal de coreografia.
+- O efeito precisa parecer premium e controlado, nunca aleatorio.
+- Glow seletivo funciona melhor do que brilho exagerado em tudo.
+- O `i` deve parecer integrado ao lettering, nao um overlay independente.
+- O climax final deve favorecer leitura de transicao, nao ruido visual.
+
+## Debug / review
+
+URLs uteis para revisar a sequencia:
+
+- `http://127.0.0.1:3000/`
+- `http://127.0.0.1:3000/?loading-slow=0.3&loading-motion=1`
+- `http://127.0.0.1:3000/?loading-slow=0.18&loading-motion=1`
 
 ## Instrucao para a proxima IA
 
-Se voce estiver animando esta sequencia:
+Se voce estiver refinando esta sequencia:
 
-- use o Canva como storyboard;
-- nao trate os slides como sugestao vaga;
-- replique a intencao visual de cada frame;
-- ajuste apenas o necessario para viabilidade tecnica no front-end.
+- use o Canva como storyboard e clima geral;
+- preserve o `i` como origem da energia;
+- refine timing, glow, profundidade e reveal sem voltar para o conceito antigo de raio;
+- valide sempre em runtime/localhost antes de declarar pronto.
