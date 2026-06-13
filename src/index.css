@@ -375,6 +375,23 @@ button {
   padding-top: 8svh;
 }
 
+.transition-stage::after {
+  content: '';
+  position: absolute;
+  left: -8vw;
+  right: -8vw;
+  bottom: -44svh;
+  height: 74svh;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 50% 6%, rgba(126, 158, 255, 0.16), transparent 18%),
+    radial-gradient(circle at 50% 20%, rgba(70, 96, 214, 0.18), transparent 30%),
+    linear-gradient(180deg, rgba(4, 6, 11, 0.02), rgba(4, 6, 11, 0.12) 26%, rgba(4, 6, 11, 0.34) 58%, rgba(3, 6, 13, 0.78) 100%);
+  filter: blur(14px);
+  opacity: calc(0.28 + var(--stage-ease, 0) * 0.22 + var(--stage-settle, 0) * 0.18);
+}
+
 .sticky-stage {
   position: sticky;
   top: 0;
@@ -780,8 +797,26 @@ button {
 .fake-footer-stage {
   position: relative;
   min-height: 250svh;
-  margin-top: -20svh;
-  padding-top: 6svh;
+  margin-top: -32svh;
+  padding-top: 0svh;
+}
+
+.fake-footer-stage::before {
+  content: '';
+  position: absolute;
+  left: -10vw;
+  right: -10vw;
+  top: -52svh;
+  height: 82svh;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 50% 88%, rgba(154, 181, 255, 0.24), transparent 18%),
+    radial-gradient(circle at 50% 74%, rgba(78, 104, 224, 0.24), transparent 30%),
+    radial-gradient(circle at 50% 92%, rgba(26, 36, 78, 0.34), transparent 44%),
+    linear-gradient(180deg, rgba(3, 6, 13, 0), rgba(15, 24, 52, 0.1) 18%, rgba(22, 34, 78, 0.2) 34%, rgba(3, 6, 13, 0.52) 66%, rgba(3, 6, 13, 0.84) 100%);
+  filter: blur(20px);
+  opacity: calc(0.6 + var(--fake-footer-progress, 0) * 0.18);
 }
 
 .fake-footer-sticky {
@@ -796,20 +831,37 @@ button {
   position: absolute;
   inset: 0;
   z-index: 0;
-  display: grid;
-  place-items: center;
+  overflow: hidden;
   pointer-events: none;
 }
 
 .fake-footer-media-well {
-  position: relative;
+  position: absolute;
+  inset: 0;
   width: 100%;
-  height: 100svh;
+  height: 100%;
+  min-height: 100%;
   overflow: hidden;
   transform-origin: center center;
   background:
-    radial-gradient(circle at 50% 42%, rgba(34, 46, 98, 0.22), rgba(4, 8, 18, 0.62) 58%, rgba(2, 4, 10, 0.9) 100%),
+    radial-gradient(circle at 50% 18%, rgba(98, 126, 232, 0.18), transparent 24%),
+    radial-gradient(circle at 50% 32%, rgba(58, 82, 176, 0.16), transparent 36%),
+    radial-gradient(circle at 50% 42%, rgba(52, 72, 148, 0.28), rgba(8, 14, 30, 0.44) 54%, rgba(2, 4, 10, 0.78) 100%),
     #03060d;
+}
+
+.fake-footer-media-well::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 50% 28%, rgba(158, 184, 255, 0.18), transparent 16%),
+    radial-gradient(circle at 50% 46%, rgba(124, 150, 255, 0.2), transparent 20%),
+    radial-gradient(circle at 50% 56%, rgba(66, 94, 220, 0.2), transparent 35%),
+    radial-gradient(circle at 50% 62%, rgba(10, 18, 42, 0.12), transparent 52%);
+  opacity: calc(0.36 + var(--fake-footer-progress, 0) * 0.18 - var(--fake-footer-settle, 0) * 0.04);
+  mix-blend-mode: screen;
 }
 
 .fake-footer-video {
@@ -841,9 +893,10 @@ button {
   background:
     radial-gradient(circle at 50% 49%, rgba(176, 204, 255, 0.28), transparent 9%),
     radial-gradient(circle at 50% 49%, rgba(104, 132, 238, 0.26), transparent 24%),
+    radial-gradient(circle at 50% 58%, rgba(88, 118, 248, 0.16), transparent 34%),
     radial-gradient(circle at 50% 49%, rgba(18, 26, 58, 0.18), transparent 40%);
   mix-blend-mode: screen;
-  opacity: calc(0.2 + var(--fake-footer-tunnel, 0) * 0.44 + var(--fake-footer-settle, 0) * 0.08 - var(--fake-footer-reverse, 0) * 0.08);
+  opacity: calc(0.32 + var(--fake-footer-tunnel, 0) * 0.38 + var(--fake-footer-progress, 0) * 0.1 + var(--fake-footer-settle, 0) * 0.08 - var(--fake-footer-reverse, 0) * 0.08);
   transform: scale(calc(1 + var(--fake-footer-reverse, 0) * 0.03));
 }
 
@@ -851,7 +904,7 @@ button {
   background:
     radial-gradient(circle at 50% 49%, transparent 0 12%, rgba(3, 6, 13, 0.08) 24%, rgba(3, 6, 13, 0.24) 42%, rgba(3, 6, 13, 0.48) 70%, rgba(3, 6, 13, 0.8) 100%),
     linear-gradient(180deg, rgba(3, 6, 13, 0.08), rgba(3, 6, 13, 0.02) 22%, rgba(3, 6, 13, 0.32) 78%, rgba(3, 6, 13, 0.62));
-  opacity: calc(1 - var(--fake-footer-settle, 0) * 0.16 + var(--fake-footer-reverse, 0) * 0.06);
+  opacity: calc(0.82 - var(--fake-footer-progress, 0) * 0.04 - var(--fake-footer-settle, 0) * 0.08 + var(--fake-footer-reverse, 0) * 0.05);
 }
 
 .fake-footer-surface {
@@ -864,6 +917,36 @@ button {
   width: min(100%, 110rem);
   margin: 0 auto;
   padding: 6vh 1.5rem 3.2vh;
+}
+
+.fake-footer-surface::before,
+.fake-footer-surface::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.fake-footer-surface::before {
+  z-index: 0;
+  inset: -8svh -6vw 18svh;
+  background:
+    radial-gradient(circle at 54% 30%, rgba(170, 195, 255, 0.14), transparent 12%),
+    radial-gradient(circle at 51% 28%, rgba(96, 122, 242, 0.18), transparent 24%),
+    radial-gradient(circle at 48% 40%, rgba(52, 74, 168, 0.18), transparent 34%),
+    radial-gradient(circle at 50% 58%, rgba(16, 24, 54, 0.18), transparent 52%);
+  filter: blur(18px);
+  opacity: calc(0.46 + var(--fake-footer-progress, 0) * 0.18 + var(--fake-footer-tunnel, 0) * 0.1);
+  mix-blend-mode: screen;
+}
+
+.fake-footer-surface::after {
+  z-index: 0;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(8, 12, 24, 0.02), rgba(8, 12, 24, 0.1) 26%, rgba(8, 12, 24, 0.16) 54%, rgba(8, 12, 24, 0.08) 100%),
+    radial-gradient(circle at 50% 34%, rgba(255, 255, 255, 0.04), transparent 18%);
+  opacity: 0.9;
 }
 
 .fake-footer-topline {
