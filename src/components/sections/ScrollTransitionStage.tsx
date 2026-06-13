@@ -84,6 +84,45 @@ export function ScrollTransitionStage({
     };
   }, []);
 
+  useEffect(() => {
+    const leader = heroVideoRef.current;
+    const followers = [backdropVideoRef.current, focusVideoRef.current].filter(Boolean) as HTMLVideoElement[];
+    const videos = [leader, ...followers].filter(Boolean) as HTMLVideoElement[];
+    if (!leader || videos.length === 0) return;
+
+    const freezeRamp = Math.min(Math.max((stageProgress - 0.78) / 0.18, 0), 1);
+    const shouldFreeze = stageProgress >= 0.965;
+    const playbackRate = 1 - freezeRamp * 0.82;
+
+    for (const video of videos) {
+      video.playbackRate = Math.max(0.18, playbackRate);
+    }
+
+    if (shouldFreeze) {
+      for (const follower of followers) {
+        if (Number.isFinite(leader.currentTime)) {
+          follower.currentTime = leader.currentTime;
+        }
+      }
+
+      for (const video of videos) video.pause();
+      return;
+    }
+
+    for (const follower of followers) {
+      if (Number.isFinite(leader.currentTime) && Math.abs((follower.currentTime || 0) - leader.currentTime) > 0.08) {
+        follower.currentTime = leader.currentTime;
+      }
+    }
+
+    for (const video of videos) {
+      if (video.paused) {
+        const playPromise = video.play();
+        if (playPromise) playPromise.catch(() => undefined);
+      }
+    }
+  }, [stageProgress]);
+
   return (
     <section className="transition-stage" style={stageStyle}>
       <div className="sticky-stage">

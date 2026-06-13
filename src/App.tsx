@@ -4,6 +4,7 @@ import {LoadingScreen} from './components/sections/LoadingScreen';
 import {HeroIntro} from './components/sections/HeroIntro';
 import {ScrollTransitionStage} from './components/sections/ScrollTransitionStage';
 import {FakeFooterStage} from './components/sections/FakeFooterStage';
+import {LegalPage} from './components/legal/LegalPage';
 import {HOME_COPY} from './config/homeContent';
 import {useTranslation} from './i18n/useTranslation';
 
@@ -14,16 +15,20 @@ function clamp(value: number, min: number, max: number) {
 export default function App() {
   const [loaded, setLoaded] = useState(false);
   const {locale, setLocale} = useTranslation();
+  const pathname = typeof window === 'undefined' ? '/' : window.location.pathname.replace(/\/+$/, '') || '/';
   const copy = HOME_COPY[locale];
   const [phraseIndex, setPhraseIndex] = useState(0);
+  const [footerPhraseIndex, setFooterPhraseIndex] = useState(0);
   const [heroProgress, setHeroProgress] = useState(0);
   const [stageProgress, setStageProgress] = useState(0);
   const [fakeFooterProgress, setFakeFooterProgress] = useState(0);
+  const [scrollDirectionBias, setScrollDirectionBias] = useState(0);
   const transitionSectionRef = useRef<HTMLElement | null>(null);
   const fakeFooterSectionRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     setPhraseIndex(0);
+    setFooterPhraseIndex(0);
   }, [locale]);
 
   useEffect(() => {
@@ -47,11 +52,33 @@ export default function App() {
   }, [copy.phrases]);
 
   useEffect(() => {
+    const phraseCount = copy.footerPhrases.length;
+    const intervalId = window.setInterval(() => {
+      startTransition(() => {
+        setFooterPhraseIndex((current) => {
+          if (phraseCount <= 1) return current;
+
+          let next = current;
+          while (next === current) {
+            next = Math.floor(Math.random() * phraseCount);
+          }
+
+          return next;
+        });
+      });
+    }, 3200);
+
+    return () => window.clearInterval(intervalId);
+  }, [copy.footerPhrases]);
+
+  useEffect(() => {
     const transitionSection = transitionSectionRef.current;
     const fakeFooterSection = fakeFooterSectionRef.current;
     if (!transitionSection || !fakeFooterSection) return;
 
     let frame = 0;
+    let lastScrollY = window.scrollY;
+    let directionBias = 0;
 
     const resolveProgress = (section: HTMLElement, introRatio: number) => {
       const viewportHeight = Math.max(window.innerHeight, 1);
@@ -65,10 +92,17 @@ export default function App() {
 
     const updateProgress = () => {
       const viewportHeight = Math.max(window.innerHeight, 1);
-      const rawHero = window.scrollY / (viewportHeight * 0.92);
+      const currentScrollY = window.scrollY;
+      const delta = currentScrollY - lastScrollY;
+      lastScrollY = currentScrollY;
+      const directionalImpulse = clamp(delta / Math.max(viewportHeight * 0.08, 48), -1, 1);
+      directionBias = clamp(directionBias * 0.72 + directionalImpulse * 0.28, -1, 1);
+
+      const rawHero = currentScrollY / (viewportHeight * 0.92);
       setHeroProgress(clamp(rawHero, 0, 1));
       setStageProgress(resolveProgress(transitionSection, 0.22));
-      setFakeFooterProgress(resolveProgress(fakeFooterSection, 0.12));
+      setFakeFooterProgress(resolveProgress(fakeFooterSection, -0.42));
+      setScrollDirectionBias(directionBias);
     };
 
     const requestUpdate = () => {
@@ -96,9 +130,24 @@ export default function App() {
   const stageSettleEase = stageSettle * stageSettle * (3 - 2 * stageSettle);
 
   const fakeFooterEase = 1 - Math.pow(1 - fakeFooterProgress, 3);
-  const fakeFooterTunnel = clamp((fakeFooterProgress - 0.16) / 0.54, 0, 1);
+  const fakeFooterTunnel = clamp((fakeFooterProgress - 0.02) / 0.6, 0, 1);
   const fakeFooterTunnelEase = fakeFooterTunnel * fakeFooterTunnel * (3 - 2 * fakeFooterTunnel);
   const fakeFooterSettle = clamp((fakeFooterProgress - 0.78) / 0.22, 0, 1);
+  const fakeFooterVideoActivation = clamp((fakeFooterProgress - 0.14) / 0.22, 0, 1);
+  const upwardScrollBias = clamp(-scrollDirectionBias, 0, 1);
+
+  const fakeFooterReverseWindow =
+    clamp((fakeFooterProgress - 0.05) / 0.24, 0, 1) * clamp((1 - fakeFooterProgress) / 0.88, 0, 1);
+  const fakeFooterReverse = upwardScrollBias * fakeFooterReverseWindow;
+  const fakeFooterReverseEase = fakeFooterReverse * fakeFooterReverse * (3 - 2 * fakeFooterReverse);
+
+  if (pathname === '/privacy-policy') {
+    return <LegalPage kind="privacy" locale={locale} setLocale={setLocale} />;
+  }
+
+  if (pathname === '/terms-of-service') {
+    return <LegalPage kind="terms" locale={locale} setLocale={setLocale} />;
+  }
 
   return (
     <>
@@ -170,21 +219,24 @@ export default function App() {
         <section ref={fakeFooterSectionRef}>
           <FakeFooterStage
             copy={copy}
-            stageProgress={fakeFooterProgress}
+            locale={locale}
+            footerPhraseIndex={footerPhraseIndex}
+            videoActivation={fakeFooterVideoActivation}
             stageStyle={{
               '--fake-footer-progress': `${fakeFooterProgress}`,
               '--fake-footer-ease': `${fakeFooterEase}`,
               '--fake-footer-tunnel': `${fakeFooterTunnelEase}`,
               '--fake-footer-settle': `${fakeFooterSettle}`,
+              '--fake-footer-reverse': `${fakeFooterReverseEase}`,
             } as CSSProperties}
             shellStyle={{
-              transform: `translate3d(0, ${(1 - fakeFooterEase) * 5.5}vh, 0) scale(${0.96 + fakeFooterTunnelEase * 0.08 - fakeFooterSettle * 0.02})`,
-              opacity: 0.24 + fakeFooterEase * 0.74,
+              transform: `translate3d(0, ${(1 - fakeFooterEase) * 0.75 - fakeFooterTunnelEase * 0.7 + fakeFooterReverseEase * 1.8 + fakeFooterSettle * 0.08}vh, 0) scale(${1.018 + fakeFooterTunnelEase * 0.028 - fakeFooterSettle * 0.002 - fakeFooterReverseEase * 0.01})`,
+              opacity: 0.82 + fakeFooterEase * 0.14 - fakeFooterReverseEase * 0.025,
             }}
             videoStyle={{
-              opacity: 0.4 + fakeFooterTunnelEase * 0.34 - fakeFooterSettle * 0.12,
-              transform: `translate3d(0, ${(1 - fakeFooterTunnelEase) * 8}vh, 0) scale(${1.2 - fakeFooterTunnelEase * 0.24 - fakeFooterSettle * 0.05})`,
-              filter: `saturate(${0.86 + fakeFooterTunnelEase * 0.18 - fakeFooterSettle * 0.05}) brightness(${0.26 + fakeFooterTunnelEase * 0.16 - fakeFooterSettle * 0.03}) contrast(${1.05 + fakeFooterTunnelEase * 0.07}) blur(${(1 - fakeFooterTunnelEase) * 4 + fakeFooterSettle * 0.8}px)`,
+              opacity: (0.88 + fakeFooterTunnelEase * 0.18 - fakeFooterSettle * 0.012 - fakeFooterReverseEase * 0.04) * fakeFooterVideoActivation,
+              transform: `translate3d(0, ${(1 - fakeFooterTunnelEase) * 4.2 - fakeFooterTunnelEase * 3.8 - fakeFooterSettle * 0.24 + fakeFooterReverseEase * 4.2}vh, 0) scale(${1.15 - fakeFooterTunnelEase * 0.15 - fakeFooterSettle * 0.008 - fakeFooterReverseEase * 0.052})`,
+              filter: `saturate(${1.14 + fakeFooterTunnelEase * 0.22 - fakeFooterSettle * 0.01 - fakeFooterReverseEase * 0.06}) brightness(${0.78 + fakeFooterTunnelEase * 0.18 - fakeFooterSettle * 0.004 - fakeFooterReverseEase * 0.05}) contrast(${1.22 + fakeFooterTunnelEase * 0.08 - fakeFooterReverseEase * 0.02}) blur(${(1 - fakeFooterTunnelEase) * 0.8 + fakeFooterSettle * 0.14 + fakeFooterReverseEase * 0.85}px)`,
             }}
           />
         </section>
