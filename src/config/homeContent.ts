@@ -21,6 +21,24 @@ export type HomeCopy = {
   stageThreeRailPrimary: string;
   stageThreeRailSecondary: string;
   stageThreeRailTertiary: string;
+  footerExpertiseLabel: string;
+  footerSocialLabel: string;
+  footerLegalLabel: string;
+  footerDirectLabel: string;
+  privacyLabel: string;
+  termsLabel: string;
+  socialGithub: string;
+  socialInstagram: string;
+  socialLinkedIn: string;
+  socialWhatsApp: string;
+  socialEmail: string;
+  footerAvailabilityEyebrow: string;
+  footerAvailabilityTitle: string;
+  footerAvailabilityBody: string;
+  footerStatusTitle: string;
+  footerStatusBody: string;
+  footerCopyright: string;
+  footerPhrases: string[];
   language: string;
   placeholderEyebrow: string;
   placeholderTitle: string;
@@ -34,11 +52,11 @@ export const HOME_COPY: Record<Locale, HomeCopy> = {
     heroSubtag: 'Interfaces, sistemas e motion para produto digital.',
     heroSupport: 'Experiências visuais com foco em performance, automação e clareza de produto.',
     scrollCue: 'Role para iniciar a progressão visual.',
-    stageTwo: 'Etapa 02 / Motion field',
+    stageTwo: 'Etapa 02 / Campo em movimento',
     stageTwoTitle: 'Agora o campo visual fica sustentado apenas pelo vídeo, pronto para receber conteúdo depois.',
     stageTwoBody: 'O movimento continua discreto e escuro, funcionando como base viva para os próximos módulos sem poluir a composição.',
     motionMeter: 'Presença do vídeo em cena',
-    stageThree: 'Etapa 03 / False footer',
+    stageThree: 'Etapa 03 / Encerramento imersivo',
     stageThreeTitle: 'O layout passa a parecer encerrado, mas o scroll continua puxando a cena para dentro do fundo.',
     stageThreeBody: 'Este bloco funciona como um footer falso: ele entrega sensação de fechamento, porém guarda profundidade suficiente para sugerir que ainda existe outra camada abaixo.',
     stageThreeMeter: 'Profundidade do mergulho',
@@ -46,10 +64,33 @@ export const HOME_COPY: Record<Locale, HomeCopy> = {
     stageThreeCardTitle: 'Footer visual com saída escondida para uma próxima etapa.',
     stageThreeCardBody: 'A composição precisa parecer final, mas ainda induzir curiosidade para quem insistir em descer mais a tela.',
     stageThreeCta: 'Vamos trabalhar juntos?',
-    stageThreeCtaAlt: 'Shall we work together?',
-    stageThreeRailPrimary: 'Work together',
-    stageThreeRailSecondary: 'Join the team',
-    stageThreeRailTertiary: 'Just say hello',
+    stageThreeCtaAlt: 'Vamos conversar sobre o seu projeto.',
+    stageThreeRailPrimary: 'Front-end criativo',
+    stageThreeRailSecondary: 'UI Motion Design',
+    stageThreeRailTertiary: 'Automações web',
+    footerExpertiseLabel: 'Atuação',
+    footerSocialLabel: 'Redes',
+    footerLegalLabel: 'Legal',
+    footerDirectLabel: 'Contato direto',
+    privacyLabel: 'Política de Privacidade',
+    termsLabel: 'Termos de Serviço',
+    socialGithub: 'GitHub',
+    socialInstagram: 'Instagram',
+    socialLinkedIn: 'LinkedIn',
+    socialWhatsApp: 'WhatsApp',
+    socialEmail: 'Gmail',
+    footerAvailabilityEyebrow: 'Disponibilidade',
+    footerAvailabilityTitle: 'Aberto para projetos, produtos digitais e automações sob medida.',
+    footerAvailabilityBody: 'Podemos conversar sobre portfólio, landing pages, interfaces em motion, sistemas internos e experiências web com execução real.',
+    footerStatusTitle: 'Contato com retorno profissional e direcionamento claro.',
+    footerStatusBody: 'Escolha um canal, envie contexto e eu respondo com a melhor rota para seguir o projeto.',
+    footerCopyright: '© 2026 MoreiraGabryel. Todos os direitos reservados.',
+    footerPhrases: [
+      'Vamos fechar seu projeto?',
+      'Disponível para contrato.',
+      'Execução premium.',
+      'Vamos conversar?',
+    ],
     language: 'Idioma',
     placeholderEyebrow: 'Próxima funcionalidade',
     placeholderTitle: 'Espaço reservado para o próximo módulo interativo.',
@@ -80,10 +121,33 @@ export const HOME_COPY: Record<Locale, HomeCopy> = {
     stageThreeCardTitle: 'A visual footer with a hidden exit toward a later stage.',
     stageThreeCardBody: 'The composition should feel final while still provoking curiosity for anyone who keeps scrolling downward.',
     stageThreeCta: 'Shall we work together?',
-    stageThreeCtaAlt: 'Vamos trabalhar juntos?',
-    stageThreeRailPrimary: 'Work together',
-    stageThreeRailSecondary: 'Join the team',
-    stageThreeRailTertiary: 'Just say hello',
+    stageThreeCtaAlt: 'Let’s talk about your project.',
+    stageThreeRailPrimary: 'Creative front-end',
+    stageThreeRailSecondary: 'UI motion design',
+    stageThreeRailTertiary: 'Web automations',
+    footerExpertiseLabel: 'Focus',
+    footerSocialLabel: 'Socials',
+    footerLegalLabel: 'Legal',
+    footerDirectLabel: 'Direct contact',
+    privacyLabel: 'Privacy Policy',
+    termsLabel: 'Terms of Service',
+    socialGithub: 'GitHub',
+    socialInstagram: 'Instagram',
+    socialLinkedIn: 'LinkedIn',
+    socialWhatsApp: 'WhatsApp',
+    socialEmail: 'Gmail',
+    footerAvailabilityEyebrow: 'Availability',
+    footerAvailabilityTitle: 'Open for digital products, custom automations, and premium interface work.',
+    footerAvailabilityBody: 'We can talk about portfolios, landing pages, motion-driven interfaces, internal systems, and real-world web experiences.',
+    footerStatusTitle: 'Clear contact channels with professional follow-through.',
+    footerStatusBody: 'Pick a channel, send the context, and I will respond with the best route to move the project forward.',
+    footerCopyright: '© 2026 MoreiraGabryel. All rights reserved.',
+    footerPhrases: [
+      'Shall we build this?',
+      'Available for contract.',
+      'Premium execution.',
+      'Let’s talk?',
+    ],
     language: 'Language',
     placeholderEyebrow: 'Next feature',
     placeholderTitle: 'Reserved space for the next interactive module.',
