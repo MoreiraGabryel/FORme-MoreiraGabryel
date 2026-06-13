@@ -13,6 +13,7 @@ type Props = {
   stageStyle: CSSProperties;
   videoStyle: CSSProperties;
   shellStyle: CSSProperties;
+  videoActivation: number;
 };
 
 type FooterIconName = 'github' | 'instagram' | 'linkedin' | 'whatsapp' | 'email';
@@ -77,7 +78,7 @@ function FooterIcon({name}: {name: FooterIconName}) {
   }
 }
 
-export function FakeFooterStage({copy, locale, footerPhraseIndex, stageStyle, videoStyle, shellStyle}: Props) {
+export function FakeFooterStage({copy, locale, footerPhraseIndex, stageStyle, videoStyle, shellStyle, videoActivation}: Props) {
   const leadVideoRef = useRef<HTMLVideoElement | null>(null);
 
   useEffect(() => {
@@ -125,6 +126,25 @@ export function FakeFooterStage({copy, locale, footerPhraseIndex, stageStyle, vi
       video.removeEventListener('timeupdate', handleTimeUpdate);
     };
   }, []);
+
+  useEffect(() => {
+    const video = leadVideoRef.current;
+    if (!video) return;
+
+    const loopStart = 0.35;
+
+    if (videoActivation <= 0.02) {
+      if (Math.abs((video.currentTime || 0) - loopStart) > 0.06) {
+        video.currentTime = loopStart;
+      }
+      video.pause();
+      return;
+    }
+
+    video.playbackRate = 0.35 + videoActivation * 0.65;
+    const playPromise = video.play();
+    if (playPromise) playPromise.catch(() => undefined);
+  }, [videoActivation]);
 
   const socialLinks: FooterLink[] = [
     {label: copy.socialInstagram, href: CONTACT_LINKS.instagram, icon: 'instagram'},
