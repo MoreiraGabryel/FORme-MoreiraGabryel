@@ -8,7 +8,6 @@ export function HeroIntro({
   setLocale,
   phraseIndex,
   heroProgress,
-  imageStyle,
   overlayStyle,
   introStyle,
   footerStyle,
@@ -18,17 +17,15 @@ export function HeroIntro({
   setLocale: Dispatch<SetStateAction<Locale>>;
   phraseIndex: number;
   heroProgress: number;
-  imageStyle: CSSProperties;
   overlayStyle: CSSProperties;
   introStyle: CSSProperties;
   footerStyle: CSSProperties;
 }) {
   return (
     <section className="hero-stage" style={{'--hero-progress': `${heroProgress}`} as CSSProperties}>
-      <div className="hero-media">
-        <img className="hero-image" src="/media/hero-space.jpg" alt="" style={imageStyle} />
-        <div className="hero-overlay" style={overlayStyle} />
-      </div>
+        <div className="hero-media">
+          <div className="hero-overlay" style={overlayStyle} />
+        </div>
 
       <div className="hero-frame">
         <header className="top-bar">

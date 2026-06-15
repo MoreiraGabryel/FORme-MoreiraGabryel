@@ -1,10 +1,11 @@
-import {useEffect, useRef} from 'react';
+import {useEffect, useRef, useState} from 'react';
 import type {CSSProperties} from 'react';
 import type {HomeCopy} from '../../config/homeContent';
 import {CONTACT_LINKS} from '../../config/contact';
 import type {Locale} from '../../i18n/useTranslation';
 
-const footerVideoSrc = new URL('../../../fundo_site2.mp4', import.meta.url).href;
+const footerVideoSrc = '/media/stage3-tunnel-loop.mp4';
+const transitionVideoSrc = '/media/stage2-to-3.mp4';
 
 type Props = {
   copy: HomeCopy;
@@ -12,8 +13,10 @@ type Props = {
   footerPhraseIndex: number;
   stageStyle: CSSProperties;
   videoStyle: CSSProperties;
+  transitionVideoStyle: CSSProperties;
   shellStyle: CSSProperties;
   videoActivation: number;
+  transitionVideoEnabled: boolean;
 };
 
 type FooterIconName = 'github' | 'instagram' | 'linkedin' | 'whatsapp' | 'email';
@@ -78,14 +81,83 @@ function FooterIcon({name}: {name: FooterIconName}) {
   }
 }
 
-export function FakeFooterStage({copy, locale, footerPhraseIndex, stageStyle, videoStyle, shellStyle, videoActivation}: Props) {
+export function FakeFooterStage({
+  copy,
+  locale,
+  footerPhraseIndex,
+  stageStyle,
+  videoStyle,
+  transitionVideoStyle,
+  shellStyle,
+  videoActivation,
+  transitionVideoEnabled,
+}: Props) {
+  const transitionVideoRef = useRef<HTMLVideoElement | null>(null);
   const leadVideoRef = useRef<HTMLVideoElement | null>(null);
+  const [canPlay, setCanPlay] = useState(false);
+
+  useEffect(() => {
+    const video = leadVideoRef.current;
+    const mediaWell = video?.parentElement;
+    if (!video || !mediaWell) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setCanPlay(true);
+          observer.disconnect();
+        }
+      },
+      {threshold: 0.1},
+    );
+
+    observer.observe(mediaWell);
+
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const video = transitionVideoRef.current;
+    if (!video) return;
+
+    video.muted = true;
+    video.defaultMuted = true;
+    video.playsInline = true;
+    video.loop = false;
+    video.preload = 'auto';
+  }, []);
+
+  useEffect(() => {
+    const video = transitionVideoRef.current;
+    if (!video) return;
+
+    if (!canPlay || !transitionVideoEnabled) {
+      video.pause();
+      if (Math.abs(video.currentTime) > 0.06) video.currentTime = 0;
+      return;
+    }
+
+    const section = video.closest('.fake-footer-stage') as HTMLElement | null;
+    if (section) {
+      const rect = section.getBoundingClientRect();
+      if (rect.top > window.innerHeight * 0.92) {
+        video.pause();
+        return;
+      }
+    }
+
+    if (video.ended) return;
+    if (video.currentTime < 0.03) {
+      const playPromise = video.play();
+      if (playPromise) playPromise.catch(() => undefined);
+    }
+  }, [canPlay, transitionVideoEnabled]);
 
   useEffect(() => {
     const video = leadVideoRef.current;
     if (!video) return;
 
-    const loopStart = 0.35;
+    const loopStart = 1.24;
     const loopEnd = 7.35;
 
     const syncVisibleLoopWindow = () => {
@@ -102,8 +174,6 @@ export function FakeFooterStage({copy, locale, footerPhraseIndex, stageStyle, vi
 
     const handleLoadedMetadata = () => {
       syncVisibleLoopWindow();
-      const playPromise = video.play();
-      if (playPromise) playPromise.catch(() => undefined);
     };
 
     const handleTimeUpdate = () => {
@@ -118,8 +188,6 @@ export function FakeFooterStage({copy, locale, footerPhraseIndex, stageStyle, vi
     video.addEventListener('timeupdate', handleTimeUpdate);
 
     syncVisibleLoopWindow();
-    const playPromise = video.play();
-    if (playPromise) playPromise.catch(() => undefined);
 
     return () => {
       video.removeEventListener('loadedmetadata', handleLoadedMetadata);
@@ -131,9 +199,9 @@ export function FakeFooterStage({copy, locale, footerPhraseIndex, stageStyle, vi
     const video = leadVideoRef.current;
     if (!video) return;
 
-    const loopStart = 0.35;
+    const loopStart = 1.24;
 
-    if (videoActivation <= 0.02) {
+    if (!canPlay || videoActivation <= 0.08) {
       if (Math.abs((video.currentTime || 0) - loopStart) > 0.06) {
         video.currentTime = loopStart;
       }
@@ -141,10 +209,19 @@ export function FakeFooterStage({copy, locale, footerPhraseIndex, stageStyle, vi
       return;
     }
 
+    const section = video.closest('.fake-footer-stage') as HTMLElement | null;
+    if (section) {
+      const rect = section.getBoundingClientRect();
+      if (rect.top > window.innerHeight * 0.92) {
+        video.pause();
+        return;
+      }
+    }
+
     video.playbackRate = 0.35 + videoActivation * 0.65;
     const playPromise = video.play();
     if (playPromise) playPromise.catch(() => undefined);
-  }, [videoActivation]);
+  }, [canPlay, videoActivation]);
 
   const socialLinks: FooterLink[] = [
     {label: copy.socialInstagram, href: CONTACT_LINKS.instagram, icon: 'instagram'},
@@ -165,16 +242,25 @@ export function FakeFooterStage({copy, locale, footerPhraseIndex, stageStyle, vi
         <div className="fake-footer-media" aria-hidden="true">
           <div className="fake-footer-media-well" style={shellStyle}>
             <video
+              ref={transitionVideoRef}
+              className="fake-footer-transition-video"
+              src={transitionVideoSrc}
+              muted
+              playsInline
+              preload="auto"
+              style={transitionVideoStyle}
+            />
+            <video
               ref={leadVideoRef}
               className="fake-footer-video"
               src={footerVideoSrc}
-              autoPlay
-              loop
               muted
               playsInline
               preload="metadata"
               style={videoStyle}
             />
+            <div className="fake-footer-bridge-haze" />
+            <div className="fake-footer-bridge-core" />
             <div className="fake-footer-tunnel-glow" />
             <div className="fake-footer-vignette" />
           </div>
@@ -231,7 +317,7 @@ export function FakeFooterStage({copy, locale, footerPhraseIndex, stageStyle, vi
                   <span className="fake-footer-group-label">{copy.footerLegalLabel}</span>
                   <div className="fake-footer-legal-row fake-footer-legal-row-right">
                     {legalLinks.map((item) => (
-                      <a key={item.label} className="fake-footer-legal-link" href={item.href}>
+                      <a key={item.label} href={item.href} className="fake-footer-legal-link">
                         {item.label}
                       </a>
                     ))}

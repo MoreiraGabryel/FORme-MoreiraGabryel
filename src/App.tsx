@@ -4,6 +4,7 @@ import {LoadingScreen} from './components/sections/LoadingScreen';
 import {HeroIntro} from './components/sections/HeroIntro';
 import {ScrollTransitionStage} from './components/sections/ScrollTransitionStage';
 import {FakeFooterStage} from './components/sections/FakeFooterStage';
+import {SceneCrossfade} from './components/SceneCrossfade';
 import {LegalPage} from './components/legal/LegalPage';
 import {HOME_COPY} from './config/homeContent';
 import {useTranslation} from './i18n/useTranslation';
@@ -19,10 +20,14 @@ export default function App() {
   const copy = HOME_COPY[locale];
   const [phraseIndex, setPhraseIndex] = useState(0);
   const [footerPhraseIndex, setFooterPhraseIndex] = useState(0);
-  const [heroProgress, setHeroProgress] = useState(0);
-  const [stageProgress, setStageProgress] = useState(0);
-  const [fakeFooterProgress, setFakeFooterProgress] = useState(0);
-  const [scrollDirectionBias, setScrollDirectionBias] = useState(0);
+  const [scrollState, setScrollState] = useState({
+    heroProgress: 0,
+    rawStageProgress: 0,
+    rawFakeFooterProgress: 0,
+    scrollDirectionBias: 0,
+    isLargeViewport: false,
+  });
+  const {heroProgress, rawStageProgress, rawFakeFooterProgress, scrollDirectionBias, isLargeViewport} = scrollState;
   const transitionSectionRef = useRef<HTMLElement | null>(null);
   const fakeFooterSectionRef = useRef<HTMLElement | null>(null);
 
@@ -37,17 +42,12 @@ export default function App() {
       startTransition(() => {
         setPhraseIndex((current) => {
           if (phraseCount <= 1) return current;
-
           let next = current;
-          while (next === current) {
-            next = Math.floor(Math.random() * phraseCount);
-          }
-
+          while (next === current) next = Math.floor(Math.random() * phraseCount);
           return next;
         });
       });
     }, 3600);
-
     return () => window.clearInterval(intervalId);
   }, [copy.phrases]);
 
@@ -57,19 +57,28 @@ export default function App() {
       startTransition(() => {
         setFooterPhraseIndex((current) => {
           if (phraseCount <= 1) return current;
-
           let next = current;
-          while (next === current) {
-            next = Math.floor(Math.random() * phraseCount);
-          }
-
+          while (next === current) next = Math.floor(Math.random() * phraseCount);
           return next;
         });
       });
     }, 3200);
-
     return () => window.clearInterval(intervalId);
   }, [copy.footerPhrases]);
+
+  useEffect(() => {
+    const preloadImages = [
+      '/media/scene-0.webp',
+      '/media/scene-1.webp',
+      '/media/scene-2.webp',
+      '/media/scene-3.webp',
+    ];
+
+    preloadImages.forEach((src) => {
+      const img = new Image();
+      img.src = src;
+    });
+  }, []);
 
   useEffect(() => {
     const transitionSection = transitionSectionRef.current;
@@ -99,10 +108,13 @@ export default function App() {
       directionBias = clamp(directionBias * 0.72 + directionalImpulse * 0.28, -1, 1);
 
       const rawHero = currentScrollY / (viewportHeight * 0.92);
-      setHeroProgress(clamp(rawHero, 0, 1));
-      setStageProgress(resolveProgress(transitionSection, 0.22));
-      setFakeFooterProgress(resolveProgress(fakeFooterSection, -0.42));
-      setScrollDirectionBias(directionBias);
+      setScrollState({
+        heroProgress: clamp(rawHero, 0, 1),
+        rawStageProgress: resolveProgress(transitionSection, 0.22),
+        rawFakeFooterProgress: resolveProgress(fakeFooterSection, -0.42),
+        scrollDirectionBias: directionBias,
+        isLargeViewport: window.innerWidth >= 1500 || window.innerHeight >= 920,
+      });
     };
 
     const requestUpdate = () => {
@@ -121,56 +133,58 @@ export default function App() {
     };
   }, []);
 
-  const stageVideoReveal = clamp((stageProgress + 0.02) / 0.24, 0, 1);
-  const stageImageFade = clamp(1 - stageVideoReveal * 0.9, 0.1, 1);
+  const stageReadProgress = clamp(rawStageProgress / 0.78, 0, 1);
+  const stageHoldProgress = clamp((rawStageProgress - 0.78) / 0.14, 0, 1);
+  const stageReleaseProgress = clamp((rawStageProgress - 0.92) / 0.08, 0, 1);
+  const stageProgress = rawStageProgress < 0.78 ? stageReadProgress : 1;
   const heroHandoff = clamp((heroProgress - 0.58) / 0.34, 0, 1);
   const heroHandoffEase = 1 - Math.pow(1 - heroHandoff, 3);
   const stageEase = 1 - Math.pow(1 - stageProgress, 3);
-  const stageSettle = clamp((stageProgress - 0.72) / 0.28, 0, 1);
-  const stageSettleEase = stageSettle * stageSettle * (3 - 2 * stageSettle);
+  const stageHoldEase = stageHoldProgress * stageHoldProgress * (3 - 2 * stageHoldProgress);
+  const stageSettleEase = stageReleaseProgress * stageReleaseProgress * (3 - 2 * stageReleaseProgress);
 
+  const fakeFooterGate = rawStageProgress >= 0.92 ? 1 : 0;
+  const fakeFooterProgress = fakeFooterGate === 0 ? 0 : clamp((rawFakeFooterProgress - 0.01) / 0.99, 0, 1);
   const fakeFooterEase = 1 - Math.pow(1 - fakeFooterProgress, 3);
-  const fakeFooterTunnel = clamp((fakeFooterProgress - 0.02) / 0.6, 0, 1);
+  const fakeFooterTunnel = clamp((fakeFooterProgress - 0.01) / 0.62, 0, 1);
   const fakeFooterTunnelEase = fakeFooterTunnel * fakeFooterTunnel * (3 - 2 * fakeFooterTunnel);
   const fakeFooterSettle = clamp((fakeFooterProgress - 0.78) / 0.22, 0, 1);
-  const fakeFooterVideoActivation = clamp((fakeFooterProgress - 0.14) / 0.22, 0, 1);
+  const fakeFooterVideoActivation = clamp((fakeFooterProgress - 0.28) / 0.24, 0, 1);
   const upwardScrollBias = clamp(-scrollDirectionBias, 0, 1);
-
   const fakeFooterReverseWindow =
     clamp((fakeFooterProgress - 0.05) / 0.24, 0, 1) * clamp((1 - fakeFooterProgress) / 0.88, 0, 1);
   const fakeFooterReverse = upwardScrollBias * fakeFooterReverseWindow;
   const fakeFooterReverseEase = fakeFooterReverse * fakeFooterReverse * (3 - 2 * fakeFooterReverse);
 
-  if (pathname === '/privacy-policy') {
-    return <LegalPage kind="privacy" locale={locale} setLocale={setLocale} />;
-  }
+  const totalScrollProgress = clamp(
 
-  if (pathname === '/terms-of-service') {
-    return <LegalPage kind="terms" locale={locale} setLocale={setLocale} />;
-  }
+    heroProgress * 0.28 + rawStageProgress * 0.48 + rawFakeFooterProgress * 0.24,
+    0,
+    1,
+  );
+
+  if (pathname === '/privacy-policy') return <LegalPage kind="privacy" locale={locale} setLocale={setLocale} />;
+  if (pathname === '/terms-of-service') return <LegalPage kind="terms" locale={locale} setLocale={setLocale} />;
 
   return (
     <>
       {!loaded && <LoadingScreen onDone={() => setLoaded(true)} />}
       <main className="site-shell">
+        <div className="global-scene-bg">
+          <SceneCrossfade progress={totalScrollProgress} />
+        </div>
+
         <HeroIntro
           copy={copy}
           locale={locale}
           setLocale={setLocale}
           phraseIndex={phraseIndex}
           heroProgress={heroProgress}
-          imageStyle={{
-            opacity: 0.34 - heroProgress * 0.16,
-            transform: `translate3d(0, ${heroProgress * 7}vh, 0) scale(${1.02 + heroProgress * 0.12})`,
-            filter: `saturate(${0.84 + heroProgress * 0.22}) brightness(${0.48 - heroProgress * 0.08}) contrast(${1.06 + heroProgress * 0.08})`,
-          }}
-          overlayStyle={{
-            opacity: 1 - heroProgress * 0.18,
-          }}
+          overlayStyle={{opacity: 1 - heroProgress * 0.18}}
           introStyle={{
             opacity: 1 - heroProgress * 0.78 - heroHandoffEase * 0.18,
-            transform: `translate3d(0, ${heroProgress * -12 - heroHandoffEase * 6}vh, 0) scale(${1 - heroProgress * 0.045 - heroHandoffEase * 0.045})`,
-            filter: `blur(${heroProgress * 7 + heroHandoffEase * 5}px)`,
+            transform: `translate3d(0, ${heroProgress * -12 - heroHandoffEase * 6}vh, 0) scale(${1 - heroProgress * 0.06 - heroHandoffEase * 0.08})`,
+            filter: `blur(${heroProgress * 6 + heroHandoffEase * 8}px)`,
           }}
           footerStyle={{
             opacity: 1 - heroProgress * 0.72 - heroHandoffEase * 0.22,
@@ -182,37 +196,18 @@ export default function App() {
           <ScrollTransitionStage
             copy={copy}
             stageProgress={stageProgress}
+            rawStageProgress={rawStageProgress}
             stageStyle={{
               '--stage-progress': `${stageProgress}`,
               '--stage-ease': `${stageEase}`,
               '--hero-handoff': `${heroHandoffEase}`,
+              '--stage-entry-y': `${(1 - heroHandoffEase) * 6}`,
+              '--stage-hold': `${stageHoldEase}`,
               '--stage-settle': `${stageSettleEase}`,
+              '--stage-perf-tier': isLargeViewport ? '1' : '0',
+              '--stage-active': rawStageProgress > 0.02 && rawStageProgress < 0.985 ? '1' : '0',
+              '--clip-reveal': `${heroHandoffEase}`,
             } as CSSProperties}
-            imageStyle={{
-              opacity: Math.max(0.02, stageImageFade * (0.2 - stageSettleEase * 0.06)),
-              transform: `translate3d(0, ${(1 - stageEase) * 4.5 + stageProgress * 0.35}vh, 0) scale(${1.085 - stageEase * 0.04})`,
-              filter: `saturate(${0.76 + stageEase * 0.08}) brightness(${0.16 - stageSettleEase * 0.03}) contrast(${1.01 + stageEase * 0.02}) blur(${(1 - stageEase) * 1.8}px)`,
-            }}
-            backdropImageStyle={{
-              opacity: 0.008 + stageImageFade * (0.02 - stageSettleEase * 0.006),
-              transform: `translate3d(0, ${(1 - stageEase) * 2.5}vh, 0) scale(${1.11 - stageEase * 0.015})`,
-              filter: `blur(${18 - stageEase * 3}px) saturate(${0.64 + stageEase * 0.05}) brightness(${0.055 + stageImageFade * 0.018}) contrast(1.01)`,
-            }}
-            videoStyle={{
-              opacity: 0.56 + stageVideoReveal * 0.16 - stageSettleEase * 0.14,
-              transform: `translate3d(0, ${(1 - stageEase) * 5.5 - stageProgress * 0.08}vh, 0) scale(${1.045 - stageEase * 0.022 - stageSettleEase * 0.012})`,
-              filter: `saturate(${0.92 + stageEase * 0.08 - stageSettleEase * 0.05}) brightness(${0.44 + stageVideoReveal * 0.06 - stageSettleEase * 0.05}) contrast(${1.06 + stageEase * 0.03 - stageSettleEase * 0.03}) blur(${stageSettleEase * 0.9}px)`,
-            }}
-            backdropVideoStyle={{
-              opacity: 0.12 + stageVideoReveal * 0.09 - stageSettleEase * 0.035,
-              transform: `translate3d(0, ${(1 - stageEase) * 3.8}vh, 0) scale(${1.1 - stageEase * 0.018})`,
-              filter: `blur(${11 - stageEase * 1.6 + stageSettleEase * 0.9}px) saturate(${0.88 + stageEase * 0.04 - stageSettleEase * 0.03}) brightness(${0.22 + stageVideoReveal * 0.05 - stageSettleEase * 0.03}) contrast(1.02)`,
-            }}
-            focusVideoStyle={{
-              opacity: 0.64 + stageVideoReveal * 0.22 - stageSettleEase * 0.16,
-              transform: `translate3d(0, ${(1 - stageEase) * 6.5 - stageProgress * 0.12}vh, 0) scale(${1.08 - stageEase * 0.038 - stageSettleEase * 0.018})`,
-              filter: `saturate(${1.02 + stageEase * 0.1 - stageSettleEase * 0.08}) brightness(${0.76 + stageVideoReveal * 0.1 - stageSettleEase * 0.08}) contrast(${1.14 + stageEase * 0.04 - stageSettleEase * 0.05}) blur(${stageSettleEase * 1.1}px)`,
-            }}
           />
         </section>
 
@@ -222,24 +217,33 @@ export default function App() {
             locale={locale}
             footerPhraseIndex={footerPhraseIndex}
             videoActivation={fakeFooterVideoActivation}
+            transitionVideoEnabled={fakeFooterGate === 1}
             stageStyle={{
               '--fake-footer-progress': `${fakeFooterProgress}`,
               '--fake-footer-ease': `${fakeFooterEase}`,
               '--fake-footer-tunnel': `${fakeFooterTunnelEase}`,
               '--fake-footer-settle': `${fakeFooterSettle}`,
               '--fake-footer-reverse': `${fakeFooterReverseEase}`,
+              '--footer-clip': `${fakeFooterEase}`,
+              '--footer-entry-y': `${(1 - fakeFooterEase) * 5}`,
             } as CSSProperties}
+            transitionVideoStyle={{
+              opacity: clamp((fakeFooterProgress + 0.14) / 0.38, 0, 1) * clamp((1 - fakeFooterProgress) / 0.52, 0, 1) * 0.72,
+            }}
             shellStyle={{
-              transform: `translate3d(0, ${(1 - fakeFooterEase) * 0.75 - fakeFooterTunnelEase * 0.7 + fakeFooterReverseEase * 1.8 + fakeFooterSettle * 0.08}vh, 0) scale(${1.018 + fakeFooterTunnelEase * 0.028 - fakeFooterSettle * 0.002 - fakeFooterReverseEase * 0.01})`,
-              opacity: 0.82 + fakeFooterEase * 0.14 - fakeFooterReverseEase * 0.025,
+              transform: `translate3d(0, ${(1 - fakeFooterEase) * 0.24 - fakeFooterTunnelEase * 0.44 + fakeFooterReverseEase * 1.4 + fakeFooterSettle * 0.04}vh, 0) scale(${1.038 + fakeFooterTunnelEase * 0.03 - fakeFooterSettle * 0.002 - fakeFooterReverseEase * 0.012})`,
+              opacity: 0.82 + fakeFooterEase * 0.06 - fakeFooterReverseEase * 0.02,
             }}
             videoStyle={{
-              opacity: (0.88 + fakeFooterTunnelEase * 0.18 - fakeFooterSettle * 0.012 - fakeFooterReverseEase * 0.04) * fakeFooterVideoActivation,
-              transform: `translate3d(0, ${(1 - fakeFooterTunnelEase) * 4.2 - fakeFooterTunnelEase * 3.8 - fakeFooterSettle * 0.24 + fakeFooterReverseEase * 4.2}vh, 0) scale(${1.15 - fakeFooterTunnelEase * 0.15 - fakeFooterSettle * 0.008 - fakeFooterReverseEase * 0.052})`,
-              filter: `saturate(${1.14 + fakeFooterTunnelEase * 0.22 - fakeFooterSettle * 0.01 - fakeFooterReverseEase * 0.06}) brightness(${0.78 + fakeFooterTunnelEase * 0.18 - fakeFooterSettle * 0.004 - fakeFooterReverseEase * 0.05}) contrast(${1.22 + fakeFooterTunnelEase * 0.08 - fakeFooterReverseEase * 0.02}) blur(${(1 - fakeFooterTunnelEase) * 0.8 + fakeFooterSettle * 0.14 + fakeFooterReverseEase * 0.85}px)`,
+              opacity: (0.58 + fakeFooterTunnelEase * 0.1 - fakeFooterSettle * 0.008 - fakeFooterReverseEase * 0.04) * fakeFooterVideoActivation,
+              transform: `translate3d(0, ${(1 - fakeFooterTunnelEase) * 2.5 - fakeFooterTunnelEase * 2.7 - fakeFooterSettle * 0.14 + fakeFooterReverseEase * 3.4}vh, 0) scale(${isLargeViewport ? 1.12 - fakeFooterTunnelEase * 0.12 - fakeFooterReverseEase * 0.03 : 1.2 - fakeFooterTunnelEase * 0.19 - fakeFooterSettle * 0.004 - fakeFooterReverseEase * 0.05})`,
+              filter: isLargeViewport
+                ? `brightness(${0.8 + fakeFooterTunnelEase * 0.05 - fakeFooterReverseEase * 0.03}) contrast(${1.03 + fakeFooterTunnelEase * 0.02 - fakeFooterReverseEase * 0.02})`
+                : `saturate(${1.02 + fakeFooterTunnelEase * 0.12 - fakeFooterSettle * 0.008 - fakeFooterReverseEase * 0.05}) brightness(${0.78 + fakeFooterTunnelEase * 0.1 - fakeFooterSettle * 0.002 - fakeFooterReverseEase * 0.05}) contrast(${1.1 + fakeFooterTunnelEase * 0.05 - fakeFooterReverseEase * 0.02}) blur(${(1 - fakeFooterTunnelEase) * 0.52 + fakeFooterSettle * 0.1 + fakeFooterReverseEase * 0.82}px)`,
             }}
           />
         </section>
+
       </main>
     </>
   );
