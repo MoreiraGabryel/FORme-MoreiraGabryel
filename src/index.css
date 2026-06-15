@@ -75,10 +75,34 @@ button {
 .site-shell {
   position: relative;
   overflow-x: clip;
-  background:
-    radial-gradient(circle at top, rgba(124, 155, 255, 0.16), transparent 22%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent 12%),
-    #04060b;
+  background: #04060b;
+}
+
+.global-scene-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.site-shell > :not(.global-scene-bg) {
+  position: relative;
+  z-index: 1;
+}
+
+.scene-crossfade {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.scene-frame {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: var(--scene-opacity, 0);
 }
 
 .hero-stage,
@@ -136,15 +160,9 @@ button {
 
 .hero-overlay {
   background:
-    radial-gradient(circle at 50% 46%, rgba(110, 139, 255, 0.16), transparent 32%),
-    linear-gradient(180deg, rgba(4, 6, 11, 0.18), rgba(4, 6, 11, 0.82) 58%, rgba(4, 6, 11, 0.96)),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px);
-  background-size:
-    auto,
-    auto,
-    136px 136px,
-    136px 136px;
+    radial-gradient(circle at 50% 46%, rgba(110, 139, 255, 0.14), transparent 32%),
+    linear-gradient(180deg, rgba(4, 6, 11, 0.18), rgba(4, 6, 11, 0.82) 58%, rgba(4, 6, 11, 0.96));
+  background-size: auto, auto;
   background-position: center;
 }
 
@@ -398,6 +416,7 @@ button {
   min-height: 100svh;
   overflow: clip;
   margin-top: -2svh;
+  transform: translate3d(0, calc(var(--stage-entry-y, 0) * 1vh), 0);
 }
 
 .transition-backdrop {
@@ -804,19 +823,19 @@ button {
 .fake-footer-stage::before {
   content: '';
   position: absolute;
-  left: -10vw;
-  right: -10vw;
+  left: -14vw;
+  right: -14vw;
   top: -52svh;
   height: 82svh;
   z-index: 0;
   pointer-events: none;
   background:
-    radial-gradient(circle at 50% 88%, rgba(154, 181, 255, 0.24), transparent 18%),
-    radial-gradient(circle at 50% 74%, rgba(78, 104, 224, 0.24), transparent 30%),
-    radial-gradient(circle at 50% 92%, rgba(26, 36, 78, 0.34), transparent 44%),
-    linear-gradient(180deg, rgba(3, 6, 13, 0), rgba(15, 24, 52, 0.1) 18%, rgba(22, 34, 78, 0.2) 34%, rgba(3, 6, 13, 0.52) 66%, rgba(3, 6, 13, 0.84) 100%);
+    radial-gradient(circle at 50% 88%, rgba(154, 181, 255, 0.12), transparent 16%),
+    radial-gradient(circle at 50% 74%, rgba(78, 104, 224, 0.12), transparent 28%),
+    radial-gradient(circle at 50% 92%, rgba(26, 36, 78, 0.16), transparent 42%),
+    linear-gradient(180deg, rgba(3, 6, 13, 0), rgba(15, 24, 52, 0.04) 18%, rgba(22, 34, 78, 0.08) 34%, rgba(3, 6, 13, 0.24) 66%, rgba(3, 6, 13, 0.46) 100%);
   filter: blur(20px);
-  opacity: calc(0.6 + var(--fake-footer-progress, 0) * 0.18);
+  opacity: calc(0.34 + var(--fake-footer-progress, 0) * 0.08);
 }
 
 .fake-footer-sticky {
@@ -825,6 +844,7 @@ button {
   min-height: 100svh;
   overflow: clip;
   background: #03060d;
+  transform: translate3d(0, calc(var(--footer-entry-y, 0) * 1vh), 0);
 }
 
 .fake-footer-media {
@@ -856,14 +876,15 @@ button {
   inset: 0;
   pointer-events: none;
   background:
-    radial-gradient(circle at 50% 28%, rgba(158, 184, 255, 0.18), transparent 16%),
-    radial-gradient(circle at 50% 46%, rgba(124, 150, 255, 0.2), transparent 20%),
-    radial-gradient(circle at 50% 56%, rgba(66, 94, 220, 0.2), transparent 35%),
-    radial-gradient(circle at 50% 62%, rgba(10, 18, 42, 0.12), transparent 52%);
-  opacity: calc(0.36 + var(--fake-footer-progress, 0) * 0.18 - var(--fake-footer-settle, 0) * 0.04);
-  mix-blend-mode: screen;
+    radial-gradient(circle at 50% 28%, rgba(158, 184, 255, 0.14), transparent 16%),
+    radial-gradient(circle at 50% 46%, rgba(124, 150, 255, 0.15), transparent 20%),
+    radial-gradient(circle at 50% 56%, rgba(66, 94, 220, 0.14), transparent 35%),
+    radial-gradient(circle at 50% 62%, rgba(10, 18, 42, 0.1), transparent 52%);
+  opacity: calc(0.22 + var(--fake-footer-progress, 0) * 0.12 - var(--fake-footer-settle, 0) * 0.03);
+  mix-blend-mode: normal;
 }
 
+.fake-footer-transition-video,
 .fake-footer-video {
   position: absolute;
   inset: 0;
@@ -872,7 +893,16 @@ button {
   object-fit: cover;
   transform-origin: center center;
   will-change: transform, opacity, filter;
-  mix-blend-mode: screen;
+}
+
+.fake-footer-transition-video {
+  z-index: 1;
+  mix-blend-mode: normal;
+}
+
+.fake-footer-video {
+  z-index: 2;
+  mix-blend-mode: normal;
 }
 
 .fake-footer-tunnel-glow,
@@ -891,12 +921,12 @@ button {
 
 .fake-footer-tunnel-glow {
   background:
-    radial-gradient(circle at 50% 49%, rgba(176, 204, 255, 0.28), transparent 9%),
-    radial-gradient(circle at 50% 49%, rgba(104, 132, 238, 0.26), transparent 24%),
-    radial-gradient(circle at 50% 58%, rgba(88, 118, 248, 0.16), transparent 34%),
-    radial-gradient(circle at 50% 49%, rgba(18, 26, 58, 0.18), transparent 40%);
+    radial-gradient(circle at 50% 49%, rgba(176, 204, 255, 0.15), transparent 9%),
+    radial-gradient(circle at 50% 49%, rgba(104, 132, 238, 0.11), transparent 24%),
+    radial-gradient(circle at 50% 58%, rgba(88, 118, 248, 0.06), transparent 34%),
+    radial-gradient(circle at 50% 49%, rgba(18, 26, 58, 0.08), transparent 40%);
   mix-blend-mode: screen;
-  opacity: calc(0.32 + var(--fake-footer-tunnel, 0) * 0.38 + var(--fake-footer-progress, 0) * 0.1 + var(--fake-footer-settle, 0) * 0.08 - var(--fake-footer-reverse, 0) * 0.08);
+  opacity: calc(0.08 + var(--fake-footer-tunnel, 0) * 0.13 + var(--fake-footer-progress, 0) * 0.02 + var(--fake-footer-settle, 0) * 0.02 - var(--fake-footer-reverse, 0) * 0.05);
   transform: scale(calc(1 + var(--fake-footer-reverse, 0) * 0.03));
 }
 
@@ -929,24 +959,24 @@ button {
 
 .fake-footer-surface::before {
   z-index: 0;
-  inset: -8svh -6vw 18svh;
+  inset: -10svh -18vw 18svh;
   background:
     radial-gradient(circle at 54% 30%, rgba(170, 195, 255, 0.14), transparent 12%),
     radial-gradient(circle at 51% 28%, rgba(96, 122, 242, 0.18), transparent 24%),
     radial-gradient(circle at 48% 40%, rgba(52, 74, 168, 0.18), transparent 34%),
     radial-gradient(circle at 50% 58%, rgba(16, 24, 54, 0.18), transparent 52%);
   filter: blur(18px);
-  opacity: calc(0.46 + var(--fake-footer-progress, 0) * 0.18 + var(--fake-footer-tunnel, 0) * 0.1);
-  mix-blend-mode: screen;
+  opacity: calc(0.24 + var(--fake-footer-progress, 0) * 0.1 + var(--fake-footer-tunnel, 0) * 0.05);
+  mix-blend-mode: normal;
 }
 
 .fake-footer-surface::after {
   z-index: 0;
   inset: 0;
   background:
-    linear-gradient(180deg, rgba(8, 12, 24, 0.02), rgba(8, 12, 24, 0.1) 26%, rgba(8, 12, 24, 0.16) 54%, rgba(8, 12, 24, 0.08) 100%),
-    radial-gradient(circle at 50% 34%, rgba(255, 255, 255, 0.04), transparent 18%);
-  opacity: 0.9;
+    linear-gradient(180deg, rgba(8, 12, 24, 0.01), rgba(8, 12, 24, 0.05) 26%, rgba(8, 12, 24, 0.08) 54%, rgba(8, 12, 24, 0.04) 100%),
+    radial-gradient(circle at 50% 34%, rgba(255, 255, 255, 0.018), transparent 18%);
+  opacity: calc(0.22 + var(--fake-footer-progress, 0) * 0.04);
 }
 
 .fake-footer-topline {
@@ -1230,6 +1260,7 @@ button {
   z-index: 2;
   display: grid;
   grid-template-columns: 1fr;
+  place-items: center;
   min-height: 100svh;
   padding: 10vh 0 3.4vh;
 }
@@ -1242,8 +1273,9 @@ button {
 }
 
 .fake-footer-left-column {
-  position: absolute;
-  inset: 0;
+  position: relative;
+  width: min(calc(100% - 3rem), 72rem);
+  margin-inline: auto;
   gap: 2.2rem;
   justify-items: center;
   align-content: center;
