@@ -194,7 +194,7 @@ export default function App() {
 
         <section ref={transitionSectionRef}>
           <ScrollTransitionStage
-            copy={copy}
+            locale={locale}
             stageProgress={stageProgress}
             rawStageProgress={rawStageProgress}
             stageStyle={{
