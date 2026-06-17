@@ -14,18 +14,18 @@ export type Technology = {
 export const TECHNOLOGIES_SECTION_COPY: Record<
   Locale,
   {
-    title: string;
+    titlePhrases: string[];
     subtitle: string;
     instruction: string;
   }
 > = {
   pt: {
-    title: 'Minha base técnica',
+    titlePhrases: ['Meu stack diário', 'As linguagens que domino', 'Com o que construo', 'Minha base técnica', 'O que me move'],
     subtitle: 'Tecnologias que uso para criar interfaces, automações e produtos digitais.',
     instruction: 'Mova o mouse para explorar',
   },
   en: {
-    title: 'My technical foundation',
+    titlePhrases: ['My daily stack', 'The languages I master', 'What I build with', 'My technical foundation', 'What drives me'],
     subtitle: 'Technologies I use to create interfaces, automations, and digital products.',
     instruction: 'Move your mouse to explore',
   },

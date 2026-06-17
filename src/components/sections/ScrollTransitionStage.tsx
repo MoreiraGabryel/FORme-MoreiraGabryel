@@ -3,6 +3,7 @@ import type {CSSProperties, PointerEvent as ReactPointerEvent} from 'react';
 import type {Locale} from '../../i18n/useTranslation';
 import {TECHNOLOGIES, TECHNOLOGIES_SECTION_COPY, type Technology} from '../../config/technologies';
 import {useIsMobile} from '../../hooks/useIsMobile';
+import {TypewriterText} from '../motion/TypewriterText';
 
 type FloatingTechnologySpec = {
   id: string;
@@ -85,16 +86,69 @@ function isInsideCenterSafeZone(left: number, top: number, isMobile: boolean) {
   return normalizedX * normalizedX + normalizedY * normalizedY < 1;
 }
 
+function isInsideHeadingSafeZone(left: number, top: number, isMobile: boolean) {
+  const minX = isMobile ? 0.18 : 0.24;
+  const maxX = isMobile ? 0.82 : 0.76;
+  const minY = isMobile ? 0.08 : 0.06;
+  const maxY = isMobile ? 0.42 : 0.38;
+  return left >= minX && left <= maxX && top >= minY && top <= maxY;
+}
+
+function getSafeSpawnOrigin(targetX: number, targetY: number, rect: DOMRect, isMobile: boolean) {
+  const minCenterDistance = Math.min(rect.width, rect.height) * (isMobile ? 0.28 : 0.24);
+  const boundsPaddingX = rect.width * (isMobile ? 0.16 : 0.12);
+  const boundsPaddingY = rect.height * (isMobile ? 0.14 : 0.1);
+  const targetDistance = Math.hypot(targetX, targetY) || 1;
+  const directionX = targetX / targetDistance;
+  const directionY = targetY / targetDistance;
+  const unclampedX = directionX * minCenterDistance;
+  const unclampedY = directionY * minCenterDistance;
+
+  return {
+    x: clamp(unclampedX, -rect.width / 2 + boundsPaddingX, rect.width / 2 - boundsPaddingX),
+    y: clamp(unclampedY, -rect.height / 2 + boundsPaddingY, rect.height / 2 - boundsPaddingY),
+  };
+}
+
+function getFallbackSafePoints(isMobile: boolean) {
+  return isMobile
+    ? [
+        {left: 0.18, top: 0.2},
+        {left: 0.82, top: 0.2},
+        {left: 0.16, top: 0.5},
+        {left: 0.84, top: 0.5},
+        {left: 0.22, top: 0.8},
+        {left: 0.78, top: 0.8},
+        {left: 0.32, top: 0.12},
+        {left: 0.68, top: 0.12},
+      ]
+    : [
+        {left: 0.14, top: 0.16},
+        {left: 0.86, top: 0.16},
+        {left: 0.1, top: 0.34},
+        {left: 0.9, top: 0.34},
+        {left: 0.08, top: 0.56},
+        {left: 0.92, top: 0.56},
+        {left: 0.16, top: 0.8},
+        {left: 0.84, top: 0.8},
+        {left: 0.28, top: 0.1},
+        {left: 0.72, top: 0.1},
+        {left: 0.22, top: 0.9},
+        {left: 0.78, top: 0.9},
+      ];
+}
+
 function createFloatingSpecs(items: Technology[], isMobile: boolean) {
   const orderedItems = shuffleArray(items);
   const placedPoints: Array<{left: number; top: number}> = [];
   const minDistance = isMobile ? 0.15 : 0.092;
   const bandCounts = {top: 0, middle: 0, bottom: 0};
   const bandLimits = isMobile ? {top: 3, middle: 3, bottom: 2} : {top: 5, middle: 6, bottom: 5};
+  const fallbackSafePoints = getFallbackSafePoints(isMobile);
 
   return orderedItems.map((item, index) => {
-    let left = 0.5;
-    let top = 0.5;
+    let left: number | null = null;
+    let top: number | null = null;
 
     for (let attempt = 0; attempt < 240; attempt += 1) {
       const candidateLeft = randomBetween(isMobile ? 0.11 : 0.07, isMobile ? 0.89 : 0.93);
@@ -103,12 +157,27 @@ function createFloatingSpecs(items: Technology[], isMobile: boolean) {
 
       if (bandCounts[band] >= bandLimits[band]) continue;
       if (isInsideCenterSafeZone(candidateLeft, candidateTop, isMobile)) continue;
+      if (isInsideHeadingSafeZone(candidateLeft, candidateTop, isMobile)) continue;
       if (isTooClose(candidateLeft, candidateTop, placedPoints, minDistance)) continue;
 
       left = candidateLeft;
       top = candidateTop;
       bandCounts[band] += 1;
       break;
+    }
+
+    if (left === null || top === null) {
+      const fallbackPoint = fallbackSafePoints.find(
+        (point) => !isInsideHeadingSafeZone(point.left, point.top, isMobile) && !isTooClose(point.left, point.top, placedPoints, minDistance * 0.9),
+      );
+
+      if (fallbackPoint) {
+        left = fallbackPoint.left;
+        top = fallbackPoint.top;
+      } else {
+        left = isMobile ? 0.12 + (index % 2) * 0.76 : 0.08 + (index % 2) * 0.84;
+        top = isMobile ? 0.56 + ((Math.floor(index / 2) % 2) * 0.22) : 0.5 + ((Math.floor(index / 2) % 2) * 0.28);
+      }
     }
 
     placedPoints.push({left, top});
@@ -121,9 +190,9 @@ function createFloatingSpecs(items: Technology[], isMobile: boolean) {
       left,
       top,
       revealDelay: index * (isMobile ? 110 : 82),
-      driftAmplitudeX: lerp(isMobile ? 6 : 8, isMobile ? 14 : 22, depth),
-      driftAmplitudeY: lerp(isMobile ? 8 : 10, isMobile ? 16 : 24, depth),
-      driftSpeed: lerp(0.00028, 0.00074, depth),
+      driftAmplitudeX: lerp(isMobile ? 12 : 18, isMobile ? 28 : 52, depth),
+      driftAmplitudeY: lerp(isMobile ? 14 : 20, isMobile ? 32 : 56, depth),
+      driftSpeed: lerp(0.00055, 0.0014, depth),
       driftOffset: randomBetween(0, Math.PI * 2),
       jitterDuration: Number(randomBetween(3.1, 4.8).toFixed(2)),
       jitterDelay: Number(randomBetween(-2.6, -0.15).toFixed(2)),
@@ -204,8 +273,11 @@ export function ScrollTransitionStage({
   const buttonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const animationFrameRef = useRef<number | null>(null);
   const introStartRef = useRef<number | null>(null);
+  const outroStartRef = useRef<number | null>(null);
   const previousStageActiveRef = useRef(false);
   const mouseStateRef = useRef({x: 0, y: 0, inside: false});
+  const smoothMouseRef = useRef({x: 0, y: 0});
+  const OUTRO_DURATION = 680;
 
   const sectionCopy = TECHNOLOGIES_SECTION_COPY[locale];
   const visibleTechnologies = useMemo(
@@ -219,6 +291,8 @@ export function ScrollTransitionStage({
   );
 
   const stageActive = rawStageProgress > 0.02 && rawStageProgress < 0.985;
+  const stageExitProgress = clamp((rawStageProgress - 0.78) / 0.16, 0, 1);
+  const stageLeaving = stageExitProgress > 0.001;
 
   useEffect(() => {
     const media = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -248,11 +322,13 @@ export function ScrollTransitionStage({
   useEffect(() => {
     if (stageActive && !previousStageActiveRef.current) {
       introStartRef.current = null;
+      outroStartRef.current = null;
       setHoveredTechnologyId(null);
       setFloatingSpecs(createFloatingSpecs(visibleTechnologies, isMobile));
     }
 
     if (!stageActive) {
+      outroStartRef.current = performance.now();
       mouseStateRef.current.inside = false;
       setHoveredTechnologyId(null);
       if (cursorFieldRef.current) cursorFieldRef.current.style.opacity = '0';
@@ -262,7 +338,7 @@ export function ScrollTransitionStage({
   }, [isMobile, stageActive, visibleTechnologies]);
 
   useEffect(() => {
-    if (!stageActive) {
+    if (!stageActive && outroStartRef.current === null) {
       if (animationFrameRef.current) {
         window.cancelAnimationFrame(animationFrameRef.current);
         animationFrameRef.current = null;
@@ -282,12 +358,16 @@ export function ScrollTransitionStage({
       const rect = field.getBoundingClientRect();
       const centerX = rect.left + rect.width / 2;
       const centerY = rect.top + rect.height / 2;
-      const mouseLocalX = mouseStateRef.current.x - centerX;
-      const mouseLocalY = mouseStateRef.current.y - centerY;
+
+      smoothMouseRef.current.x = lerp(smoothMouseRef.current.x, mouseStateRef.current.x, 0.08);
+      smoothMouseRef.current.y = lerp(smoothMouseRef.current.y, mouseStateRef.current.y, 0.08);
+
+      const mouseLocalX = smoothMouseRef.current.x - centerX;
+      const mouseLocalY = smoothMouseRef.current.y - centerY;
       const pointerEnabled = mouseStateRef.current.inside && !isMobile;
       const motionFactor = reducedMotion ? 0.38 : 1;
-      const parallaxX = pointerEnabled ? clamp((mouseStateRef.current.x - centerX) / rect.width, -0.5, 0.5) * motionFactor : 0;
-      const parallaxY = pointerEnabled ? clamp((mouseStateRef.current.y - centerY) / rect.height, -0.5, 0.5) * motionFactor : 0;
+      const parallaxX = pointerEnabled ? clamp((smoothMouseRef.current.x - centerX) / rect.width, -0.5, 0.5) * motionFactor : 0;
+      const parallaxY = pointerEnabled ? clamp((smoothMouseRef.current.y - centerY) / rect.height, -0.5, 0.5) * motionFactor : 0;
 
       field.style.setProperty('--field-parallax-x', `${(parallaxX * 18).toFixed(2)}px`);
       field.style.setProperty('--field-parallax-y', `${(parallaxY * 18).toFixed(2)}px`);
@@ -305,6 +385,7 @@ export function ScrollTransitionStage({
         const targetDistance = Math.hypot(targetX, targetY) || 1;
         const directionX = targetX / targetDistance;
         const directionY = targetY / targetDistance;
+        const spawnOrigin = getSafeSpawnOrigin(targetX, targetY, rect, isMobile);
         const tangentX = -directionY;
         const tangentY = directionX;
         const waveX = Math.sin(time * spec.driftSpeed + spec.driftOffset) * spec.driftAmplitudeX * motionFactor;
@@ -315,8 +396,8 @@ export function ScrollTransitionStage({
         const swirlDrift = reducedMotion ? 0 : Math.sin(time * (spec.driftSpeed * 1.08) + spec.driftOffset * 1.6) * lerp(4, 13, spec.depth) * driftProgress;
         const driftX = (waveX + microX) * driftProgress + parallaxX * spec.depth * 16 + directionX * ejectionPulse + tangentX * swirlDrift;
         const driftY = (waveY + microY) * driftProgress + parallaxY * spec.depth * 16 + directionY * ejectionPulse + tangentY * swirlDrift;
-        const baseX = lerp(0, targetX, revealProgress) + driftX;
-        const baseY = lerp(0, targetY, revealProgress) + driftY;
+        const baseX = lerp(spawnOrigin.x, targetX, revealProgress) + driftX;
+        const baseY = lerp(spawnOrigin.y, targetY, revealProgress) + driftY;
 
         let forceX = 0;
         let forceY = 0;
@@ -326,10 +407,10 @@ export function ScrollTransitionStage({
           const deltaX = baseX - mouseLocalX;
           const deltaY = baseY - mouseLocalY;
           const distance = Math.hypot(deltaX, deltaY) || 1;
-          const influenceRadius = lerp(148, 228, spec.depth);
+          const influenceRadius = lerp(100, 160, spec.depth);
           influence = clamp(1 - distance / influenceRadius, 0, 1);
           const force = influence * influence;
-          const repulsion = force * lerp(18, 42, spec.depth) * motionFactor;
+          const repulsion = force * lerp(52, 96, spec.depth) * motionFactor;
           forceX = (deltaX / distance) * repulsion;
           forceY = (deltaY / distance) * repulsion;
         }
@@ -343,10 +424,19 @@ export function ScrollTransitionStage({
         const brightness = lerp(1, 1.14, spec.depth) + influence * (reducedMotion ? 0.05 : 0.12);
         const shadowOpacity = lerp(0.08, 0.18, spec.depth) + influence * 0.16;
         const shadowBlur = lerp(12, 22, spec.depth) + influence * (reducedMotion ? 10 : 18);
-        const blur = (1 - spec.depth) * 1.1 + (1 - revealProgress) * 3.4;
+        const blur = (1 - revealProgress) * 3.4;
 
-        anchor.style.opacity = opacity.toFixed(3);
-        anchor.style.transform = `translate(-50%, -50%) translate3d(${finalX.toFixed(2)}px, ${finalY.toFixed(2)}px, 0)`;
+        let outroProgress = 0;
+        if (outroStartRef.current !== null) {
+          outroProgress = clamp((time - outroStartRef.current) / OUTRO_DURATION, 0, 1);
+        }
+        const easeIn = outroProgress * outroProgress * outroProgress;
+        const displayX = lerp(finalX, 0, easeIn);
+        const displayY = lerp(finalY, 0, easeIn);
+        const displayOpacity = opacity * (1 - easeIn);
+
+        anchor.style.opacity = displayOpacity.toFixed(3);
+        anchor.style.transform = `translate(-50%, -50%) translate3d(${displayX.toFixed(2)}px, ${displayY.toFixed(2)}px, 0)`;
         button.style.transform = `translate3d(0, 0, 0) rotate(${rotation.toFixed(2)}deg) scale(${scale.toFixed(3)})`;
         button.style.filter = `brightness(${brightness.toFixed(3)}) blur(${blur.toFixed(2)}px) drop-shadow(0 0 ${shadowBlur.toFixed(2)}px rgba(255,255,255,${shadowOpacity.toFixed(3)}))`;
       });
@@ -355,9 +445,21 @@ export function ScrollTransitionStage({
       if (cursorField) {
         if (pointerEnabled) {
           cursorField.style.opacity = '1';
-          cursorField.style.transform = `translate3d(${(mouseStateRef.current.x - rect.left).toFixed(2)}px, ${(mouseStateRef.current.y - rect.top).toFixed(2)}px, 0) translate(-50%, -50%) scale(1)`;
+          cursorField.style.transform = `translate3d(${(smoothMouseRef.current.x - rect.left).toFixed(2)}px, ${(smoothMouseRef.current.y - rect.top).toFixed(2)}px, 0) translate(-50%, -50%) scale(1)`;
         } else {
           cursorField.style.opacity = '0';
+        }
+      }
+
+      if (!stageActive && outroStartRef.current !== null) {
+        const outroProgress = clamp((time - outroStartRef.current) / OUTRO_DURATION, 0, 1);
+        if (outroProgress >= 1) {
+          outroStartRef.current = null;
+          if (animationFrameRef.current) {
+            window.cancelAnimationFrame(animationFrameRef.current);
+            animationFrameRef.current = null;
+          }
+          return;
         }
       }
 
@@ -393,8 +495,11 @@ export function ScrollTransitionStage({
 
   return (
     <section
-      className={`transition-stage technologies-stage${stageActive ? ' is-active' : ''}${reducedMotion ? ' reduce-motion' : ''}${hoveredTechnologyId || activeTechnologyId ? ' has-active-technology' : ''}${activeTechnology ? ' has-open-technology-card' : ''}`}
-      style={stageStyle}
+      className={`transition-stage technologies-stage${stageActive ? ' is-active' : ''}${stageLeaving ? ' is-leaving' : ''}${reducedMotion ? ' reduce-motion' : ''}${hoveredTechnologyId || activeTechnologyId ? ' has-active-technology' : ''}${activeTechnology ? ' has-open-technology-card' : ''}`}
+      style={{
+        ...stageStyle,
+        '--stage2-exit-progress': stageExitProgress,
+      } as CSSProperties}
       onPointerMove={handleStagePointerMove}
       onPointerLeave={handleStagePointerLeave}
     >
@@ -480,8 +585,20 @@ export function ScrollTransitionStage({
         <div className="transition-copy technologies-copy">
           <div className="technologies-copy-inner">
             <div className="technologies-title-glow" aria-hidden="true" />
-            <h2 className="technologies-title">{sectionCopy.title}</h2>
-            <p className="technologies-subtitle">{sectionCopy.subtitle}</p>
+            <div className="technologies-heading-stack">
+              <TypewriterText
+                as="h2"
+                phrases={sectionCopy.titlePhrases}
+                active={stageActive}
+                paused={stageLeaving}
+                className="technologies-title"
+                typingSpeedMs={30}
+                deletingSpeedMs={20}
+                holdDurationMs={3100}
+                initialDelayMs={240}
+              />
+              <p className="technologies-subtitle">{sectionCopy.subtitle}</p>
+            </div>
             <p className="technologies-instruction">{sectionCopy.instruction}</p>
           </div>
         </div>
