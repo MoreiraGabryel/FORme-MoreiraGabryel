@@ -1,9 +1,14 @@
-import {useEffect, useMemo, useRef, useState} from 'react';
+import {useEffect, useLayoutEffect, useMemo, useRef, useState} from 'react';
 import type {CSSProperties, PointerEvent as ReactPointerEvent} from 'react';
+import {gsap} from 'gsap';
+import {ScrollTrigger} from 'gsap/ScrollTrigger';
 import type {Locale} from '../../i18n/useTranslation';
 import {TECHNOLOGIES, TECHNOLOGIES_SECTION_COPY, type Technology} from '../../config/technologies';
 import {useIsMobile} from '../../hooks/useIsMobile';
 import {TypewriterText} from '../motion/TypewriterText';
+import {AboutStage} from './AboutStage';
+
+gsap.registerPlugin(ScrollTrigger);
 
 type FloatingTechnologySpec = {
   id: string;
@@ -265,8 +270,13 @@ export function ScrollTransitionStage({
   void stageProgress;
 
   const [reducedMotion, setReducedMotion] = useState(false);
+  const [aboutStageInteractive, setAboutStageInteractive] = useState(false);
   const [hoveredTechnologyId, setHoveredTechnologyId] = useState<string | null>(null);
   const [activeTechnologyId, setActiveTechnologyId] = useState<string | null>(null);
+  const stageSectionRef = useRef<HTMLElement | null>(null);
+  const pinnedShellRef = useRef<HTMLDivElement | null>(null);
+  const stageOneLayerRef = useRef<HTMLDivElement | null>(null);
+  const stageTwoLayerRef = useRef<HTMLDivElement | null>(null);
   const stageFieldRef = useRef<HTMLDivElement | null>(null);
   const cursorFieldRef = useRef<HTMLDivElement | null>(null);
   const anchorRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -301,6 +311,78 @@ export function ScrollTransitionStage({
     media.addEventListener('change', update);
     return () => media.removeEventListener('change', update);
   }, []);
+
+  useLayoutEffect(() => {
+    const section = stageSectionRef.current;
+    const pinnedShell = pinnedShellRef.current;
+    const stageOneLayer = stageOneLayerRef.current;
+    const stageTwoLayer = stageTwoLayerRef.current;
+
+    if (!section || !pinnedShell || !stageOneLayer || !stageTwoLayer) return;
+
+    let isAboutInteractive = false;
+
+    const ctx = gsap.context(() => {
+      gsap.set(stageOneLayer, {
+        autoAlpha: 1,
+        y: 0,
+        willChange: 'transform, opacity',
+      });
+
+      gsap.set(stageTwoLayer, {
+        autoAlpha: 0,
+        y: reducedMotion ? 16 : 88,
+        willChange: 'transform, opacity',
+      });
+
+      gsap.timeline({
+        defaults: {ease: 'none'},
+        scrollTrigger: {
+          trigger: section,
+          start: 'top top',
+          end: () => `+=${Math.round(window.innerHeight * (reducedMotion ? 5.5 : 7.2))}`,
+          scrub: reducedMotion ? 0.18 : 0.92,
+          pin: pinnedShell,
+          anticipatePin: 1,
+          invalidateOnRefresh: true,
+          onUpdate: (self) => {
+            const nextInteractive = self.progress >= 0.32;
+            if (nextInteractive !== isAboutInteractive) {
+              isAboutInteractive = nextInteractive;
+              setAboutStageInteractive(nextInteractive);
+            }
+          },
+          onLeaveBack: () => {
+            isAboutInteractive = false;
+            setAboutStageInteractive(false);
+          },
+        },
+      })
+        .to(
+          stageOneLayer,
+          {
+            autoAlpha: 0,
+            y: reducedMotion ? -12 : -60,
+            duration: 0.18,
+          },
+          0.06,
+        )
+        .to(
+          stageTwoLayer,
+          {
+            autoAlpha: 1,
+            y: 0,
+            duration: 0.18,
+          },
+          0.18,
+        );
+    }, stageSectionRef);
+
+    return () => {
+      setAboutStageInteractive(false);
+      ctx.revert();
+    };
+  }, [reducedMotion]);
 
   useEffect(() => {
     if (!activeTechnologyId) return;
@@ -495,6 +577,7 @@ export function ScrollTransitionStage({
 
   return (
     <section
+      ref={stageSectionRef}
       className={`transition-stage technologies-stage${stageActive ? ' is-active' : ''}${stageLeaving ? ' is-leaving' : ''}${reducedMotion ? ' reduce-motion' : ''}${hoveredTechnologyId || activeTechnologyId ? ' has-active-technology' : ''}${activeTechnology ? ' has-open-technology-card' : ''}`}
       style={{
         ...stageStyle,
@@ -503,7 +586,7 @@ export function ScrollTransitionStage({
       onPointerMove={handleStagePointerMove}
       onPointerLeave={handleStagePointerLeave}
     >
-      <div className="sticky-stage technologies-sticky-stage">
+      <div ref={pinnedShellRef} className="technologies-pin-shell">
         <div className="transition-backdrop technologies-backdrop" aria-hidden="true">
           <div className="technologies-backdrop-grid" />
           <div className="technologies-backdrop-radial" />
@@ -516,90 +599,100 @@ export function ScrollTransitionStage({
           <div className="technologies-backdrop-noise" />
         </div>
 
-        <div className="transition-stage-media technologies-stage-media" aria-hidden="true">
-          <div className="transition-media technologies-media">
-            <div ref={stageFieldRef} className="technologies-float-field">
-              <div ref={cursorFieldRef} className="technologies-cursor-field" />
-              {floatingSpecs.map((spec) => {
-                const technology = visibleTechnologies.find((item) => item.id === spec.id);
-                if (!technology) return null;
+        <div ref={stageOneLayerRef} className="technologies-stage-one-layer">
+          <div className="sticky-stage technologies-sticky-stage">
+            <div className="transition-stage-media technologies-stage-media" aria-hidden="true">
+              <div className="transition-media technologies-media">
+                <div ref={stageFieldRef} className="technologies-float-field">
+                  <div ref={cursorFieldRef} className="technologies-cursor-field" />
+                  {floatingSpecs.map((spec) => {
+                    const technology = visibleTechnologies.find((item) => item.id === spec.id);
+                    if (!technology) return null;
 
-                const isHovered = hoveredTechnologyId === technology.id;
-                const isActive = activeTechnologyId === technology.id;
+                    const isHovered = hoveredTechnologyId === technology.id;
+                    const isActive = activeTechnologyId === technology.id;
 
-                return (
-                  <div
-                    key={spec.id}
-                    ref={(node) => {
-                      anchorRefs.current[spec.id] = node;
-                    }}
-                    className={`technology-float-anchor${isHovered ? ' is-hovered' : ''}${isActive ? ' is-active' : ''}`}
-                    style={{
-                      left: '50%',
-                      top: '50%',
-                      zIndex: isActive ? 26 : isHovered ? 22 : spec.zIndex,
-                      opacity: 0,
-                    } as CSSProperties}
-                  >
-                    <button
-                      ref={(node) => {
-                        buttonRefs.current[spec.id] = node;
-                      }}
-                      type="button"
-                      className="technology-float-button"
-                      aria-label={technology.label}
-                      aria-expanded={isActive}
-                      onPointerEnter={() => setHoveredTechnologyId(technology.id)}
-                      onPointerLeave={() => setHoveredTechnologyId((current) => (current === technology.id ? null : current))}
-                      onClick={() => setActiveTechnologyId(technology.id)}
-                      style={{
-                        width: `${spec.size}px`,
-                        height: `${spec.size}px`,
-                        '--icon-jitter-duration': `${spec.jitterDuration}s`,
-                        '--icon-jitter-delay': `${spec.jitterDelay}s`,
-                      } as CSSProperties}
-                    >
-                      <InlineTechnologyIcon
-                        className="technology-inline-icon"
-                        src={technology.icon}
-                        label={technology.label}
+                    return (
+                      <div
+                        key={spec.id}
+                        ref={(node) => {
+                          anchorRefs.current[spec.id] = node;
+                        }}
+                        className={`technology-float-anchor${isHovered ? ' is-hovered' : ''}${isActive ? ' is-active' : ''}`}
                         style={{
-                          '--icon-scale': technology.iconScale ?? 1,
-                          '--icon-offset-x': `${technology.iconOffsetX ?? 0}px`,
-                          '--icon-offset-y': `${technology.iconOffsetY ?? 0}px`,
+                          left: '50%',
+                          top: '50%',
+                          zIndex: isActive ? 26 : isHovered ? 22 : spec.zIndex,
+                          opacity: 0,
                         } as CSSProperties}
-                      />
-                      <span className={`technology-hover-card${isHovered && !activeTechnology ? ' is-visible' : ''}`} role="tooltip">
-                        <strong>{technology.label}</strong>
-                        <span>{technology.tooltip[locale]}</span>
-                      </span>
-                    </button>
-                  </div>
-                );
-              })}
+                      >
+                        <button
+                          ref={(node) => {
+                            buttonRefs.current[spec.id] = node;
+                          }}
+                          type="button"
+                          className="technology-float-button"
+                          aria-label={technology.label}
+                          aria-expanded={isActive}
+                          onPointerEnter={() => setHoveredTechnologyId(technology.id)}
+                          onPointerLeave={() => setHoveredTechnologyId((current) => (current === technology.id ? null : current))}
+                          onClick={() => setActiveTechnologyId(technology.id)}
+                          style={{
+                            width: `${spec.size}px`,
+                            height: `${spec.size}px`,
+                            '--icon-jitter-duration': `${spec.jitterDuration}s`,
+                            '--icon-jitter-delay': `${spec.jitterDelay}s`,
+                          } as CSSProperties}
+                        >
+                          <InlineTechnologyIcon
+                            className="technology-inline-icon"
+                            src={technology.icon}
+                            label={technology.label}
+                            style={{
+                              '--icon-scale': technology.iconScale ?? 1,
+                              '--icon-offset-x': `${technology.iconOffsetX ?? 0}px`,
+                              '--icon-offset-y': `${technology.iconOffsetY ?? 0}px`,
+                            } as CSSProperties}
+                          />
+                          <span className={`technology-hover-card${isHovered && !activeTechnology ? ' is-visible' : ''}`} role="tooltip">
+                            <strong>{technology.label}</strong>
+                            <span>{technology.tooltip[locale]}</span>
+                          </span>
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="transition-overlay technologies-overlay" />
+              </div>
             </div>
-            <div className="transition-overlay technologies-overlay" />
+
+            <div className="transition-copy technologies-copy">
+              <div className="technologies-copy-inner">
+                <div className="technologies-title-glow" aria-hidden="true" />
+                <div className="technologies-heading-stack">
+                  <TypewriterText
+                    as="h2"
+                    phrases={sectionCopy.titlePhrases}
+                    active={stageActive}
+                    paused={stageLeaving}
+                    className="technologies-title"
+                    typingSpeedMs={30}
+                    deletingSpeedMs={20}
+                    holdDurationMs={3100}
+                    initialDelayMs={240}
+                  />
+                  <p className="technologies-subtitle">{sectionCopy.subtitle}</p>
+                </div>
+                <p className="technologies-instruction">{sectionCopy.instruction}</p>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div className="transition-copy technologies-copy">
-          <div className="technologies-copy-inner">
-            <div className="technologies-title-glow" aria-hidden="true" />
-            <div className="technologies-heading-stack">
-              <TypewriterText
-                as="h2"
-                phrases={sectionCopy.titlePhrases}
-                active={stageActive}
-                paused={stageLeaving}
-                className="technologies-title"
-                typingSpeedMs={30}
-                deletingSpeedMs={20}
-                holdDurationMs={3100}
-                initialDelayMs={240}
-              />
-              <p className="technologies-subtitle">{sectionCopy.subtitle}</p>
-            </div>
-            <p className="technologies-instruction">{sectionCopy.instruction}</p>
+        <div ref={stageTwoLayerRef} className={`about-stage-two-layer${aboutStageInteractive ? ' is-interactive' : ''}`}>
+          <div className="about-stage-two-viewport">
+            <AboutStage reducedMotion={reducedMotion} isActive={aboutStageInteractive} />
           </div>
         </div>
       </div>
