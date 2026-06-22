@@ -1954,6 +1954,381 @@ button {
   min-height: 300svh;
 }
 
+.technologies-pin-shell {
+  position: relative;
+  min-height: 100svh;
+}
+
+.technologies-pin-shell > .technologies-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.technologies-pin-shell .technologies-backdrop-grid {
+  opacity: 0.22;
+  transform: none;
+}
+
+.technologies-pin-shell .technologies-backdrop-radial {
+  background:
+    radial-gradient(circle at 50% 49%, rgba(255, 255, 255, 0.08), transparent 15%),
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.05), transparent 28%),
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.025), transparent 42%),
+    radial-gradient(circle at 26% 28%, rgba(255, 255, 255, 0.03), transparent 18%),
+    radial-gradient(circle at 74% 24%, rgba(255, 255, 255, 0.025), transparent 16%),
+    linear-gradient(180deg, rgba(10, 10, 10, 0.18), rgba(10, 10, 10, 0.76) 62%, rgba(10, 10, 10, 0.96));
+}
+
+.technologies-pin-shell .technologies-backdrop-orbits {
+  opacity: 0.28;
+}
+
+.technologies-pin-shell .technologies-backdrop-particles {
+  animation: none;
+  opacity: 0.22;
+}
+
+.technologies-pin-shell .technologies-backdrop-noise {
+  opacity: 0.16;
+}
+
+.technologies-stage-one-layer,
+.about-stage-two-layer {
+  position: absolute;
+  inset: 0;
+}
+
+.technologies-stage-one-layer {
+  z-index: 1;
+}
+
+.about-stage-two-layer {
+  z-index: 7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(1.25rem, 2vw, 2rem);
+  pointer-events: none;
+}
+
+.about-stage-two-layer.is-interactive {
+  pointer-events: auto;
+}
+
+.about-stage-two-viewport {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.about-stage {
+  width: 100%;
+}
+
+.about-stage-shell {
+  width: min(100%, 100rem);
+  margin: 0 auto;
+}
+
+.about-coverflow-viewport {
+  position: relative;
+  width: 100%;
+  min-height: min(100svh, 52rem);
+  display: grid;
+  place-items: center;
+  perspective: 1800px;
+  perspective-origin: 50% 48%;
+  overflow: hidden;
+  touch-action: pan-y;
+}
+
+.about-coverflow-track {
+  position: relative;
+  width: 100%;
+  height: min(32rem, 72svh);
+  transform-style: preserve-3d;
+}
+
+.about-coverflow-card {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: min(32.5rem, 52vw);
+  height: min(23.75rem, 60svh);
+  transform: translate3d(-50%, -50%, 0);
+  transform-style: preserve-3d;
+  transform-origin: center center;
+  cursor: pointer;
+}
+
+.about-coverflow-card-shell {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 20px;
+  transform-style: preserve-3d;
+}
+
+.about-coverflow-card-flip {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 20px;
+  transform-style: preserve-3d;
+  transition: transform 0.72s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.about-coverflow-card.is-open .about-coverflow-card-flip {
+  transform: rotateY(180deg);
+}
+
+.about-coverflow-card-face {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 20px;
+  background: rgba(17, 17, 17, 0.88);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.about-coverflow-card.is-active .about-coverflow-card-face,
+.about-coverflow-card:hover .about-coverflow-card-face {
+  border-color: rgba(232, 255, 0, 0.35);
+}
+
+.about-coverflow-card.is-active:hover {
+  transform: translate3d(-50%, -50%, 0) scale(1.02);
+}
+
+.about-coverflow-card-front {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.about-coverflow-card-back {
+  transform: rotateY(180deg);
+  padding: 1.35rem 1.35rem 1.45rem;
+}
+
+.about-coverflow-card-media {
+  position: absolute;
+  inset: 0 auto auto 0;
+  width: 100%;
+  height: 55%;
+}
+
+.about-coverflow-card-media-placeholder,
+.about-coverflow-card-media-overlay {
+  position: absolute;
+  inset: 0;
+}
+
+.about-coverflow-card-media-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #1A1A1A;
+}
+
+.about-coverflow-card-media-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 4.9rem;
+  height: 4.9rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(17, 17, 17, 0.72);
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.about-coverflow-card-media-icon svg,
+.about-coverflow-card-corner-icon svg {
+  width: 1.45rem;
+  height: 1.45rem;
+}
+
+.about-coverflow-card-media-overlay {
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.1), rgba(10, 10, 10, 0.85));
+}
+
+.about-coverflow-card-tag {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.85rem;
+  padding: 0.2rem 0.7rem;
+  border: 1px solid rgba(232, 255, 0, 0.3);
+  border-radius: 999px;
+  background: rgba(232, 255, 0, 0.12);
+  color: #E8FF00;
+  font-family: 'Inter', var(--font-body);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+}
+
+.about-coverflow-card-corner-icon {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.65rem;
+  height: 2.65rem;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 999px;
+  background: rgba(17, 17, 17, 0.78);
+  color: #FFFFFF;
+}
+
+.about-coverflow-card-copy {
+  position: relative;
+  z-index: 2;
+  padding: 0 1.5rem 1.4rem;
+}
+
+.about-coverflow-card-copy h3,
+.about-coverflow-card-back-copy h3 {
+  margin: 0;
+  font-family: 'Space Grotesk', var(--font-display);
+  font-size: 1.375rem;
+  font-weight: 500;
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+  color: #FFFFFF;
+}
+
+.about-coverflow-card-open-hint {
+  position: absolute;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 4.25rem;
+  min-height: 2rem;
+  padding: 0.25rem 0.8rem;
+  border: 1px solid rgba(232, 255, 0, 0.35);
+  border-radius: 999px;
+  background: rgba(10, 10, 10, 0.78);
+  color: #E8FF00;
+  font-family: 'Inter', var(--font-body);
+  font-size: 0.78rem;
+  font-weight: 600;
+  opacity: 0;
+  transform: translate3d(0, 0.5rem, 0);
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.about-coverflow-card-open-hint.is-visible {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+}
+
+.about-coverflow-card-back-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.95rem;
+  height: 100%;
+  padding-top: 2.3rem;
+}
+
+.about-coverflow-card-back-copy p,
+.about-coverflow-card-back-copy ul {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.72);
+  font-family: 'Inter', var(--font-body);
+  font-size: 0.98rem;
+  line-height: 1.72;
+}
+
+.about-coverflow-card-back-copy ul {
+  padding-left: 1.15rem;
+}
+
+.about-coverflow-card-back-copy li::marker {
+  color: #E8FF00;
+}
+
+.about-coverflow-card-close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  z-index: 3;
+  width: 2.45rem;
+  height: 2.45rem;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 999px;
+  background: rgba(10, 10, 10, 0.82);
+  color: #FFFFFF;
+  cursor: pointer;
+  transition: transform 0.24s ease, border-color 0.24s ease;
+}
+
+.about-coverflow-card-close:hover,
+.about-coverflow-card-close:focus-visible {
+  transform: scale(1.03);
+  border-color: rgba(232, 255, 0, 0.35);
+}
+
+.about-coverflow-nav {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.about-coverflow-arrow {
+  position: absolute;
+  top: 50%;
+  width: 3.25rem;
+  height: 3.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 999px;
+  background: rgba(17, 17, 17, 0.9);
+  color: #FFFFFF;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+  pointer-events: auto;
+  cursor: pointer;
+  transform: translateY(-50%);
+  transition: transform 0.25s ease, border-color 0.25s ease, color 0.25s ease;
+}
+
+.about-coverflow-arrow span {
+  font-family: 'Space Grotesk', var(--font-display);
+  font-size: 1.8rem;
+  line-height: 1;
+}
+
+.about-coverflow-arrow:hover,
+.about-coverflow-arrow:focus-visible {
+  transform: translateY(-50%) scale(1.03);
+  border-color: rgba(232, 255, 0, 0.35);
+  color: #E8FF00;
+}
+
+.about-coverflow-arrow-left {
+  left: max(1rem, calc(50% - 25rem));
+}
+
+.about-coverflow-arrow-right {
+  right: max(1rem, calc(50% - 25rem));
+}
+
 .technologies-sticky-stage {
   isolation: isolate;
   overflow: hidden;
@@ -1968,6 +2343,7 @@ button {
 
 .technologies-backdrop {
   inset: -8svh -8vw;
+  z-index: 0;
   overflow: hidden;
 }
 
@@ -2596,6 +2972,38 @@ button {
     width: 90%;
     padding: 1.15rem;
   }
+
+  .about-stage-two-layer {
+    align-items: flex-start;
+    padding-top: 5.5rem;
+    padding-bottom: 1.25rem;
+  }
+
+  .about-stage-shell {
+    width: 100%;
+  }
+
+  .about-coverflow-viewport {
+    min-height: calc(100svh - 7rem);
+    perspective: none;
+  }
+
+  .about-coverflow-track {
+    height: 23rem;
+  }
+
+  .about-coverflow-card {
+    width: 88vw;
+    height: 20rem;
+  }
+
+  .about-coverflow-arrow-left {
+    left: 0.5rem;
+  }
+
+  .about-coverflow-arrow-right {
+    right: 0.5rem;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -2608,8 +3016,50 @@ button {
   .technology-hover-card,
   .technologies-copy-inner,
   .technology-modal-card,
+  .about-coverflow-card,
+  .about-coverflow-card-flip,
+  .about-stage-two-layer,
   .technologies-cursor-field {
     transition-duration: 0.01ms;
     animation-duration: 0.01ms;
+  }
+
+  .about-coverflow-viewport {
+    perspective: none;
+  }
+
+  .about-coverflow-track,
+  .about-coverflow-card,
+  .about-coverflow-card-shell,
+  .about-coverflow-card-flip {
+    transform-style: flat;
+  }
+
+  .about-coverflow-card.is-open .about-coverflow-card-flip {
+    transform: none;
+  }
+
+  .about-coverflow-card-face {
+    transition: opacity 0.2s ease;
+  }
+
+  .about-coverflow-card-front,
+  .about-coverflow-card-back {
+    transform: none;
+    backface-visibility: visible;
+  }
+
+  .about-coverflow-card-back {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .about-coverflow-card.is-open .about-coverflow-card-front {
+    opacity: 0;
+  }
+
+  .about-coverflow-card.is-open .about-coverflow-card-back {
+    opacity: 1;
+    pointer-events: auto;
   }
 }
