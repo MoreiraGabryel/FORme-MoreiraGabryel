@@ -18,6 +18,10 @@ Portfolio estatico em React + Vite + TypeScript, preparado para deploy no Cloudf
 - `npm run build` remove `dist/`, executa o typecheck e gera um build novo
 - `npm run preview` serve o build em `http://127.0.0.1:4173`
 
+Observacao:
+- `dev:fresh` e `dev:stop` agora funcionam em Linux e Windows
+- em Linux, rode o projeto a partir de um filesystem nativo (ex.: `/home/...`); evitar `node_modules` em particoes exFAT/NTFS montadas externamente
+
 ## Cloudflare Pages
 
 - Build command: `npm run build`
