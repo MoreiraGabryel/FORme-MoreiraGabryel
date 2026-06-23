@@ -1,4 +1,4 @@
-import {startTransition, useEffect, useRef, useState} from 'react';
+import {startTransition, useCallback, useEffect, useRef, useState} from 'react';
 import type {CSSProperties} from 'react';
 import {LoadingScreen} from './components/sections/LoadingScreen';
 import {HeroIntro} from './components/sections/HeroIntro';
@@ -16,6 +16,9 @@ function clamp(value: number, min: number, max: number) {
 export default function App() {
   const [loaded, setLoaded] = useState(false);
   const {locale, setLocale} = useTranslation();
+  const handleLoadingDone = useCallback(() => {
+    setLoaded(true);
+  }, []);
   const pathname = typeof window === 'undefined' ? '/' : window.location.pathname.replace(/\/+$/, '') || '/';
   const copy = HOME_COPY[locale];
   const [phraseIndex, setPhraseIndex] = useState(0);
@@ -168,7 +171,7 @@ export default function App() {
 
   return (
     <>
-      {!loaded && <LoadingScreen onDone={() => setLoaded(true)} />}
+      {!loaded && <LoadingScreen onDone={handleLoadingDone} />}
       <main className="site-shell">
         <div className="global-scene-bg">
           <SceneCrossfade progress={totalScrollProgress} />

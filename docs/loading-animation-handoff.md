@@ -6,7 +6,7 @@ Data: `2026-06-11`
 
 Este documento orienta a proxima pessoa/IA responsavel por manter ou refinar a animacao de loading do portfolio.
 
-A direcao atual ja nao usa mais o conceito literal de raio. O loading foi traduzido para uma linguagem mais premium/optica, mantendo a ideia de energia nascendo no `i` e se espalhando pelo nome.
+A direcao atual ja nao usa mais o conceito literal de raio. O loading foi traduzido para uma linguagem mais premium/optica, tratando o wordmark inteiro como protagonista e evitando qualquer evento especial isolado na letra `i`.
 
 ## Fonte de verdade visual
 
@@ -16,14 +16,14 @@ A direcao atual ja nao usa mais o conceito literal de raio. O loading foi traduz
 
 ## Regra principal
 
-O Canva continua definindo a narrativa visual geral, mas a implementacao atual traduz essa narrativa para uma solucao original de motion design.
+O Canva continua definindo o clima geral e a ordem dos beats, mas a implementacao atual traduziu a sequencia para uma linguagem mais limpa, premium e controlada.
 
 A implementacao no site deve:
 
 - preservar a ordem dos beats visuais;
-- preservar o `i` como ponto de ruptura e origem da energia;
+- preservar o nome `MoreiraGabryel` como protagonista absoluto;
 - preservar a sensacao de glow/flash antes da abertura do site;
-- preservar a energia percorrendo o lettering;
+- preservar a energia percorrendo o lettering como um todo, sem transformar uma letra isolada em efeito separado;
 - usar os slides como storyboard, nao como copia literal.
 
 Nao fazer nesta etapa:
@@ -31,7 +31,7 @@ Nao fazer nesta etapa:
 - nao voltar para um raio literal ou clipart;
 - nao copiar tipografia, composicao ou assinatura visual de referencia externa;
 - nao simplificar a sequencia para uma animacao generica;
-- nao desconectar os efeitos de energia do lettering.
+- nao reintroduzir prisma, cristal, stem, core ou eco isolados na letra `i`.
 
 ## Sequencia aprovada
 
@@ -47,23 +47,23 @@ Leitura:
 
 ### Beat 2
 
-O `i` deixa de ser apenas caractere e entra em transmutacao.
+O wordmark entra em escrita controlada, com reveal sequencial e flare discreto por letra.
 
 Leitura:
 
-- o `i` perde solidez tipografica;
-- surge um conjunto optico/luminoso no mesmo slot;
-- esse e o primeiro evento especial da sequencia.
+- cada letra sai de baixa opacidade e blur leve para branco limpo;
+- o `writeHead` avanca junto da escrita;
+- nao existe evento especial isolado no `i`.
 
 ### Beat 3
 
-O novo `i` prismático energiza o restante do lettering.
+O nome completo estabiliza e a barra consolida o progresso.
 
 Leitura:
 
-- a energia nasce no `i`;
-- o brilho se propaga para as letras vizinhas por proximidade;
-- o nome entra em estado energizado sem perder legibilidade.
+- o brilho permanece contido e tecnico;
+- o lettering ganha presenca sem perder legibilidade;
+- a barra e o percentual parecem conectados ao mesmo sistema visual.
 
 ### Beat 4
 
@@ -81,7 +81,7 @@ Flash, abertura luminosa e saida para a interface principal.
 
 Leitura:
 
-- o prisma do `i` faz o ultimo bloom;
+- o flash acontece de forma breve e controlada;
 - o aperture abre a transicao;
 - o loading entrega a tela principal com sensacao cinematica/premium.
 
@@ -89,15 +89,15 @@ Leitura:
 
 Arquivo principal:
 
-- `F:/Repositório-Pessoal/src/components/sections/LoadingScreen.tsx`
+- `src/components/sections/LoadingScreen.tsx`
 
-Estruturas-chave do `i` na versao atual:
+Elementos que NAO fazem mais parte da versao atual:
 
-- `iFocusRef`: halo focal suave
-- `iCoreRef`: ponto luminoso central
-- `iStemRef`: haste vertical energizada
-- `iPrismRef`: prisma facetado principal
-- `iEchoRef`: anel/eco de energia
+- `iFocusRef`
+- `iCoreRef`
+- `iStemRef`
+- `iPrismRef`
+- `iEchoRef`
 
 Outras pecas importantes:
 
@@ -111,11 +111,11 @@ Outras pecas importantes:
 Quando alguem for refinar esta sequencia, a logica deve continuar assim:
 
 1. mostrar o status e o nome sendo escrito lentamente;
-2. destacar o `i` como pivot narrativo;
-3. transmutar o `i` em um objeto luminoso/prismatico;
-4. propagar energia do `i` para o restante do nome;
-5. intensificar glow, foco e tensao de palco;
-6. fazer o reveal final para entrada do site.
+2. revelar `MoreiraGabryel` letra por letra como um wordmark unico;
+3. sincronizar `writeHead`, barra e percentual com a escrita;
+4. intensificar glow e tensao de palco no pre-reveal;
+5. fazer o reveal final com flash curto + aperture;
+6. entregar a home sem residuos visuais nem bloqueio de interacao.
 
 ## Observacoes tecnicas
 
@@ -138,6 +138,6 @@ URLs uteis para revisar a sequencia:
 Se voce estiver refinando esta sequencia:
 
 - use o Canva como storyboard e clima geral;
-- preserve o `i` como origem da energia;
-- refine timing, glow, profundidade e reveal sem voltar para o conceito antigo de raio;
+- preserve o wordmark como protagonista;
+- refine timing, glow, profundidade e reveal sem voltar para o conceito antigo de raio nem reintroduzir um efeito isolado no `i`;
 - valide sempre em runtime/localhost antes de declarar pronto.
