@@ -7,6 +7,7 @@ type Props = {onDone: () => void};
 type DebugOptions = {
   freezeAt: number | null;
   forceMotion: boolean;
+  forceReducedMotion: boolean;
   slowMo: number | null;
 };
 
@@ -72,7 +73,7 @@ const PROGRESS_BEAM_STYLE = {
 
 function readDebugOptions(): DebugOptions {
   if (typeof window === 'undefined') {
-    return {freezeAt: null, forceMotion: false, slowMo: null};
+    return {freezeAt: null, forceMotion: false, forceReducedMotion: false, slowMo: null};
   }
 
   const params = new URLSearchParams(window.location.search);
@@ -84,6 +85,7 @@ function readDebugOptions(): DebugOptions {
   return {
     freezeAt: Number.isFinite(freezeAt) ? freezeAt : null,
     forceMotion: params.get('loading-motion') === '1',
+    forceReducedMotion: params.get('loading-reduce') === '1',
     slowMo: typeof slowMo === 'number' && Number.isFinite(slowMo) && slowMo > 0 ? slowMo : null,
   };
 }
@@ -144,7 +146,7 @@ export function LoadingScreen({onDone}: Props) {
     const debug = readDebugOptions();
     const isMobile = window.matchMedia('(pointer: coarse)').matches;
     const rawReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const prefersReducedMotion = rawReducedMotion && !debug.forceMotion;
+    const prefersReducedMotion = (rawReducedMotion || debug.forceReducedMotion) && !debug.forceMotion;
     const progressState = {value: 0};
     const writingStart = prefersReducedMotion ? 0.08 : 0.18;
     const letterStagger = prefersReducedMotion ? 0.028 : isMobile ? 0.062 : 0.06;
