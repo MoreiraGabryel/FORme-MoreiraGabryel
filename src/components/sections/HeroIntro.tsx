@@ -34,34 +34,79 @@ export function HeroIntro({
   footerStyle: CSSProperties;
 }) {
   const rootRef = useRef<HTMLElement>(null);
+  const mediaRef = useRef<HTMLDivElement>(null);
+  const overlayRef = useRef<HTMLDivElement>(null);
+  const frameRef = useRef<HTMLDivElement>(null);
+  const topBarRef = useRef<HTMLElement>(null);
+  const brandMarkRef = useRef<HTMLAnchorElement>(null);
+  const brandCaptionRef = useRef<HTMLSpanElement>(null);
+  const langSwitchRef = useRef<HTMLDivElement>(null);
+  const introCopyRef = useRef<HTMLDivElement>(null);
   const titleWrapRef = useRef<HTMLDivElement>(null);
   const titleRealRef = useRef<HTMLSpanElement>(null);
   const titleSliceRefs = useRef<HTMLSpanElement[]>([]);
   const kickerRef = useRef<HTMLParagraphElement>(null);
   const supportRef = useRef<HTMLParagraphElement>(null);
+  const footerRef = useRef<HTMLElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const cueRef = useRef<HTMLParagraphElement>(null);
 
   useLayoutEffect(() => {
     const root = rootRef.current;
+    const media = mediaRef.current;
+    const overlay = overlayRef.current;
+    const frame = frameRef.current;
+    const topBar = topBarRef.current;
+    const brandMark = brandMarkRef.current;
+    const brandCaption = brandCaptionRef.current;
+    const langSwitch = langSwitchRef.current;
+    const introCopy = introCopyRef.current;
     const titleWrap = titleWrapRef.current;
     const titleReal = titleRealRef.current;
     const kicker = kickerRef.current;
     const support = supportRef.current;
+    const footer = footerRef.current;
     const card = cardRef.current;
     const cue = cueRef.current;
     const slices = titleSliceRefs.current.slice(0, HERO_SLICE_SEGMENTS.length);
 
-    if (!root || !titleWrap || !titleReal || !kicker || !support || !card || !cue || slices.length !== HERO_SLICE_SEGMENTS.length) {
+    if (
+      !root ||
+      !media ||
+      !overlay ||
+      !frame ||
+      !topBar ||
+      !brandMark ||
+      !brandCaption ||
+      !langSwitch ||
+      !introCopy ||
+      !titleWrap ||
+      !titleReal ||
+      !kicker ||
+      !support ||
+      !footer ||
+      !card ||
+      !cue ||
+      slices.length !== HERO_SLICE_SEGMENTS.length
+    ) {
       return;
     }
 
     const ctx = gsap.context(() => {
       const setIdle = () => {
+        gsap.set(root, {'--hero-handoff': 0});
+        gsap.set(media, {opacity: 1, scale: 1, filter: 'blur(0px) saturate(1) brightness(1)'});
+        gsap.set(overlay, {opacity: 1, filter: 'blur(0px) brightness(1)'});
+        gsap.set(frame, {opacity: 1, scale: 1, filter: 'blur(0px)'});
+        gsap.set(topBar, {opacity: 1, y: 0, filter: 'blur(0px)'});
+        gsap.set([brandMark, brandCaption, langSwitch], {opacity: 1, x: 0, y: 0, filter: 'blur(0px)'});
+        gsap.set(introCopy, {opacity: 1, y: 0, scale: 1, filter: 'blur(0px)'});
         gsap.set(titleWrap, {opacity: 1});
-        gsap.set(titleReal, {opacity: 1, y: 0, filter: 'blur(0px)'});
+        gsap.set(titleReal, {opacity: 1, y: 0, scale: 1, filter: 'blur(0px)'});
         gsap.set(slices, {autoAlpha: 0, x: 0, y: 0, filter: 'blur(0px)'});
-        gsap.set([kicker, support, card, cue], {opacity: 1, y: 0, filter: 'blur(0px)'});
+        gsap.set([kicker, support], {opacity: 1, y: 0, filter: 'blur(0px)'});
+        gsap.set(footer, {opacity: 1, y: 0, filter: 'blur(0px)'});
+        gsap.set([card, cue], {opacity: 1, y: 0, filter: 'blur(0px)'});
       };
 
       setIdle();
@@ -76,9 +121,51 @@ export function HeroIntro({
         const sliceOffsets = [-8, -5, -3, 0, 3, 5, 8];
         const sliceBlur = reducedMotion ? [1.2, 1.2, 1, 0.8, 1, 1.2, 1.2] : [4, 3.5, 3, 2.5, 3, 3.5, 4];
 
+        gsap.set(root, {'--hero-handoff': 1});
+        gsap.set(media, {
+          opacity: reducedMotion ? 0.9 : 0.78,
+          scale: reducedMotion ? 1.008 : 1.022,
+          filter: `blur(${reducedMotion ? 2.5 : 8}px) saturate(${reducedMotion ? 0.94 : 0.88}) brightness(${reducedMotion ? 0.96 : 0.88})`,
+        });
+        gsap.set(overlay, {
+          opacity: reducedMotion ? 0.94 : 1,
+          filter: `blur(${reducedMotion ? 0.5 : 2}px) brightness(${reducedMotion ? 1 : 0.92})`,
+        });
+        gsap.set(frame, {
+          opacity: reducedMotion ? 0.9 : 0.76,
+          scale: reducedMotion ? 0.998 : 0.992,
+          filter: `blur(${reducedMotion ? 2 : 6}px)`,
+        });
+        gsap.set(topBar, {
+          opacity: reducedMotion ? 0.32 : 0.14,
+          y: reducedMotion ? -2 : -8,
+          filter: `blur(${reducedMotion ? 1.5 : 4}px)`,
+        });
+        gsap.set(brandMark, {
+          opacity: reducedMotion ? 0.5 : 0.24,
+          x: reducedMotion ? -2 : -8,
+          filter: `blur(${reducedMotion ? 1.5 : 4}px)`,
+        });
+        gsap.set(brandCaption, {
+          opacity: reducedMotion ? 0.38 : 0.14,
+          x: reducedMotion ? -1 : -6,
+          filter: `blur(${reducedMotion ? 1.5 : 4}px)`,
+        });
+        gsap.set(langSwitch, {
+          opacity: reducedMotion ? 0.42 : 0.18,
+          x: reducedMotion ? 2 : 8,
+          filter: `blur(${reducedMotion ? 1.5 : 4}px)`,
+        });
+        gsap.set(introCopy, {
+          opacity: reducedMotion ? 0.86 : 0.72,
+          y: reducedMotion ? 3 : 10,
+          scale: reducedMotion ? 0.998 : 0.994,
+          filter: `blur(${reducedMotion ? 1.5 : 4}px)`,
+        });
         gsap.set(titleReal, {
-          opacity: reducedMotion ? 0.82 : 0.68,
+          opacity: reducedMotion ? 0.84 : 0.72,
           y: reducedMotion ? 1 : 4,
+          scale: reducedMotion ? 0.999 : 0.996,
           filter: `blur(${reducedMotion ? 1.5 : 4}px)`,
         });
         gsap.set(slices, {
@@ -88,9 +175,14 @@ export function HeroIntro({
           filter: (index: number) => `blur(${sliceBlur[index]}px)`,
         });
         gsap.set([kicker, support], {
-          opacity: reducedMotion ? 0.4 : 0.18,
+          opacity: reducedMotion ? 0.4 : 0.16,
           y: reducedMotion ? 3 : 10,
           filter: `blur(${reducedMotion ? 2 : 5}px)`,
+        });
+        gsap.set(footer, {
+          opacity: reducedMotion ? 0.32 : 0.08,
+          y: reducedMotion ? 4 : 14,
+          filter: `blur(${reducedMotion ? 2 : 6}px)`,
         });
         gsap.set([card, cue], {
           opacity: 0,
@@ -99,43 +191,109 @@ export function HeroIntro({
         });
 
         handoffTl = gsap.timeline({defaults: {overwrite: 'auto'}})
+          .to(root, {
+            '--hero-handoff': 0.56,
+            duration: reducedMotion ? 0.16 : 0.24,
+            ease: 'sine.out',
+          }, 0)
+          .to(media, {
+            opacity: 1,
+            scale: 1,
+            filter: 'blur(0px) saturate(1) brightness(1)',
+            duration: reducedMotion ? 0.22 : 0.36,
+            ease: 'power3.out',
+          }, 0)
+          .to(overlay, {
+            opacity: 0.86,
+            filter: 'blur(0px) brightness(1)',
+            duration: reducedMotion ? 0.2 : 0.34,
+            ease: 'power2.out',
+          }, 0.02)
+          .to(frame, {
+            opacity: 1,
+            scale: 1,
+            filter: 'blur(0px)',
+            duration: reducedMotion ? 0.22 : 0.34,
+            ease: 'power3.out',
+          }, 0.03)
           .to(slices, {
-            autoAlpha: (index: number) => (reducedMotion ? 0.2 : index === 3 ? 0.52 : index === 2 || index === 4 ? 0.4 : 0.3),
+            autoAlpha: (index: number) => (reducedMotion ? 0.18 : index === 3 ? 0.48 : index === 2 || index === 4 ? 0.36 : 0.26),
             x: 0,
             filter: 'blur(0px)',
-            duration: reducedMotion ? 0.16 : 0.3,
+            duration: reducedMotion ? 0.15 : 0.28,
             ease: 'power3.out',
             stagger: 0.018,
-          }, 0)
+          }, 0.06)
           .to(titleReal, {
             opacity: 1,
             y: 0,
+            scale: 1,
             filter: 'blur(0px)',
-            duration: reducedMotion ? 0.2 : 0.38,
+            duration: reducedMotion ? 0.18 : 0.34,
             ease: 'power3.out',
-          }, 0.04)
+          }, 0.08)
           .to(slices, {
             autoAlpha: 0,
-            duration: reducedMotion ? 0.12 : 0.22,
+            duration: reducedMotion ? 0.12 : 0.2,
             ease: 'sine.out',
             stagger: 0.01,
-          }, reducedMotion ? 0.12 : 0.2)
-          .to([kicker, support], {
+          }, reducedMotion ? 0.14 : 0.2)
+          .to(topBar, {
             opacity: 1,
             y: 0,
             filter: 'blur(0px)',
-            duration: reducedMotion ? 0.18 : 0.3,
+            duration: reducedMotion ? 0.16 : 0.24,
             ease: 'power2.out',
-            stagger: reducedMotion ? 0.02 : 0.05,
-          }, reducedMotion ? 0.12 : 0.24)
-          .to([card, cue], {
+          }, reducedMotion ? 0.18 : 0.26)
+          .to(brandMark, {
+            opacity: 1,
+            x: 0,
+            filter: 'blur(0px)',
+            duration: reducedMotion ? 0.16 : 0.22,
+            ease: 'power2.out',
+          }, reducedMotion ? 0.18 : 0.26)
+          .to(brandCaption, {
+            opacity: 1,
+            x: 0,
+            filter: 'blur(0px)',
+            duration: reducedMotion ? 0.16 : 0.22,
+            ease: 'power2.out',
+          }, reducedMotion ? 0.2 : 0.29)
+          .to(langSwitch, {
+            opacity: 1,
+            x: 0,
+            filter: 'blur(0px)',
+            duration: reducedMotion ? 0.16 : 0.22,
+            ease: 'power2.out',
+          }, reducedMotion ? 0.22 : 0.32)
+          .to([kicker, support], {
             opacity: 1,
             y: 0,
             filter: 'blur(0px)',
             duration: reducedMotion ? 0.18 : 0.28,
             ease: 'power2.out',
             stagger: reducedMotion ? 0.02 : 0.05,
-          }, reducedMotion ? 0.2 : 0.34)
+          }, reducedMotion ? 0.24 : 0.34)
+          .to(footer, {
+            opacity: 1,
+            y: 0,
+            filter: 'blur(0px)',
+            duration: reducedMotion ? 0.18 : 0.24,
+            ease: 'power2.out',
+          }, reducedMotion ? 0.28 : 0.42)
+          .to([card, cue], {
+            opacity: 1,
+            y: 0,
+            filter: 'blur(0px)',
+            duration: reducedMotion ? 0.18 : 0.26,
+            ease: 'power2.out',
+            stagger: reducedMotion ? 0.02 : 0.05,
+          }, reducedMotion ? 0.3 : 0.46)
+          .to(root, {
+            '--hero-handoff': 0,
+            duration: reducedMotion ? 0.14 : 0.22,
+            ease: 'sine.out',
+          }, reducedMotion ? 0.34 : 0.52)
           .add(() => setIdle());
       };
 
@@ -153,21 +311,21 @@ export function HeroIntro({
 
   return (
     <section ref={rootRef} className="hero-stage" style={{'--hero-progress': `${heroProgress}`} as CSSProperties}>
-      <div className="hero-media">
-        <div className="hero-overlay" style={overlayStyle} />
+      <div ref={mediaRef} className="hero-media">
+        <div ref={overlayRef} className="hero-overlay" style={overlayStyle} />
       </div>
 
-      <div className="hero-frame">
-        <header className="top-bar">
+      <div ref={frameRef} className="hero-frame">
+        <header ref={topBarRef} className="top-bar">
           <div className="brand-lockup">
-            <a className="brand-mark" href="#home">
+            <a ref={brandMarkRef} className="brand-mark" href="#home">
               MoreiraGabryel
             </a>
-            <span className="brand-caption">{copy.heroTag}</span>
+            <span ref={brandCaptionRef} className="brand-caption">{copy.heroTag}</span>
           </div>
 
           <div className="top-actions">
-            <div className="lang-switch" aria-label={copy.language}>
+            <div ref={langSwitchRef} className="lang-switch" aria-label={copy.language}>
               <button className={locale === 'pt' ? 'is-active' : undefined} type="button" onClick={() => setLocale('pt')}>
                 PT
               </button>
@@ -179,7 +337,7 @@ export function HeroIntro({
         </header>
 
         <div className="hero-center">
-          <div className="hero-intro-copy" style={introStyle}>
+          <div ref={introCopyRef} className="hero-intro-copy" style={introStyle}>
             <p ref={kickerRef} className="hero-kicker">{copy.heroSubtag}</p>
             <div className="hero-statement-wrap" aria-live="polite">
               <div ref={titleWrapRef} key={`${locale}-${phraseIndex}`} className="hero-statement-handshake">
@@ -206,7 +364,7 @@ export function HeroIntro({
           </div>
         </div>
 
-        <footer className="hero-footer" style={footerStyle}>
+        <footer ref={footerRef} className="hero-footer" style={footerStyle}>
           <div ref={cardRef} className="hero-progress-card" aria-hidden="true">
             <div className="panel-heading">
               <span>Stage 01 / Image field</span>
