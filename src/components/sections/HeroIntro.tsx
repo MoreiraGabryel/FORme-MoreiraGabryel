@@ -94,6 +94,7 @@ export function HeroIntro({
 
     const ctx = gsap.context(() => {
       const setIdle = () => {
+        root.classList.remove('is-handoff-active');
         gsap.set(root, {'--hero-handoff': 0});
         gsap.set(media, {opacity: 1, scale: 1, filter: 'blur(0px) saturate(1) brightness(1)'});
         gsap.set(overlay, {opacity: 1, filter: 'blur(0px) brightness(1)'});
@@ -119,54 +120,55 @@ export function HeroIntro({
         handoffTl?.kill();
 
         const sliceOffsets = [-8, -5, -3, 0, 3, 5, 8];
-        const sliceBlur = reducedMotion ? [1.2, 1.2, 1, 0.8, 1, 1.2, 1.2] : [4, 3.5, 3, 2.5, 3, 3.5, 4];
+        const sliceBlur = reducedMotion ? [0.9, 0.9, 0.8, 0.7, 0.8, 0.9, 0.9] : [2.8, 2.4, 2.1, 1.8, 2.1, 2.4, 2.8];
 
+        root.classList.add('is-handoff-active');
         gsap.set(root, {'--hero-handoff': 1});
         gsap.set(media, {
-          opacity: reducedMotion ? 0.9 : 0.78,
-          scale: reducedMotion ? 1.008 : 1.022,
-          filter: `blur(${reducedMotion ? 2.5 : 8}px) saturate(${reducedMotion ? 0.94 : 0.88}) brightness(${reducedMotion ? 0.96 : 0.88})`,
+          opacity: reducedMotion ? 0.92 : 0.84,
+          scale: reducedMotion ? 1.006 : 1.014,
+          filter: `blur(${reducedMotion ? 2 : 6}px) saturate(${reducedMotion ? 0.96 : 0.92}) brightness(${reducedMotion ? 0.98 : 0.92})`,
         });
         gsap.set(overlay, {
-          opacity: reducedMotion ? 0.94 : 1,
-          filter: `blur(${reducedMotion ? 0.5 : 2}px) brightness(${reducedMotion ? 1 : 0.92})`,
+          opacity: reducedMotion ? 0.96 : 0.96,
+          filter: `blur(${reducedMotion ? 0.4 : 1.5}px) brightness(${reducedMotion ? 1 : 0.95})`,
         });
         gsap.set(frame, {
-          opacity: reducedMotion ? 0.9 : 0.76,
-          scale: reducedMotion ? 0.998 : 0.992,
-          filter: `blur(${reducedMotion ? 2 : 6}px)`,
+          opacity: reducedMotion ? 0.92 : 0.84,
+          scale: reducedMotion ? 0.999 : 0.995,
+          filter: `blur(${reducedMotion ? 1.5 : 4}px)`,
         });
         gsap.set(topBar, {
-          opacity: reducedMotion ? 0.32 : 0.14,
-          y: reducedMotion ? -2 : -8,
-          filter: `blur(${reducedMotion ? 1.5 : 4}px)`,
+          opacity: reducedMotion ? 0.56 : 0.38,
+          y: reducedMotion ? -1 : -4,
+          filter: `blur(${reducedMotion ? 1 : 2.5}px)`,
         });
         gsap.set(brandMark, {
-          opacity: reducedMotion ? 0.5 : 0.24,
-          x: reducedMotion ? -2 : -8,
-          filter: `blur(${reducedMotion ? 1.5 : 4}px)`,
+          opacity: reducedMotion ? 0.7 : 0.56,
+          x: reducedMotion ? -1 : -4,
+          filter: `blur(${reducedMotion ? 1 : 2.5}px)`,
         });
         gsap.set(brandCaption, {
-          opacity: reducedMotion ? 0.38 : 0.14,
-          x: reducedMotion ? -1 : -6,
-          filter: `blur(${reducedMotion ? 1.5 : 4}px)`,
+          opacity: reducedMotion ? 0.58 : 0.38,
+          x: reducedMotion ? -1 : -3,
+          filter: `blur(${reducedMotion ? 1 : 2.5}px)`,
         });
         gsap.set(langSwitch, {
-          opacity: reducedMotion ? 0.42 : 0.18,
-          x: reducedMotion ? 2 : 8,
-          filter: `blur(${reducedMotion ? 1.5 : 4}px)`,
+          opacity: reducedMotion ? 0.62 : 0.46,
+          x: reducedMotion ? 1 : 4,
+          filter: `blur(${reducedMotion ? 1 : 2.5}px)`,
         });
         gsap.set(introCopy, {
-          opacity: reducedMotion ? 0.86 : 0.72,
-          y: reducedMotion ? 3 : 10,
-          scale: reducedMotion ? 0.998 : 0.994,
-          filter: `blur(${reducedMotion ? 1.5 : 4}px)`,
+          opacity: reducedMotion ? 0.92 : 0.84,
+          y: reducedMotion ? 1 : 5,
+          scale: 1,
+          filter: 'blur(0px)',
         });
         gsap.set(titleReal, {
-          opacity: reducedMotion ? 0.84 : 0.72,
-          y: reducedMotion ? 1 : 4,
-          scale: reducedMotion ? 0.999 : 0.996,
-          filter: `blur(${reducedMotion ? 1.5 : 4}px)`,
+          opacity: reducedMotion ? 0.9 : 0.82,
+          y: reducedMotion ? 0.5 : 3,
+          scale: 1,
+          filter: `blur(${reducedMotion ? 0.9 : 2.2}px)`,
         });
         gsap.set(slices, {
           autoAlpha: 0,
@@ -192,7 +194,7 @@ export function HeroIntro({
 
         handoffTl = gsap.timeline({defaults: {overwrite: 'auto'}})
           .to(root, {
-            '--hero-handoff': 0.56,
+            '--hero-handoff': 0.42,
             duration: reducedMotion ? 0.16 : 0.24,
             ease: 'sine.out',
           }, 0)
@@ -217,27 +219,27 @@ export function HeroIntro({
             ease: 'power3.out',
           }, 0.03)
           .to(slices, {
-            autoAlpha: (index: number) => (reducedMotion ? 0.18 : index === 3 ? 0.48 : index === 2 || index === 4 ? 0.36 : 0.26),
+            autoAlpha: (index: number) => (reducedMotion ? 0.12 : index === 3 ? 0.32 : index === 2 || index === 4 ? 0.24 : 0.17),
             x: 0,
             filter: 'blur(0px)',
-            duration: reducedMotion ? 0.15 : 0.28,
+            duration: reducedMotion ? 0.14 : 0.24,
             ease: 'power3.out',
-            stagger: 0.018,
-          }, 0.06)
+            stagger: 0.016,
+          }, 0.12)
           .to(titleReal, {
             opacity: 1,
             y: 0,
             scale: 1,
             filter: 'blur(0px)',
-            duration: reducedMotion ? 0.18 : 0.34,
+            duration: reducedMotion ? 0.16 : 0.28,
             ease: 'power3.out',
-          }, 0.08)
+          }, 0.16)
           .to(slices, {
             autoAlpha: 0,
-            duration: reducedMotion ? 0.12 : 0.2,
+            duration: reducedMotion ? 0.1 : 0.16,
             ease: 'sine.out',
-            stagger: 0.01,
-          }, reducedMotion ? 0.14 : 0.2)
+            stagger: 0.008,
+          }, reducedMotion ? 0.22 : 0.28)
           .to(topBar, {
             opacity: 1,
             y: 0,
