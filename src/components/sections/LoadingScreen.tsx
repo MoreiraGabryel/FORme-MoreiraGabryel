@@ -73,6 +73,15 @@ const PROGRESS_BEAM_STYLE = {
   willChange: 'transform, opacity',
 } satisfies CSSProperties;
 
+const SCAN_BEAM_STYLE = {
+  opacity: 0,
+  background:
+    'linear-gradient(180deg, rgba(120,168,214,0) 0%, rgba(168,214,255,0.12) 14%, rgba(255,255,255,0.68) 50%, rgba(168,214,255,0.18) 82%, rgba(120,168,214,0) 100%)',
+  boxShadow: '0 0 44px rgba(170,218,255,0.18)',
+  filter: 'blur(7px)',
+  willChange: 'transform, opacity',
+} satisfies CSSProperties;
+
 function readDebugOptions(): DebugOptions {
   if (typeof window === 'undefined') {
     return {freezeAt: null, forceMotion: false, forceReducedMotion: false, slowMo: null};
@@ -110,6 +119,7 @@ export function LoadingScreen({onDone}: Props) {
   const trackRef = useRef<HTMLDivElement>(null);
   const fillRef = useRef<HTMLDivElement>(null);
   const beamRef = useRef<HTMLDivElement>(null);
+  const scanBeamRef = useRef<HTMLDivElement>(null);
   const stageGlowRef = useRef<HTMLDivElement>(null);
   const flashRef = useRef<HTMLDivElement>(null);
   const doneTimeoutRef = useRef<number | null>(null);
@@ -127,6 +137,7 @@ export function LoadingScreen({onDone}: Props) {
     const track = trackRef.current;
     const fill = fillRef.current;
     const beam = beamRef.current;
+    const scanBeam = scanBeamRef.current;
     const stageGlow = stageGlowRef.current;
     const flash = flashRef.current;
     const chars = charRefs.current.slice(0, BRAND_CHARS.length);
@@ -144,6 +155,7 @@ export function LoadingScreen({onDone}: Props) {
       !track ||
       !fill ||
       !beam ||
+      !scanBeam ||
       !stageGlow ||
       !flash ||
       chars.length !== BRAND_CHARS.length
@@ -168,7 +180,7 @@ export function LoadingScreen({onDone}: Props) {
     const writingDuration = (chars.length - 1) * letterStagger + letterDuration;
     const writingEnd = writingStart + writingDuration;
     const holdStart = writingEnd + finalHold;
-    const fallbackDoneAt = debug.freezeAt ?? holdStart + progressFinalDuration + revealDuration + cleanupDuration + 0.52;
+    const fallbackDoneAt = debug.freezeAt ?? holdStart + progressFinalDuration + revealDuration + cleanupDuration + 0.86;
     let isDone = false;
 
     const html = document.documentElement;
@@ -216,6 +228,13 @@ export function LoadingScreen({onDone}: Props) {
       const stageGlowPeak = prefersReducedMotion ? 0.3 : 0.46;
       const flashPeak = prefersReducedMotion ? 0.06 : 0.1;
       const bridgePeak = prefersReducedMotion ? 0.12 : 0.22;
+      const scanPeak = prefersReducedMotion ? 0.28 : 0.62;
+      const scanDuration = prefersReducedMotion ? 0.18 : 0.3;
+      const dispatchHeroHandoff = () => {
+        window.dispatchEvent(new CustomEvent('mg:loading-handoff', {
+          detail: {reducedMotion: prefersReducedMotion},
+        }));
+      };
 
       gsap.set(panel, {
         opacity: 0,
@@ -260,6 +279,10 @@ export function LoadingScreen({onDone}: Props) {
         xPercent: -120,
         scaleX: 0.72,
         transformOrigin: '50% 50%',
+      });
+      gsap.set(scanBeam, {
+        opacity: 0,
+        yPercent: -140,
       });
       gsap.set(stageGlow, {
         opacity: 0,
@@ -411,6 +434,13 @@ export function LoadingScreen({onDone}: Props) {
           duration: revealDuration,
           ease: 'power2.out',
         }, 'hold+=0.03')
+        .call(dispatchHeroHandoff, [], 'hold+=0.08')
+        .to(scanBeam, {
+          opacity: scanPeak,
+          yPercent: -12,
+          duration: scanDuration,
+          ease: 'power2.out',
+        }, 'hold+=0.08')
         .addLabel('reveal', holdStart + revealDuration * 0.56)
         .to(content, {
           opacity: 0,
@@ -438,6 +468,12 @@ export function LoadingScreen({onDone}: Props) {
           ease: 'sine.inOut',
         }, 'flash+=0.08')
         .addLabel('aperture', 'reveal+=0.08')
+        .to(scanBeam, {
+          opacity: 0,
+          yPercent: 124,
+          duration: prefersReducedMotion ? 0.16 : 0.26,
+          ease: 'power3.out',
+        }, 'aperture')
         .to(bridge, {
           opacity: bridgePeak,
           duration: prefersReducedMotion ? 0.08 : 0.14,
@@ -509,6 +545,13 @@ export function LoadingScreen({onDone}: Props) {
       </div>
 
       <div ref={flashRef} className="pointer-events-none absolute inset-0" aria-hidden="true" style={FLASH_OVERLAY_STYLE} />
+
+      <div
+        ref={scanBeamRef}
+        className="pointer-events-none absolute inset-x-0 top-1/2 h-[16vh] min-h-[5rem] -translate-y-1/2"
+        aria-hidden="true"
+        style={SCAN_BEAM_STYLE}
+      />
 
       <div ref={bridgeRef} className="pointer-events-none absolute inset-0" aria-hidden="true" style={BRIDGE_OVERLAY_STYLE} />
 
