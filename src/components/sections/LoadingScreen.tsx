@@ -36,14 +36,16 @@ const STAGE_GLOW_STYLE = {
 const FLASH_OVERLAY_STYLE = {
   opacity: 0,
   background:
-    'radial-gradient(circle at 50% 50%, rgba(255,255,255,0.58) 0%, rgba(196,230,255,0.14) 16%, transparent 56%)',
+    'linear-gradient(90deg, rgba(4,6,10,0) 0%, rgba(120,168,214,0.03) 24%, rgba(255,255,255,0.14) 50%, rgba(120,168,214,0.03) 76%, rgba(4,6,10,0) 100%)',
+  mixBlendMode: 'screen',
   willChange: 'opacity',
 } satisfies CSSProperties;
 
-const APERTURE_OVERLAY_STYLE = {
+const BRIDGE_OVERLAY_STYLE = {
   opacity: 0,
-  background: 'linear-gradient(180deg, rgba(255,255,255,0.98), rgba(239,246,252,0.98) 42%, rgba(255,255,255,1))',
-  willChange: 'clip-path, opacity',
+  background:
+    'radial-gradient(circle at 50% 42%, rgba(122,142,230,0.12) 0%, rgba(58,78,138,0.1) 28%, rgba(10,14,24,0.28) 58%, rgba(4,6,10,0.42) 100%), linear-gradient(180deg, rgba(7,10,18,0.3), rgba(7,10,18,0.16) 34%, rgba(4,6,10,0.06) 68%, rgba(4,6,10,0))',
+  willChange: 'opacity',
 } satisfies CSSProperties;
 
 const WORDMARK_GUIDE_STYLE = {
@@ -96,6 +98,9 @@ function setTextNode(listRef: MutableRefObject<HTMLSpanElement[]>, index: number
 
 export function LoadingScreen({onDone}: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const backdropRef = useRef<HTMLDivElement>(null);
+  const bridgeRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const wordRef = useRef<HTMLDivElement>(null);
   const charRefs = useRef<HTMLSpanElement[]>([]);
@@ -107,11 +112,13 @@ export function LoadingScreen({onDone}: Props) {
   const beamRef = useRef<HTMLDivElement>(null);
   const stageGlowRef = useRef<HTMLDivElement>(null);
   const flashRef = useRef<HTMLDivElement>(null);
-  const apertureRef = useRef<HTMLDivElement>(null);
   const doneTimeoutRef = useRef<number | null>(null);
 
   useLayoutEffect(() => {
     const container = containerRef.current;
+    const backdrop = backdropRef.current;
+    const bridge = bridgeRef.current;
+    const content = contentRef.current;
     const panel = panelRef.current;
     const word = wordRef.current;
     const writeHead = writeHeadRef.current;
@@ -122,11 +129,13 @@ export function LoadingScreen({onDone}: Props) {
     const beam = beamRef.current;
     const stageGlow = stageGlowRef.current;
     const flash = flashRef.current;
-    const aperture = apertureRef.current;
     const chars = charRefs.current.slice(0, BRAND_CHARS.length);
 
     if (
       !container ||
+      !backdrop ||
+      !bridge ||
+      !content ||
       !panel ||
       !word ||
       !writeHead ||
@@ -137,7 +146,6 @@ export function LoadingScreen({onDone}: Props) {
       !beam ||
       !stageGlow ||
       !flash ||
-      !aperture ||
       chars.length !== BRAND_CHARS.length
     ) {
       return;
@@ -156,9 +164,6 @@ export function LoadingScreen({onDone}: Props) {
     const finalHold = prefersReducedMotion ? 0.08 : 0.16;
     const progressFinalDuration = prefersReducedMotion ? 0.2 : 0.24;
     const revealDuration = prefersReducedMotion ? 0.18 : 0.26;
-    const flashInDuration = prefersReducedMotion ? 0.08 : 0.12;
-    const flashOutDuration = prefersReducedMotion ? 0.12 : 0.16;
-    const apertureDuration = prefersReducedMotion ? 0.22 : 0.3;
     const cleanupDuration = prefersReducedMotion ? 0.16 : 0.22;
     const writingDuration = (chars.length - 1) * letterStagger + letterDuration;
     const writingEnd = writingStart + writingDuration;
@@ -196,14 +201,21 @@ export function LoadingScreen({onDone}: Props) {
     };
 
     renderProgress();
-    gsap.set(container, {opacity: 1, pointerEvents: 'auto'});
+    gsap.set(container, {
+      opacity: 1,
+      pointerEvents: 'auto',
+      visibility: 'visible',
+      scale: 1,
+      filter: 'none',
+    });
     doneTimeoutRef.current = window.setTimeout(finish, Math.ceil(fallbackDoneAt * 1000));
 
     const ctx = gsap.context(() => {
       const wordWidth = word.getBoundingClientRect().width;
       const writeHeadTravel = Math.max(wordWidth + 20, 24);
-      const stageGlowPeak = prefersReducedMotion ? 0.42 : 0.68;
-      const flashPeak = prefersReducedMotion ? 0.14 : 0.24;
+      const stageGlowPeak = prefersReducedMotion ? 0.3 : 0.46;
+      const flashPeak = prefersReducedMotion ? 0.06 : 0.1;
+      const bridgePeak = prefersReducedMotion ? 0.12 : 0.22;
 
       gsap.set(panel, {
         opacity: 0,
@@ -254,11 +266,19 @@ export function LoadingScreen({onDone}: Props) {
         scale: 0.92,
         transformOrigin: '50% 50%',
       });
-      gsap.set(flash, {opacity: 0});
-      gsap.set(aperture, {
-        opacity: 0,
-        clipPath: 'inset(49% 0 49% 0 round 999px)',
+      gsap.set(backdrop, {
+        opacity: 1,
       });
+      gsap.set(bridge, {
+        opacity: 0,
+      });
+      gsap.set(content, {
+        opacity: 1,
+        y: 0,
+        scale: 1,
+        filter: 'blur(0px)',
+      });
+      gsap.set(flash, {opacity: 0});
 
       const tl = gsap.timeline({
         defaults: {ease: 'power2.out'},
@@ -382,44 +402,67 @@ export function LoadingScreen({onDone}: Props) {
           duration: revealDuration,
         }, 'hold+=0.02')
         .to(track, {
-          opacity: prefersReducedMotion ? 0.52 : 0.68,
+          opacity: prefersReducedMotion ? 0.42 : 0.56,
           duration: revealDuration,
         }, 'hold+=0.02')
-        .to([panel, word], {
-          scale: prefersReducedMotion ? 1.008 : 1.02,
-          duration: revealDuration,
-          ease: 'sine.inOut',
-        }, 'hold+=0.01')
         .to(stageGlow, {
           opacity: stageGlowPeak,
-          scale: prefersReducedMotion ? 1.08 : 1.18,
+          scale: prefersReducedMotion ? 1.04 : 1.1,
           duration: revealDuration,
-          ease: 'power2.inOut',
+          ease: 'power2.out',
         }, 'hold+=0.03')
-        .addLabel('reveal', holdStart + revealDuration * 0.6)
-        .addLabel('flash', 'reveal')
+        .addLabel('reveal', holdStart + revealDuration * 0.56)
+        .to(content, {
+          opacity: 0,
+          y: prefersReducedMotion ? -2 : -6,
+          scale: prefersReducedMotion ? 1.006 : 1.015,
+          filter: `blur(${prefersReducedMotion ? 2 : 6}px)`,
+          duration: prefersReducedMotion ? 0.16 : 0.32,
+          ease: 'power2.out',
+        }, 'reveal')
+        .to(stageGlow, {
+          opacity: prefersReducedMotion ? 0.18 : 0.24,
+          scale: prefersReducedMotion ? 1.06 : 1.12,
+          duration: prefersReducedMotion ? 0.16 : 0.3,
+          ease: 'power1.out',
+        }, 'reveal')
+        .addLabel('flash', 'reveal+=0.03')
         .to(flash, {
           opacity: flashPeak,
-          duration: flashInDuration,
+          duration: prefersReducedMotion ? 0.06 : 0.08,
+          ease: 'sine.out',
         }, 'flash')
         .to(flash, {
           opacity: 0,
-          duration: flashOutDuration,
-        }, `flash+=${flashInDuration}`)
-        .addLabel('aperture', 'flash+=0.06')
-        .to(aperture, {
-          opacity: 1,
-          clipPath: 'inset(-12% -3% -12% -3% round 0px)',
-          duration: apertureDuration,
-          ease: 'expo.inOut',
+          duration: prefersReducedMotion ? 0.08 : 0.12,
+          ease: 'sine.inOut',
+        }, 'flash+=0.08')
+        .addLabel('aperture', 'reveal+=0.08')
+        .to(bridge, {
+          opacity: bridgePeak,
+          duration: prefersReducedMotion ? 0.08 : 0.14,
+          ease: 'power2.out',
         }, 'aperture')
-        .addLabel('cleanup', `aperture+=${Math.max(apertureDuration - 0.08, 0.08)}`)
-        .to(container, {
+        .to(backdrop, {
           opacity: 0,
-          scale: prefersReducedMotion ? 1.006 : 1.018,
-          filter: `blur(${prefersReducedMotion ? 0.4 : 1.2}px)`,
-          duration: cleanupDuration,
-          ease: 'power2.inOut',
+          duration: prefersReducedMotion ? 0.16 : 0.28,
+          ease: 'power2.out',
+        }, 'aperture')
+        .to(bridge, {
+          opacity: 0,
+          duration: prefersReducedMotion ? 0.12 : 0.18,
+          ease: 'power1.inOut',
+        }, 'aperture+=0.1')
+        .addLabel('cleanup', 'aperture+=0.24')
+        .to(stageGlow, {
+          opacity: 0,
+          duration: prefersReducedMotion ? 0.08 : 0.12,
+          ease: 'power1.out',
+        }, 'cleanup')
+        .to(container, {
+          autoAlpha: 0,
+          duration: prefersReducedMotion ? 0.06 : 0.1,
+          ease: 'none',
         }, 'cleanup')
         .set(container, {pointerEvents: 'none'}, 'cleanup');
 
@@ -450,68 +493,74 @@ export function LoadingScreen({onDone}: Props) {
   return (
     <div
       ref={containerRef}
-      className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-[#050608] px-5"
+      className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden px-5"
       style={{contain: 'layout paint style'}}
     >
-      <div className="pointer-events-none absolute inset-0" aria-hidden="true" style={LOADING_BACKGROUND_STYLE} />
+      <div ref={backdropRef} className="pointer-events-none absolute inset-0 bg-[#050608]" aria-hidden="true">
+        <div className="absolute inset-0" style={LOADING_BACKGROUND_STYLE} />
 
-      <div className="pointer-events-none absolute inset-0 opacity-30" aria-hidden="true" style={LOADING_GRID_STYLE} />
+        <div className="absolute inset-0 opacity-30" style={LOADING_GRID_STYLE} />
 
-      <div
-        ref={stageGlowRef}
-        className="pointer-events-none absolute left-1/2 top-1/2 h-[42rem] w-[42rem] max-h-[88vw] max-w-[88vw] -translate-x-1/2 -translate-y-1/2 rounded-full"
-        aria-hidden="true"
-        style={STAGE_GLOW_STYLE}
-      />
+        <div
+          ref={stageGlowRef}
+          className="absolute left-1/2 top-1/2 h-[42rem] w-[42rem] max-h-[88vw] max-w-[88vw] -translate-x-1/2 -translate-y-1/2 rounded-full"
+          style={STAGE_GLOW_STYLE}
+        />
+      </div>
 
       <div ref={flashRef} className="pointer-events-none absolute inset-0" aria-hidden="true" style={FLASH_OVERLAY_STYLE} />
 
-      <div ref={apertureRef} className="pointer-events-none absolute inset-0" aria-hidden="true" style={APERTURE_OVERLAY_STYLE} />
+      <div ref={bridgeRef} className="pointer-events-none absolute inset-0" aria-hidden="true" style={BRIDGE_OVERLAY_STYLE} />
 
-      <div ref={panelRef} className="relative w-full max-w-[min(66rem,94vw)] text-center opacity-0">
-        <div className="mx-auto flex w-full max-w-[54rem] items-center justify-between gap-4 text-[0.58rem] font-medium uppercase tracking-[0.3em] text-white/42 sm:text-[0.7rem] sm:tracking-[0.34em]">
-          <div ref={statusRef} className="min-w-0 truncate text-left">Inicializando portfólio</div>
-          <div ref={progressNumberRef} className="shrink-0">0%</div>
-        </div>
-
-        <div className="relative mx-auto mt-7 w-fit max-w-full px-[clamp(0.3rem,1.8vw,1.2rem)] py-[clamp(0.5rem,2vw,1rem)] sm:mt-8">
-          <div className="pointer-events-none absolute inset-x-[8%] top-1/2 h-px -translate-y-1/2 opacity-40" aria-hidden="true" style={WORDMARK_GUIDE_STYLE} />
-
-          <div
-            ref={writeHeadRef}
-            className="pointer-events-none absolute left-[4%] top-1/2 z-[4] h-[1.14em] w-[0.14em] -translate-y-1/2 rounded-full opacity-0 mix-blend-screen"
-            aria-hidden="true"
-            style={WRITE_HEAD_STYLE}
-          />
-
-          <div
-            ref={wordRef}
-            className="display-font relative z-[5] max-w-full select-none whitespace-nowrap text-[clamp(1.6rem,6.6vw,6.2rem)] font-black leading-none tracking-[-0.055em] text-white sm:text-[clamp(1.9rem,6.9vw,7rem)]"
-            aria-label={BRAND_NAME}
-          >
-            {BRAND_CHARS.map((char, index) => (
-              <span key={`${char}-${index}`} className="inline-block align-top leading-none" aria-hidden="true">
-                <span
-                  ref={(node) => setTextNode(charRefs, index, node)}
-                  className="inline-block leading-none"
-                  style={{opacity: 0, color: '#ffffff'}}
-                  aria-hidden="true"
-                >
-                  {char}
-                </span>
-              </span>
-            ))}
+      <div ref={contentRef} className="relative w-full max-w-[min(66rem,94vw)] text-center">
+        <div ref={panelRef} className="relative w-full text-center opacity-0">
+          <div className="mx-auto flex w-full max-w-[54rem] items-center justify-between gap-4 text-[0.58rem] font-medium uppercase tracking-[0.3em] text-white/42 sm:text-[0.7rem] sm:tracking-[0.34em]">
+            <div ref={statusRef} className="min-w-0 truncate text-left">Inicializando portfólio</div>
+            <div ref={progressNumberRef} className="shrink-0">0%</div>
           </div>
-        </div>
 
-        <div ref={trackRef} className="relative mx-auto mt-7 h-px w-full max-w-[54rem] overflow-hidden rounded-full bg-white/12 opacity-0 sm:mt-8">
-          <div ref={fillRef} className="absolute inset-y-0 left-0 w-full origin-left" style={PROGRESS_FILL_STYLE} />
+          <div className="relative mx-auto mt-7 w-fit max-w-full px-[clamp(0.3rem,1.8vw,1.2rem)] py-[clamp(0.5rem,2vw,1rem)] sm:mt-8">
+            <div className="pointer-events-none absolute inset-x-[8%] top-1/2 h-px -translate-y-1/2 opacity-40" aria-hidden="true" style={WORDMARK_GUIDE_STYLE} />
+
+            <div
+              ref={writeHeadRef}
+              className="pointer-events-none absolute left-[4%] top-1/2 z-[4] h-[1.14em] w-[0.14em] -translate-y-1/2 rounded-full opacity-0 mix-blend-screen"
+              aria-hidden="true"
+              style={WRITE_HEAD_STYLE}
+            />
+
+            <div
+              ref={wordRef}
+              className="display-font relative z-[5] max-w-full select-none whitespace-nowrap text-[clamp(1.6rem,6.6vw,6.2rem)] font-black leading-none tracking-[-0.055em] text-white sm:text-[clamp(1.9rem,6.9vw,7rem)]"
+              aria-label={BRAND_NAME}
+            >
+              {BRAND_CHARS.map((char, index) => (
+                <span key={`${char}-${index}`} className="inline-block align-top leading-none" aria-hidden="true">
+                  <span
+                    ref={(node) => setTextNode(charRefs, index, node)}
+                    className="inline-block leading-none"
+                    style={{opacity: 0, color: '#ffffff'}}
+                    aria-hidden="true"
+                  >
+                    {char}
+                  </span>
+                </span>
+              ))}
+            </div>
+          </div>
+
           <div
-            ref={beamRef}
-            className="pointer-events-none absolute left-0 top-1/2 h-[0.42rem] w-[28%] -translate-y-1/2 rounded-full opacity-0 sm:w-[18%]"
-            aria-hidden="true"
-            style={PROGRESS_BEAM_STYLE}
-          />
+            ref={trackRef}
+            className="relative mx-auto mt-7 h-px w-full max-w-[54rem] overflow-hidden rounded-full bg-white/12 opacity-0 sm:mt-8"
+          >
+            <div ref={fillRef} className="absolute inset-y-0 left-0 w-full origin-left" style={PROGRESS_FILL_STYLE} />
+            <div
+              ref={beamRef}
+              className="pointer-events-none absolute left-0 top-1/2 h-[0.42rem] w-[28%] -translate-y-1/2 rounded-full opacity-0 sm:w-[18%]"
+              aria-hidden="true"
+              style={PROGRESS_BEAM_STYLE}
+            />
+          </div>
         </div>
       </div>
     </div>
