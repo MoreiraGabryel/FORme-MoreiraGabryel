@@ -434,14 +434,14 @@ export function LoadingScreen({onDone}: Props) {
           duration: revealDuration,
           ease: 'power2.out',
         }, 'hold+=0.03')
-        .call(dispatchHeroHandoff, [], 'hold+=0.08')
+        .addLabel('reveal', holdStart + revealDuration * 0.56)
+        .call(dispatchHeroHandoff, [], 'reveal-=0.02')
         .to(scanBeam, {
           opacity: scanPeak,
           yPercent: -12,
           duration: scanDuration,
           ease: 'power2.out',
-        }, 'hold+=0.08')
-        .addLabel('reveal', holdStart + revealDuration * 0.56)
+        }, 'reveal-=0.02')
         .to(content, {
           opacity: 0,
           y: prefersReducedMotion ? -2 : -6,
