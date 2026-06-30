@@ -16,12 +16,12 @@ const BRAND_CHARS = [...BRAND_NAME];
 
 const LOADING_BACKGROUND_STYLE = {
   background:
-    'radial-gradient(circle at 50% 44%, rgba(170,218,255,0.08) 0%, rgba(170,218,255,0.03) 20%, transparent 62%), linear-gradient(180deg, rgba(255,255,255,0.03), transparent 18%), linear-gradient(90deg, rgba(255,255,255,0.012), transparent 24%, transparent 76%, rgba(255,255,255,0.012))',
+    'radial-gradient(circle at 50% 44%, rgba(42,57,86,0.16) 0%, rgba(42,57,86,0.06) 22%, transparent 62%), linear-gradient(180deg, rgba(18,26,42,0.12), transparent 18%), linear-gradient(90deg, rgba(215,220,229,0.016), transparent 24%, transparent 76%, rgba(215,220,229,0.016))',
 } satisfies CSSProperties;
 
 const LOADING_GRID_STYLE = {
   backgroundImage:
-    'linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px)',
+    'linear-gradient(rgba(215,220,229,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(34,48,74,0.16) 1px, transparent 1px)',
   backgroundSize: '118px 118px',
   maskImage: 'radial-gradient(circle at 50% 48%, black 26%, transparent 82%)',
 } satisfies CSSProperties;
@@ -29,14 +29,14 @@ const LOADING_GRID_STYLE = {
 const STAGE_GLOW_STYLE = {
   opacity: 0,
   background:
-    'radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(170,218,255,0.08) 16%, rgba(170,218,255,0.03) 36%, transparent 72%)',
+    'radial-gradient(circle, rgba(242,194,48,0.14) 0%, rgba(242,194,48,0.08) 18%, rgba(42,57,86,0.08) 42%, transparent 72%)',
   willChange: 'transform, opacity',
 } satisfies CSSProperties;
 
 const FLASH_OVERLAY_STYLE = {
   opacity: 0,
   background:
-    'linear-gradient(90deg, rgba(4,6,10,0) 0%, rgba(120,168,214,0.03) 24%, rgba(255,255,255,0.14) 50%, rgba(120,168,214,0.03) 76%, rgba(4,6,10,0) 100%)',
+    'linear-gradient(90deg, rgba(5,6,8,0) 0%, rgba(242,194,48,0.04) 24%, rgba(255,211,77,0.16) 50%, rgba(42,57,86,0.05) 76%, rgba(5,6,8,0) 100%)',
   mixBlendMode: 'screen',
   willChange: 'opacity',
 } satisfies CSSProperties;
@@ -44,31 +44,31 @@ const FLASH_OVERLAY_STYLE = {
 const BRIDGE_OVERLAY_STYLE = {
   opacity: 0,
   background:
-    'radial-gradient(circle at 50% 42%, rgba(122,142,230,0.12) 0%, rgba(58,78,138,0.1) 28%, rgba(10,14,24,0.28) 58%, rgba(4,6,10,0.42) 100%), linear-gradient(180deg, rgba(7,10,18,0.3), rgba(7,10,18,0.16) 34%, rgba(4,6,10,0.06) 68%, rgba(4,6,10,0))',
+    'radial-gradient(circle at 50% 42%, rgba(42,57,86,0.18) 0%, rgba(24,35,58,0.16) 28%, rgba(10,12,16,0.3) 58%, rgba(5,6,8,0.46) 100%), linear-gradient(180deg, rgba(18,26,42,0.34), rgba(18,26,42,0.18) 34%, rgba(5,6,8,0.08) 68%, rgba(5,6,8,0))',
   willChange: 'opacity',
 } satisfies CSSProperties;
 
 const WORDMARK_GUIDE_STYLE = {
   background:
-    'linear-gradient(90deg, transparent, rgba(190,230,255,0.06) 18%, rgba(255,255,255,0.16) 50%, rgba(190,230,255,0.06) 82%, transparent)',
+    'linear-gradient(90deg, transparent, rgba(242,194,48,0.06) 18%, rgba(255,211,77,0.18) 50%, rgba(42,57,86,0.08) 82%, transparent)',
 } satisfies CSSProperties;
 
 const WRITE_HEAD_STYLE = {
   background:
-    'linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.92) 18%, rgba(214,239,255,0.98) 50%, rgba(255,255,255,0.92) 82%, rgba(255,255,255,0) 100%)',
-  boxShadow: '0 0 24px rgba(190,232,255,0.34), 0 0 48px rgba(170,218,255,0.18)',
+    'linear-gradient(180deg, rgba(255,211,77,0) 0%, rgba(255,211,77,0.94) 18%, rgba(242,194,48,0.98) 50%, rgba(255,211,77,0.94) 82%, rgba(255,211,77,0) 100%)',
+  boxShadow: '0 0 24px rgba(242,194,48,0.3), 0 0 48px rgba(242,194,48,0.14)',
   filter: 'blur(0.2px)',
   willChange: 'transform, opacity',
 } satisfies CSSProperties;
 
 const PROGRESS_FILL_STYLE = {
-  background: 'linear-gradient(90deg, rgba(170,218,255,0.08), rgba(255,255,255,0.96) 56%, rgba(170,218,255,0.22))',
-  boxShadow: '0 0 16px rgba(186,232,255,0.14)',
+  background: 'linear-gradient(90deg, rgba(242,194,48,0.14), rgba(255,211,77,0.96) 56%, rgba(242,194,48,0.34))',
+  boxShadow: '0 0 16px rgba(242,194,48,0.2)',
 } satisfies CSSProperties;
 
 const PROGRESS_BEAM_STYLE = {
   background:
-    'linear-gradient(90deg, transparent, rgba(255,255,255,0.08) 18%, rgba(255,255,255,0.96) 50%, rgba(170,218,255,0.2) 82%, transparent)',
+    'linear-gradient(90deg, transparent, rgba(242,194,48,0.1) 18%, rgba(255,211,77,0.98) 50%, rgba(242,194,48,0.28) 82%, transparent)',
   filter: 'blur(5px)',
   willChange: 'transform, opacity',
 } satisfies CSSProperties;
@@ -76,8 +76,8 @@ const PROGRESS_BEAM_STYLE = {
 const SCAN_BEAM_STYLE = {
   opacity: 0,
   background:
-    'linear-gradient(180deg, rgba(120,168,214,0) 0%, rgba(168,214,255,0.12) 14%, rgba(255,255,255,0.68) 50%, rgba(168,214,255,0.18) 82%, rgba(120,168,214,0) 100%)',
-  boxShadow: '0 0 44px rgba(170,218,255,0.18)',
+    'linear-gradient(180deg, rgba(242,194,48,0) 0%, rgba(242,194,48,0.16) 14%, rgba(255,211,77,0.74) 50%, rgba(242,194,48,0.22) 82%, rgba(242,194,48,0) 100%)',
+  boxShadow: '0 0 44px rgba(242,194,48,0.24)',
   filter: 'blur(7px)',
   willChange: 'transform, opacity',
 } satisfies CSSProperties;

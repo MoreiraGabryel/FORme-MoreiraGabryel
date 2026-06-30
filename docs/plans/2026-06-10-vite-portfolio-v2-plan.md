@@ -16,7 +16,7 @@ Objetivo: trocar a base atual pela base Vite sem deixar resíduos da versão Nex
 Arquivos/pastas-alvo:
 - Substituir: package.json, tsconfig*.json, index.html, vite.config.ts, src/*
 - Remover compatibilidade antiga: next.config.*, src/app/*, src/components/sections antigos, src/animations antigos ligados ao Next, out/, .next/
-- Preservar e adaptar: public/icons/, public/projects/, scripts/ úteis de dev/stop se fizer sentido para Vite
+- Preservar e adaptar: public/icons/, public/media/, scripts/ úteis de dev/stop se fizer sentido para Vite
 
 Passos:
 1. Inventariar arquivos atuais e decidir o que sai/permanece.

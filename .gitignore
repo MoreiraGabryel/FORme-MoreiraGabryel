@@ -43,6 +43,15 @@ Thumbs.db
 .turbo/
 .cache/
 coverage/
+.tmp-*/
+
+# Local visual/source references
+backups/
+referencia-canva/
+scrool-image/
+OFICIAL_VIDEO/
+svg_icons/
+fundo_site*.mp4
 
 # Cloudflare local output
 .wrangler/
