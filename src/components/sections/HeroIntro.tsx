@@ -423,7 +423,14 @@ export function HeroIntro({
         </div>
 
         <footer ref={footerRef} className="hero-footer" style={footerStyle}>
-          <p ref={cueRef} className="scroll-cue">{copy.scrollCue}</p>
+          <p ref={cueRef} className="scroll-cue" aria-label={copy.scrollCue}>
+            <span className="scroll-cue-label">{copy.scrollCue}</span>
+            <span className="scroll-cue-arrows" aria-hidden="true">
+              <span />
+              <span />
+              <span />
+            </span>
+          </p>
         </footer>
       </div>
     </section>
