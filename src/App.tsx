@@ -142,6 +142,8 @@ export default function App() {
   const stageProgress = rawStageProgress < 0.78 ? stageReadProgress : 1;
   const heroHandoff = clamp((heroProgress - 0.58) / 0.34, 0, 1);
   const heroHandoffEase = 1 - Math.pow(1 - heroHandoff, 3);
+  const heroDepth = clamp(heroProgress / 0.92, 0, 1);
+  const heroDepthEase = heroDepth * heroDepth * (3 - 2 * heroDepth);
   const stageEase = 1 - Math.pow(1 - stageProgress, 3);
   const stageHoldEase = stageHoldProgress * stageHoldProgress * (3 - 2 * stageHoldProgress);
   const stageSettleEase = stageReleaseProgress * stageReleaseProgress * (3 - 2 * stageReleaseProgress);
@@ -174,7 +176,7 @@ export default function App() {
       {!loaded && <LoadingScreen onDone={handleLoadingDone} />}
       <main className="site-shell">
         <div className="global-scene-bg">
-          <SceneCrossfade progress={totalScrollProgress} />
+          <SceneCrossfade progress={totalScrollProgress} heroDepth={heroDepthEase} />
         </div>
 
         <HeroIntro
@@ -185,13 +187,13 @@ export default function App() {
           heroProgress={heroProgress}
           overlayStyle={{opacity: 1 - heroProgress * 0.18}}
           introStyle={{
-            opacity: 1 - heroProgress * 0.78 - heroHandoffEase * 0.18,
-            transform: `translate3d(0, ${heroProgress * -12 - heroHandoffEase * 6}vh, 0) scale(${1 - heroProgress * 0.06 - heroHandoffEase * 0.08})`,
-            filter: `blur(${heroProgress * 6 + heroHandoffEase * 8}px)`,
+            opacity: 1 - heroProgress * 0.86 - heroHandoffEase * 0.22,
+            transform: `translate3d(0, ${heroProgress * -8 - heroHandoffEase * 5}vh, 0) scale(${1 - heroProgress * 0.04 - heroHandoffEase * 0.06})`,
+            filter: `blur(${heroProgress * 8 + heroHandoffEase * 6}px)`,
           }}
           footerStyle={{
-            opacity: 1 - heroProgress * 0.72 - heroHandoffEase * 0.22,
-            transform: `translate3d(0, ${heroProgress * -5 - heroHandoffEase * 4.5}vh, 0) scale(${1 - heroHandoffEase * 0.035})`,
+            opacity: 1 - heroProgress * 0.92 - heroHandoffEase * 0.26,
+            transform: `translate3d(0, ${heroProgress * 4 - heroHandoffEase * 4}vh, 0) scale(${1 - heroHandoffEase * 0.035})`,
           }}
         />
 

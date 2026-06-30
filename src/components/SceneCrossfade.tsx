@@ -16,13 +16,13 @@ function sceneOpacity(index: number, progress: number): number {
   return Math.min(1, Math.max(0, 1 - dist / fadeWindow));
 }
 
-export function SceneCrossfade({progress}: {progress: number}) {
+export function SceneCrossfade({progress, heroDepth = 0}: {progress: number; heroDepth?: number}) {
   return (
-    <div className="scene-crossfade" aria-hidden="true">
+    <div className="scene-crossfade" aria-hidden="true" style={{'--hero-depth': heroDepth} as CSSProperties}>
       {scenes.map((src, i) => (
         <img
           key={src}
-          className="scene-frame"
+          className={`scene-frame scene-frame-${i}`}
           src={src}
           alt=""
           loading="eager"
