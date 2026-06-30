@@ -48,7 +48,6 @@ export function HeroIntro({
   const kickerRef = useRef<HTMLParagraphElement>(null);
   const supportRef = useRef<HTMLParagraphElement>(null);
   const footerRef = useRef<HTMLElement>(null);
-  const cardRef = useRef<HTMLDivElement>(null);
   const cueRef = useRef<HTMLParagraphElement>(null);
 
   useLayoutEffect(() => {
@@ -66,7 +65,6 @@ export function HeroIntro({
     const kicker = kickerRef.current;
     const support = supportRef.current;
     const footer = footerRef.current;
-    const card = cardRef.current;
     const cue = cueRef.current;
     const slices = titleSliceRefs.current.slice(0, HERO_SLICE_SEGMENTS.length);
 
@@ -85,7 +83,6 @@ export function HeroIntro({
       !kicker ||
       !support ||
       !footer ||
-      !card ||
       !cue ||
       slices.length !== HERO_SLICE_SEGMENTS.length
     ) {
@@ -107,7 +104,7 @@ export function HeroIntro({
         gsap.set(slices, {autoAlpha: 0, x: 0, y: 0, filter: 'blur(0px)'});
         gsap.set([kicker, support], {opacity: 1, y: 0, filter: 'blur(0px)'});
         gsap.set(footer, {opacity: 1, y: 0, filter: 'blur(0px)'});
-        gsap.set([card, cue], {opacity: 1, y: 0, filter: 'blur(0px)'});
+        gsap.set(cue, {opacity: 1, y: 0, filter: 'blur(0px)'});
       };
 
       setIdle();
@@ -186,7 +183,7 @@ export function HeroIntro({
           y: reducedMotion ? 4 : 14,
           filter: `blur(${reducedMotion ? 2 : 6}px)`,
         });
-        gsap.set([card, cue], {
+        gsap.set(cue, {
           opacity: 0,
           y: reducedMotion ? 4 : 14,
           filter: `blur(${reducedMotion ? 2 : 6}px)`,
@@ -283,13 +280,12 @@ export function HeroIntro({
             duration: reducedMotion ? 0.18 : 0.24,
             ease: 'power2.out',
           }, reducedMotion ? 0.28 : 0.42)
-          .to([card, cue], {
+          .to(cue, {
             opacity: 1,
             y: 0,
             filter: 'blur(0px)',
             duration: reducedMotion ? 0.18 : 0.26,
             ease: 'power2.out',
-            stagger: reducedMotion ? 0.02 : 0.05,
           }, reducedMotion ? 0.3 : 0.46)
           .to(root, {
             '--hero-handoff': 0,
@@ -327,12 +323,72 @@ export function HeroIntro({
           </div>
 
           <div className="top-actions">
-            <div ref={langSwitchRef} className="lang-switch" aria-label={copy.language}>
-              <button className={locale === 'pt' ? 'is-active' : undefined} type="button" onClick={() => setLocale('pt')}>
-                PT
+            <div
+              ref={langSwitchRef}
+              className={`lang-switch ${locale === 'en' ? 'is-en' : 'is-pt'}`}
+              aria-label={copy.language}
+              data-locale={locale}
+            >
+              <span className="lang-switch-thumb" aria-hidden="true">
+                <span className="lang-flag lang-flag-br">
+                  <svg className="lang-flag-icon" viewBox="0 0 64 64" focusable="false" aria-hidden="true">
+                    <circle className="lang-flag-ring" cx="32" cy="32" r="29" />
+                    <path className="lang-flag-main" d="M32 11 55 32 32 53 9 32Z" />
+                    <circle className="lang-flag-main" cx="32" cy="32" r="13.5" />
+                    <path className="lang-flag-fill" d="M19.5 30.2c8.8-2.6 20.6-.8 25.6 5.4" />
+                    <circle className="lang-flag-dot" cx="21.5" cy="36.5" r="1.15" />
+                    <circle className="lang-flag-dot" cx="28" cy="39.8" r="1" />
+                    <circle className="lang-flag-dot" cx="33" cy="37.2" r="0.95" />
+                    <circle className="lang-flag-dot" cx="37.7" cy="40.1" r="1" />
+                    <circle className="lang-flag-dot" cx="42" cy="35.6" r="0.95" />
+                    <circle className="lang-flag-dot" cx="31.8" cy="44.2" r="0.85" />
+                  </svg>
+                </span>
+                <span className="lang-flag lang-flag-us">
+                  <svg className="lang-flag-icon" viewBox="0 0 64 64" focusable="false" aria-hidden="true">
+                    <defs>
+                      <clipPath id="lang-us-circle">
+                        <circle cx="32" cy="32" r="29" />
+                      </clipPath>
+                    </defs>
+                    <g clipPath="url(#lang-us-circle)">
+                      <rect className="lang-flag-bg" x="3" y="3" width="58" height="58" />
+                      <path className="lang-flag-stripe" d="M23 10h38v5H23zM23 20h38v5H23zM23 30h38v5H23zM3 40h58v5H3zM3 50h58v5H3z" />
+                    </g>
+                    <circle className="lang-flag-ring" cx="32" cy="32" r="29" />
+                    <g className="lang-flag-starfield">
+                      <circle cx="13" cy="12" r="1.35" />
+                      <circle cx="21" cy="12" r="1.35" />
+                      <circle cx="29" cy="12" r="1.35" />
+                      <circle cx="17" cy="18" r="1.25" />
+                      <circle cx="25" cy="18" r="1.25" />
+                      <circle cx="13" cy="24" r="1.25" />
+                      <circle cx="21" cy="24" r="1.25" />
+                      <circle cx="29" cy="24" r="1.25" />
+                      <circle cx="17" cy="30" r="1.15" />
+                      <circle cx="25" cy="30" r="1.15" />
+                      <circle cx="13" cy="36" r="1.1" />
+                      <circle cx="21" cy="36" r="1.1" />
+                      <circle cx="29" cy="36" r="1.1" />
+                    </g>
+                  </svg>
+                </span>
+              </span>
+              <button
+                className={locale === 'pt' ? 'is-active' : undefined}
+                type="button"
+                aria-pressed={locale === 'pt'}
+                onClick={() => setLocale('pt')}
+              >
+                <span className="lang-switch-code">PT</span>
               </button>
-              <button className={locale === 'en' ? 'is-active' : undefined} type="button" onClick={() => setLocale('en')}>
-                EN
+              <button
+                className={locale === 'en' ? 'is-active' : undefined}
+                type="button"
+                aria-pressed={locale === 'en'}
+                onClick={() => setLocale('en')}
+              >
+                <span className="lang-switch-code">EN</span>
               </button>
             </div>
           </div>
@@ -367,15 +423,6 @@ export function HeroIntro({
         </div>
 
         <footer ref={footerRef} className="hero-footer" style={footerStyle}>
-          <div ref={cardRef} className="hero-progress-card" aria-hidden="true">
-            <div className="panel-heading">
-              <span>Stage 01 / Image field</span>
-              <span>{String(Math.round(heroProgress * 100)).padStart(2, '0')}%</span>
-            </div>
-            <div className="progress-rail hero-progress-rail">
-              <span className="progress-fill" style={{transform: `scaleX(${heroProgress})`}} />
-            </div>
-          </div>
           <p ref={cueRef} className="scroll-cue">{copy.scrollCue}</p>
         </footer>
       </div>
