@@ -20,14 +20,28 @@ export const TECHNOLOGIES_SECTION_COPY: Record<
   }
 > = {
   pt: {
-    titlePhrases: ['Meu stack diário', 'As linguagens que domino', 'Com o que construo', 'Minha base técnica', 'O que me move'],
-    subtitle: 'Tecnologias que uso para criar interfaces, automações e produtos digitais.',
-    instruction: 'Mova o mouse para explorar',
+    titlePhrases: [
+      'Meu Stack Diário.',
+      'Linguagens que uso.',
+      'Meu ambiente de trabalho.',
+      'Front-end e interface.',
+      'Back-end e automação.',
+      'Dados, deploy e Git.',
+    ],
+    subtitle: 'Linguagens, ferramentas e serviços que uso para construir produtos digitais.',
+    instruction: 'Role para continuar',
   },
   en: {
-    titlePhrases: ['My daily stack', 'The languages I master', 'What I build with', 'My technical foundation', 'What drives me'],
-    subtitle: 'Technologies I use to create interfaces, automations, and digital products.',
-    instruction: 'Move your mouse to explore',
+    titlePhrases: [
+      'My Daily Stack.',
+      'Languages I use.',
+      'My work environment.',
+      'Front end and interface.',
+      'Back end and automation.',
+      'Data, deploy, and Git.',
+    ],
+    subtitle: 'Languages, tools, and services I use to build digital products.',
+    instruction: 'Scroll to continue',
   },
 };
 

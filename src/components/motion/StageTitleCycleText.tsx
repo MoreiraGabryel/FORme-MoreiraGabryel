@@ -118,8 +118,8 @@ export function StageTitleCycleText<T extends ElementType = 'div'>({
       });
       gsap.set(nextLine, {
         yPercent: 108,
-        opacity: 0.16,
-        filter: 'blur(14px)',
+        opacity: 0.22,
+        filter: 'blur(6px)',
         transformOrigin: '50% 50%',
       });
       gsap.set(rootRef.current, {
@@ -138,12 +138,12 @@ export function StageTitleCycleText<T extends ElementType = 'div'>({
 
       tl.to(
         currentLine,
-        {
-          yPercent: -116,
-          opacity: 0.02,
-          filter: 'blur(16px)',
-          ease: 'power3.inOut',
-        },
+          {
+            yPercent: -116,
+            opacity: 0.04,
+            filter: 'blur(7px)',
+            ease: 'power3.inOut',
+          },
         0,
       )
         .to(

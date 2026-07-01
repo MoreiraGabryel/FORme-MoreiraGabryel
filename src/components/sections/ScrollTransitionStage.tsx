@@ -1,11 +1,11 @@
 import {useEffect, useLayoutEffect, useMemo, useRef, useState} from 'react';
-import type {CSSProperties, PointerEvent as ReactPointerEvent} from 'react';
+import type {CSSProperties} from 'react';
 import {gsap} from 'gsap';
 import {ScrollTrigger} from 'gsap/ScrollTrigger';
 import type {Locale} from '../../i18n/useTranslation';
 import {TECHNOLOGIES, TECHNOLOGIES_SECTION_COPY, type Technology} from '../../config/technologies';
 import {useIsMobile} from '../../hooks/useIsMobile';
-import {TypewriterText} from '../motion/TypewriterText';
+import {StageTitleCycleText} from '../motion/StageTitleCycleText';
 import {AboutStage} from './AboutStage';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -15,13 +15,11 @@ type FloatingTechnologySpec = {
   size: number;
   left: number;
   top: number;
-  revealDelay: number;
+  revealOrder: number;
   driftAmplitudeX: number;
   driftAmplitudeY: number;
   driftSpeed: number;
   driftOffset: number;
-  jitterDuration: number;
-  jitterDelay: number;
   depth: number;
   zIndex: number;
 };
@@ -84,18 +82,18 @@ function isTooClose(candidateLeft: number, candidateTop: number, existing: Array
 }
 
 function isInsideCenterSafeZone(left: number, top: number, isMobile: boolean) {
-  const safeRadiusX = isMobile ? 0.185 : 0.16;
-  const safeRadiusY = isMobile ? 0.16 : 0.14;
+  const safeRadiusX = isMobile ? 0.22 : 0.16;
+  const safeRadiusY = isMobile ? 0.2 : 0.14;
   const normalizedX = (left - 0.5) / safeRadiusX;
   const normalizedY = (top - 0.5) / safeRadiusY;
   return normalizedX * normalizedX + normalizedY * normalizedY < 1;
 }
 
 function isInsideHeadingSafeZone(left: number, top: number, isMobile: boolean) {
-  const minX = isMobile ? 0.18 : 0.24;
-  const maxX = isMobile ? 0.82 : 0.76;
+  const minX = isMobile ? 0.2 : 0.24;
+  const maxX = isMobile ? 0.8 : 0.76;
   const minY = isMobile ? 0.08 : 0.06;
-  const maxY = isMobile ? 0.42 : 0.38;
+  const maxY = isMobile ? 0.56 : 0.38;
   return left >= minX && left <= maxX && top >= minY && top <= maxY;
 }
 
@@ -146,7 +144,7 @@ function getFallbackSafePoints(isMobile: boolean) {
 function createFloatingSpecs(items: Technology[], isMobile: boolean) {
   const orderedItems = shuffleArray(items);
   const placedPoints: Array<{left: number; top: number}> = [];
-  const minDistance = isMobile ? 0.15 : 0.092;
+  const minDistance = isMobile ? 0.17 : 0.092;
   const bandCounts = {top: 0, middle: 0, bottom: 0};
   const bandLimits = isMobile ? {top: 3, middle: 3, bottom: 2} : {top: 5, middle: 6, bottom: 5};
   const fallbackSafePoints = getFallbackSafePoints(isMobile);
@@ -191,16 +189,14 @@ function createFloatingSpecs(items: Technology[], isMobile: boolean) {
 
     return {
       id: item.id,
-      size: Math.round(lerp(isMobile ? 40 : 48, isMobile ? 60 : 76, depth)),
+      size: Math.round(lerp(isMobile ? 34 : 48, isMobile ? 52 : 76, depth)),
       left,
       top,
-      revealDelay: index * (isMobile ? 110 : 82),
+      revealOrder: orderedItems.length <= 1 ? 0 : index / (orderedItems.length - 1),
       driftAmplitudeX: lerp(isMobile ? 12 : 18, isMobile ? 28 : 52, depth),
       driftAmplitudeY: lerp(isMobile ? 14 : 20, isMobile ? 32 : 56, depth),
       driftSpeed: lerp(0.00055, 0.0014, depth),
       driftOffset: randomBetween(0, Math.PI * 2),
-      jitterDuration: Number(randomBetween(3.1, 4.8).toFixed(2)),
-      jitterDelay: Number(randomBetween(-2.6, -0.15).toFixed(2)),
       depth,
       zIndex: Math.round(lerp(2, 8, depth)),
     };
@@ -278,15 +274,15 @@ export function ScrollTransitionStage({
   const stageOneLayerRef = useRef<HTMLDivElement | null>(null);
   const stageTwoLayerRef = useRef<HTMLDivElement | null>(null);
   const stageFieldRef = useRef<HTMLDivElement | null>(null);
-  const cursorFieldRef = useRef<HTMLDivElement | null>(null);
   const anchorRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const buttonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const animationFrameRef = useRef<number | null>(null);
   const introStartRef = useRef<number | null>(null);
   const outroStartRef = useRef<number | null>(null);
   const previousStageActiveRef = useRef(false);
-  const mouseStateRef = useRef({x: 0, y: 0, inside: false});
-  const smoothMouseRef = useRef({x: 0, y: 0});
+  const hoveredTechnologyIdRef = useRef<string | null>(null);
+  const activeTechnologyIdRef = useRef<string | null>(null);
+  const rawStageProgressRef = useRef(rawStageProgress);
   const OUTRO_DURATION = 680;
 
   const sectionCopy = TECHNOLOGIES_SECTION_COPY[locale];
@@ -346,7 +342,7 @@ export function ScrollTransitionStage({
           anticipatePin: 1,
           invalidateOnRefresh: true,
           onUpdate: (self) => {
-            const nextInteractive = self.progress >= 0.32;
+            const nextInteractive = self.progress >= 0.86;
             if (nextInteractive !== isAboutInteractive) {
               isAboutInteractive = nextInteractive;
               setAboutStageInteractive(nextInteractive);
@@ -363,18 +359,18 @@ export function ScrollTransitionStage({
           {
             autoAlpha: 0,
             y: reducedMotion ? -12 : -60,
-            duration: 0.18,
+            duration: 0.14,
           },
-          0.06,
+          0.76,
         )
         .to(
           stageTwoLayer,
           {
             autoAlpha: 1,
             y: 0,
-            duration: 0.18,
+            duration: 0.14,
           },
-          0.18,
+          0.86,
         );
     }, stageSectionRef);
 
@@ -402,22 +398,31 @@ export function ScrollTransitionStage({
   }, [isMobile, visibleTechnologies]);
 
   useEffect(() => {
+    hoveredTechnologyIdRef.current = hoveredTechnologyId;
+  }, [hoveredTechnologyId]);
+
+  useEffect(() => {
+    activeTechnologyIdRef.current = activeTechnologyId;
+  }, [activeTechnologyId]);
+
+  useEffect(() => {
+    rawStageProgressRef.current = rawStageProgress;
+  }, [rawStageProgress]);
+
+  useEffect(() => {
     if (stageActive && !previousStageActiveRef.current) {
       introStartRef.current = null;
       outroStartRef.current = null;
       setHoveredTechnologyId(null);
-      setFloatingSpecs(createFloatingSpecs(visibleTechnologies, isMobile));
     }
 
     if (!stageActive) {
       outroStartRef.current = performance.now();
-      mouseStateRef.current.inside = false;
       setHoveredTechnologyId(null);
-      if (cursorFieldRef.current) cursorFieldRef.current.style.opacity = '0';
     }
 
     previousStageActiveRef.current = stageActive;
-  }, [isMobile, stageActive, visibleTechnologies]);
+  }, [stageActive]);
 
   useEffect(() => {
     if (!stageActive && outroStartRef.current === null) {
@@ -436,32 +441,27 @@ export function ScrollTransitionStage({
       }
 
       if (introStartRef.current === null) introStartRef.current = time;
-      const introElapsed = time - introStartRef.current;
+      const driftTime = time - introStartRef.current;
       const rect = field.getBoundingClientRect();
-      const centerX = rect.left + rect.width / 2;
-      const centerY = rect.top + rect.height / 2;
-
-      smoothMouseRef.current.x = lerp(smoothMouseRef.current.x, mouseStateRef.current.x, 0.08);
-      smoothMouseRef.current.y = lerp(smoothMouseRef.current.y, mouseStateRef.current.y, 0.08);
-
-      const mouseLocalX = smoothMouseRef.current.x - centerX;
-      const mouseLocalY = smoothMouseRef.current.y - centerY;
-      const pointerEnabled = mouseStateRef.current.inside && !isMobile;
       const motionFactor = reducedMotion ? 0.38 : 1;
-      const parallaxX = pointerEnabled ? clamp((smoothMouseRef.current.x - centerX) / rect.width, -0.5, 0.5) * motionFactor : 0;
-      const parallaxY = pointerEnabled ? clamp((smoothMouseRef.current.y - centerY) / rect.height, -0.5, 0.5) * motionFactor : 0;
-
-      field.style.setProperty('--field-parallax-x', `${(parallaxX * 18).toFixed(2)}px`);
-      field.style.setProperty('--field-parallax-y', `${(parallaxY * 18).toFixed(2)}px`);
+      const scrollProgress = rawStageProgressRef.current;
+      const iconIntroProgress = clamp((scrollProgress - 0.045) / 0.5, 0, 1);
+      const iconExitProgress = clamp((scrollProgress - 0.74) / 0.22, 0, 1);
+      const scrollExitEase = iconExitProgress * iconExitProgress * iconExitProgress;
 
       floatingSpecs.forEach((spec) => {
         const anchor = anchorRefs.current[spec.id];
         const button = buttonRefs.current[spec.id];
         if (!anchor || !button) return;
 
-        const revealDuration = reducedMotion ? 420 : 980;
-        const revealProgress = easeOutCubic(clamp((introElapsed - spec.revealDelay) / revealDuration, 0, 1));
-        const driftProgress = clamp((introElapsed - spec.revealDelay - (reducedMotion ? 40 : 240)) / (reducedMotion ? 420 : 1200), 0, 1);
+        const isHovered = hoveredTechnologyIdRef.current === spec.id;
+        const isActive = activeTechnologyIdRef.current === spec.id;
+        const interactionStrength = isActive ? 1 : isHovered ? 0.72 : 0;
+        const driftDamping = interactionStrength ? 0.28 : 1;
+        const revealOffset = spec.revealOrder * (isMobile ? 0.34 : 0.42);
+        const revealWindow = isMobile ? 0.34 : 0.28;
+        const revealProgress = easeOutCubic(clamp((iconIntroProgress - revealOffset) / revealWindow, 0, 1));
+        const driftProgress = easeOutCubic(clamp((iconIntroProgress - revealOffset + 0.08) / 0.42, 0, 1));
         const targetX = (spec.left - 0.5) * rect.width;
         const targetY = (spec.top - 0.5) * rect.height;
         const targetDistance = Math.hypot(targetX, targetY) || 1;
@@ -470,47 +470,31 @@ export function ScrollTransitionStage({
         const spawnOrigin = getSafeSpawnOrigin(targetX, targetY, rect, isMobile);
         const tangentX = -directionY;
         const tangentY = directionX;
-        const waveX = Math.sin(time * spec.driftSpeed + spec.driftOffset) * spec.driftAmplitudeX * motionFactor;
-        const waveY = Math.cos(time * (spec.driftSpeed * 0.82) + spec.driftOffset * 1.17) * spec.driftAmplitudeY * motionFactor;
-        const microX = reducedMotion ? 0 : Math.sin(time * (spec.driftSpeed * 1.7) + spec.driftOffset * 2.4) * (spec.driftAmplitudeX * 0.22);
-        const microY = reducedMotion ? 0 : Math.cos(time * (spec.driftSpeed * 1.42) + spec.driftOffset * 1.9) * (spec.driftAmplitudeY * 0.18);
+        const waveX = Math.sin(driftTime * spec.driftSpeed + spec.driftOffset) * spec.driftAmplitudeX * motionFactor * driftDamping;
+        const waveY = Math.cos(driftTime * (spec.driftSpeed * 0.82) + spec.driftOffset * 1.17) * spec.driftAmplitudeY * motionFactor * driftDamping;
+        const microX = reducedMotion ? 0 : Math.sin(driftTime * (spec.driftSpeed * 1.7) + spec.driftOffset * 2.4) * (spec.driftAmplitudeX * 0.14) * driftDamping;
+        const microY = reducedMotion ? 0 : Math.cos(driftTime * (spec.driftSpeed * 1.42) + spec.driftOffset * 1.9) * (spec.driftAmplitudeY * 0.12) * driftDamping;
         const ejectionPulse = Math.sin(revealProgress * Math.PI) * lerp(reducedMotion ? 9 : 16, reducedMotion ? 24 : 42, spec.depth);
-        const swirlDrift = reducedMotion ? 0 : Math.sin(time * (spec.driftSpeed * 1.08) + spec.driftOffset * 1.6) * lerp(4, 13, spec.depth) * driftProgress;
-        const driftX = (waveX + microX) * driftProgress + parallaxX * spec.depth * 16 + directionX * ejectionPulse + tangentX * swirlDrift;
-        const driftY = (waveY + microY) * driftProgress + parallaxY * spec.depth * 16 + directionY * ejectionPulse + tangentY * swirlDrift;
+        const swirlDrift = reducedMotion ? 0 : Math.sin(driftTime * (spec.driftSpeed * 1.08) + spec.driftOffset * 1.6) * lerp(3, 9, spec.depth) * driftProgress * driftDamping;
+        const driftX = (waveX + microX) * driftProgress + directionX * ejectionPulse + tangentX * swirlDrift;
+        const driftY = (waveY + microY) * driftProgress + directionY * ejectionPulse + tangentY * swirlDrift;
         const baseX = lerp(spawnOrigin.x, targetX, revealProgress) + driftX;
         const baseY = lerp(spawnOrigin.y, targetY, revealProgress) + driftY;
 
-        let forceX = 0;
-        let forceY = 0;
-        let influence = 0;
-
-        if (pointerEnabled) {
-          const deltaX = baseX - mouseLocalX;
-          const deltaY = baseY - mouseLocalY;
-          const distance = Math.hypot(deltaX, deltaY) || 1;
-          const influenceRadius = lerp(100, 160, spec.depth);
-          influence = clamp(1 - distance / influenceRadius, 0, 1);
-          const force = influence * influence;
-          const repulsion = force * lerp(52, 96, spec.depth) * motionFactor;
-          forceX = (deltaX / distance) * repulsion;
-          forceY = (deltaY / distance) * repulsion;
-        }
-
         const depthScale = lerp(0.9, 1.18, spec.depth);
-        const finalX = baseX + forceX;
-        const finalY = baseY + forceY;
+        const finalX = baseX;
+        const finalY = baseY;
         const opacity = clamp(lerp(0.68, 1, spec.depth) * revealProgress, 0, 1);
-        const scale = lerp(0.5, depthScale, revealProgress) + influence * (reducedMotion ? 0.03 : 0.075);
-        const rotation = (Math.sin(time * (spec.driftSpeed * 0.9) + spec.driftOffset) * lerp(1.6, 4.8, spec.depth) + forceX * 0.065) * motionFactor;
-        const brightness = lerp(1, 1.14, spec.depth) + influence * (reducedMotion ? 0.05 : 0.12);
-        const shadowOpacity = lerp(0.08, 0.18, spec.depth) + influence * 0.16;
-        const shadowBlur = lerp(12, 22, spec.depth) + influence * (reducedMotion ? 10 : 18);
+        const scale = lerp(0.5, depthScale, revealProgress) + interactionStrength * (reducedMotion ? 0.025 : 0.07);
+        const rotation = Math.sin(time * (spec.driftSpeed * 0.74) + spec.driftOffset) * lerp(0.7, 2.4, spec.depth) * motionFactor * driftDamping;
+        const brightness = lerp(1, 1.12, spec.depth) + interactionStrength * (reducedMotion ? 0.04 : 0.1);
+        const shadowOpacity = lerp(0.08, 0.18, spec.depth) + interactionStrength * 0.14;
+        const shadowBlur = lerp(12, 22, spec.depth) + interactionStrength * (reducedMotion ? 8 : 16);
         const blur = (1 - revealProgress) * 3.4;
 
-        let outroProgress = 0;
+        let outroProgress = scrollExitEase;
         if (outroStartRef.current !== null) {
-          outroProgress = clamp((time - outroStartRef.current) / OUTRO_DURATION, 0, 1);
+          outroProgress = Math.max(outroProgress, clamp((time - outroStartRef.current) / OUTRO_DURATION, 0, 1));
         }
         const easeIn = outroProgress * outroProgress * outroProgress;
         const displayX = lerp(finalX, 0, easeIn);
@@ -522,16 +506,6 @@ export function ScrollTransitionStage({
         button.style.transform = `translate3d(0, 0, 0) rotate(${rotation.toFixed(2)}deg) scale(${scale.toFixed(3)})`;
         button.style.filter = `brightness(${brightness.toFixed(3)}) blur(${blur.toFixed(2)}px) drop-shadow(0 0 ${shadowBlur.toFixed(2)}px rgba(255,255,255,${shadowOpacity.toFixed(3)}))`;
       });
-
-      const cursorField = cursorFieldRef.current;
-      if (cursorField) {
-        if (pointerEnabled) {
-          cursorField.style.opacity = '1';
-          cursorField.style.transform = `translate3d(${(smoothMouseRef.current.x - rect.left).toFixed(2)}px, ${(smoothMouseRef.current.y - rect.top).toFixed(2)}px, 0) translate(-50%, -50%) scale(1)`;
-        } else {
-          cursorField.style.opacity = '0';
-        }
-      }
 
       if (!stageActive && outroStartRef.current !== null) {
         const outroProgress = clamp((time - outroStartRef.current) / OUTRO_DURATION, 0, 1);
@@ -558,21 +532,8 @@ export function ScrollTransitionStage({
     };
   }, [floatingSpecs, isMobile, reducedMotion, stageActive]);
 
-  const updatePointerState = (clientX: number, clientY: number) => {
-    mouseStateRef.current.x = clientX;
-    mouseStateRef.current.y = clientY;
-    mouseStateRef.current.inside = true;
-  };
-
-  const handleStagePointerMove = (event: ReactPointerEvent<HTMLElement>) => {
-    if (!stageActive) return;
-    updatePointerState(event.clientX, event.clientY);
-  };
-
   const handleStagePointerLeave = () => {
-    mouseStateRef.current.inside = false;
     setHoveredTechnologyId(null);
-    if (cursorFieldRef.current) cursorFieldRef.current.style.opacity = '0';
   };
 
   return (
@@ -583,7 +544,6 @@ export function ScrollTransitionStage({
         ...stageStyle,
         '--stage2-exit-progress': stageExitProgress,
       } as CSSProperties}
-      onPointerMove={handleStagePointerMove}
       onPointerLeave={handleStagePointerLeave}
     >
       <div ref={pinnedShellRef} className="technologies-pin-shell">
@@ -604,7 +564,6 @@ export function ScrollTransitionStage({
             <div className="transition-stage-media technologies-stage-media" aria-hidden="true">
               <div className="transition-media technologies-media">
                 <div ref={stageFieldRef} className="technologies-float-field">
-                  <div ref={cursorFieldRef} className="technologies-cursor-field" />
                   {floatingSpecs.map((spec) => {
                     const technology = visibleTechnologies.find((item) => item.id === spec.id);
                     if (!technology) return null;
@@ -640,8 +599,6 @@ export function ScrollTransitionStage({
                           style={{
                             width: `${spec.size}px`,
                             height: `${spec.size}px`,
-                            '--icon-jitter-duration': `${spec.jitterDuration}s`,
-                            '--icon-jitter-delay': `${spec.jitterDelay}s`,
                           } as CSSProperties}
                         >
                           <InlineTechnologyIcon
@@ -671,16 +628,16 @@ export function ScrollTransitionStage({
               <div className="technologies-copy-inner">
                 <div className="technologies-title-glow" aria-hidden="true" />
                 <div className="technologies-heading-stack">
-                  <TypewriterText
+                  <StageTitleCycleText
                     as="h2"
                     phrases={sectionCopy.titlePhrases}
                     active={stageActive}
-                    paused={stageLeaving}
                     className="technologies-title"
-                    typingSpeedMs={30}
-                    deletingSpeedMs={20}
-                    holdDurationMs={3100}
-                    initialDelayMs={240}
+                    introTypingSpeedMs={24}
+                    introHoldDurationMs={980}
+                    cycleHoldDurationMs={2100}
+                    reelDurationMs={620}
+                    initialDelayMs={180}
                   />
                   <p className="technologies-subtitle">{sectionCopy.subtitle}</p>
                 </div>
