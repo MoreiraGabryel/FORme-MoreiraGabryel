@@ -762,7 +762,7 @@ button {
   margin-top: 0;
   padding-top: 8svh;
   overflow: hidden;
-  background: #050608;
+  background: transparent;
 }
 
 .transition-stage::after {
@@ -776,7 +776,7 @@ button {
   pointer-events: none;
   background:
     linear-gradient(180deg, transparent 0%, rgba(5, 6, 8, 0.34) 58%, #050608 100%);
-  opacity: calc(0.18 + var(--stage-settle, 0) * 0.22);
+  opacity: calc(var(--stage-settle, 0) * 0.46);
 }
 
 .sticky-stage {
@@ -2356,22 +2356,19 @@ button {
 }
 
 .technologies-pin-shell .technologies-backdrop-grid {
-  opacity: 0.22;
+  opacity: 0;
   transform: none;
 }
 
 .technologies-pin-shell .technologies-backdrop-radial {
   background:
-    radial-gradient(circle at 50% 49%, rgba(242, 194, 48, 0.06), transparent 15%),
-    radial-gradient(circle at 50% 50%, rgba(42, 57, 86, 0.12), transparent 28%),
-    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.025), transparent 42%),
-    radial-gradient(circle at 26% 28%, rgba(255, 255, 255, 0.03), transparent 18%),
-    radial-gradient(circle at 74% 24%, rgba(255, 255, 255, 0.025), transparent 16%),
-    linear-gradient(180deg, rgba(10, 12, 16, 0.18), rgba(10, 12, 16, 0.72) 62%, rgba(5, 6, 8, 0.96));
+    radial-gradient(circle at 50% 46%, rgba(255, 255, 255, 0.055), transparent 14%),
+    radial-gradient(circle at 50% 50%, rgba(42, 57, 86, 0.08), transparent 36%),
+    linear-gradient(180deg, rgba(5, 6, 8, 0.04), rgba(5, 6, 8, 0.12) 58%, rgba(5, 6, 8, 0.28));
 }
 
 .technologies-pin-shell .technologies-backdrop-orbits {
-  opacity: 0.28;
+  opacity: 0;
 }
 
 .technologies-pin-shell .technologies-backdrop-particles {
@@ -2380,7 +2377,7 @@ button {
 }
 
 .technologies-pin-shell .technologies-backdrop-noise {
-  opacity: 0.16;
+  opacity: 0.05;
 }
 
 .technologies-stage-one-layer,
@@ -2399,6 +2396,9 @@ button {
   align-items: center;
   justify-content: center;
   padding: clamp(1.25rem, 2vw, 2rem);
+  background:
+    radial-gradient(circle at 50% 42%, rgba(18, 26, 42, 0.12), transparent 34%),
+    #050608;
   pointer-events: none;
 }
 
@@ -2824,8 +2824,8 @@ button {
   pointer-events: none;
   z-index: 1;
   background:
-    radial-gradient(circle at center, rgba(18, 26, 42, 0.04), transparent 28%),
-    linear-gradient(180deg, rgba(10, 12, 16, 0.04), rgba(18, 26, 42, 0.2) 52%, rgba(5, 6, 8, 0.5));
+    radial-gradient(circle at center, rgba(18, 26, 42, 0.02), transparent 30%),
+    linear-gradient(180deg, rgba(5, 6, 8, 0.06), rgba(5, 6, 8, 0.08) 54%, rgba(5, 6, 8, 0.22));
 }
 
 .technologies-copy {
@@ -2849,9 +2849,9 @@ button {
   text-align: center;
   text-shadow: 0 18px 46px rgba(0, 0, 0, 0.42);
   will-change: transform, opacity, filter;
-  transform: translate3d(0, calc((1 - var(--stage-ease, 0)) * 1.2rem - var(--hero-handoff, 0) * 2.8rem - 10vh - var(--stage2-exit-progress, 0) * 0.75rem), 0) scale(calc(1 + var(--stage-ease, 0) * 0.04 + var(--hero-handoff, 0) * 0.04 - var(--stage2-exit-progress, 0) * 0.015));
+  transform: translate3d(0, calc((1 - var(--stage-ease, 0)) * 1.2rem - var(--hero-handoff, 0) * 2.8rem - 10vh - var(--stage2-exit-progress, 0) * 10vh), 0) scale(calc(1 + var(--stage-ease, 0) * 0.04 + var(--hero-handoff, 0) * 0.04 - var(--stage2-exit-progress, 0) * 0.035));
   opacity: min(1, calc((0.34 + var(--stage-ease, 0) * 0.84 + var(--hero-handoff, 0) * 0.32) * (1 - var(--stage2-exit-progress, 0))));
-  filter: blur(calc((1 - var(--stage-ease, 0)) * 1.8px + var(--stage2-exit-progress, 0) * 6px));
+  filter: blur(calc((1 - var(--stage-ease, 0)) * 1.8px + var(--stage2-exit-progress, 0) * 9px));
   transition:
     opacity 0.28s linear,
     transform 0.4s cubic-bezier(0.22, 1, 0.36, 1),
@@ -2894,11 +2894,34 @@ button {
   will-change: transform, filter;
 }
 
+.technologies-title .typewriter-text,
+.technologies-title .stage-title-cycle {
+  width: 100%;
+  min-height: 1.08em;
+}
+
+.technologies-title .typewriter-text-content,
+.technologies-title .stage-title-cycle-content {
+  white-space: normal;
+}
+
+.technologies-title .stage-title-cycle-sizer,
+.technologies-title .stage-title-cycle-visual,
+.technologies-title .stage-title-cycle-phrase,
+.technologies-title .stage-title-cycle-reel-line {
+  align-items: center;
+}
+
+.technologies-title .stage-title-cycle-reel-viewport {
+  min-height: 1.08em;
+}
+
 .typewriter-text,
 .stage-title-cycle {
   position: relative;
   display: inline-grid;
   place-items: start center;
+  max-width: 100%;
 }
 
 .typewriter-text-sizer,
@@ -2932,11 +2955,13 @@ button {
   align-items: baseline;
   justify-content: center;
   min-width: 100%;
+  max-width: 100%;
 }
 
 .typewriter-text-content,
 .stage-title-cycle-content {
   display: inline-block;
+  max-width: 100%;
   backface-visibility: hidden;
   transform: translateZ(0);
 }
@@ -2953,7 +2978,8 @@ button {
   animation: typewriterCursorBlink 0.9s ease-in-out infinite;
 }
 
-.technologies-stage .typewriter-cursor {
+.technologies-stage .typewriter-cursor,
+.technologies-stage .stage-title-cycle-cursor {
   display: none;
 }
 
@@ -3023,27 +3049,7 @@ button {
   inset: 0;
   z-index: 2;
   overflow: hidden;
-  transform: translate3d(var(--field-parallax-x, 0px), var(--field-parallax-y, 0px), 0);
-  transition: transform 0.18s linear;
-}
-
-.technologies-cursor-field {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 140px;
-  height: 140px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(242,194,48,0.075) 0%, transparent 70%);
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.35s ease;
-  will-change: transform;
-  mix-blend-mode: screen;
-}
-
-.technologies-stage.is-active {
-  cursor: none;
+  transform: translate3d(0, 0, 0);
 }
 
 .technology-float-anchor {
@@ -3136,10 +3142,6 @@ button {
   transform: translate(-50%, 0) scale(1);
 }
 
-.technologies-stage.has-active-technology .technology-inline-icon > svg {
-  animation-play-state: paused;
-}
-
 .technology-inline-icon,
 .technology-icon-fallback {
   position: relative;
@@ -3175,10 +3177,6 @@ button {
   overflow: visible;
   filter: drop-shadow(0 0 14px rgba(255, 255, 255, 0.09));
   transform-origin: center;
-}
-
-.technology-inline-icon > svg {
-  animation: technologyIconJitter var(--icon-jitter-duration, 1.8s) ease-in-out var(--icon-jitter-delay, 0s) infinite;
 }
 
 .technology-icon-fallback {
@@ -3287,27 +3285,6 @@ button {
   }
 }
 
-@keyframes technologyIconJitter {
-  0% {
-    transform: translate3d(0, 0, 0) rotate(0deg) scale(1);
-  }
-  20% {
-    transform: translate3d(-0.8px, 1.2px, 0) rotate(-3deg) scale(1.03);
-  }
-  40% {
-    transform: translate3d(1.2px, -1.4px, 0) rotate(3.2deg) scale(1.06);
-  }
-  60% {
-    transform: translate3d(-1.4px, -0.9px, 0) rotate(-2.6deg) scale(1.04);
-  }
-  80% {
-    transform: translate3d(1px, 1.3px, 0) rotate(2.4deg) scale(1.02);
-  }
-  100% {
-    transform: translate3d(0, 0, 0) rotate(0deg) scale(1);
-  }
-}
-
 @media (max-width: 900px) {
 }
 
@@ -3408,8 +3385,7 @@ button {
   }
 
   .scroll-cue-arrows span,
-  .technologies-backdrop-particles,
-  .technology-inline-icon > svg {
+  .technologies-backdrop-particles {
     animation: none;
   }
 
@@ -3424,8 +3400,7 @@ button {
   .technology-modal-card,
   .about-coverflow-card,
   .about-coverflow-card-flip,
-  .about-stage-two-layer,
-  .technologies-cursor-field {
+  .about-stage-two-layer {
     transition-duration: 0.01ms;
     animation-duration: 0.01ms;
   }

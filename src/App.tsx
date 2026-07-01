@@ -161,9 +161,15 @@ export default function App() {
   const fakeFooterReverse = upwardScrollBias * fakeFooterReverseWindow;
   const fakeFooterReverseEase = fakeFooterReverse * fakeFooterReverse * (3 - 2 * fakeFooterReverse);
 
+  const stackSceneProgress = 0.24 + clamp(rawStageProgress / 0.78, 0, 1) * 0.02;
+  const postStackSceneProgress = 0.26 + clamp((rawStageProgress - 0.84) / 0.16, 0, 1) * 0.24;
+  const stageSceneProgress = rawStageProgress < 0.84 ? stackSceneProgress : postStackSceneProgress;
   const totalScrollProgress = clamp(
-
-    heroProgress * 0.28 + rawStageProgress * 0.48 + rawFakeFooterProgress * 0.24,
+    rawFakeFooterProgress > 0.02
+      ? 0.5 + rawFakeFooterProgress * 0.32
+      : heroProgress < 0.98
+        ? heroProgress * 0.24
+        : stageSceneProgress,
     0,
     1,
   );
