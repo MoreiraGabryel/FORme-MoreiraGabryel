@@ -4,7 +4,6 @@ import {LoadingScreen} from './components/sections/LoadingScreen';
 import {HeroIntro} from './components/sections/HeroIntro';
 import {ScrollTransitionStage} from './components/sections/ScrollTransitionStage';
 import {FakeFooterStage} from './components/sections/FakeFooterStage';
-import {SceneCrossfade} from './components/SceneCrossfade';
 import {LegalPage} from './components/legal/LegalPage';
 import {HOME_COPY} from './config/homeContent';
 import {useTranslation} from './i18n/useTranslation';
@@ -142,8 +141,6 @@ export default function App() {
   const stageProgress = rawStageProgress < 0.78 ? stageReadProgress : 1;
   const heroHandoff = clamp((heroProgress - 0.58) / 0.34, 0, 1);
   const heroHandoffEase = 1 - Math.pow(1 - heroHandoff, 3);
-  const heroDepth = clamp(heroProgress / 0.92, 0, 1);
-  const heroDepthEase = heroDepth * heroDepth * (3 - 2 * heroDepth);
   const stageEase = 1 - Math.pow(1 - stageProgress, 3);
   const stageHoldEase = stageHoldProgress * stageHoldProgress * (3 - 2 * stageHoldProgress);
   const stageSettleEase = stageReleaseProgress * stageReleaseProgress * (3 - 2 * stageReleaseProgress);
@@ -162,17 +159,11 @@ export default function App() {
   const fakeFooterReverseEase = fakeFooterReverse * fakeFooterReverse * (3 - 2 * fakeFooterReverse);
 
   const stackSceneProgress = 0.24 + clamp(rawStageProgress / 0.78, 0, 1) * 0.02;
-  const postStackSceneProgress = 0.26 + clamp((rawStageProgress - 0.84) / 0.16, 0, 1) * 0.24;
-  const stageSceneProgress = rawStageProgress < 0.84 ? stackSceneProgress : postStackSceneProgress;
-  const totalScrollProgress = clamp(
-    rawFakeFooterProgress > 0.02
-      ? 0.5 + rawFakeFooterProgress * 0.32
-      : heroProgress < 0.98
-        ? heroProgress * 0.24
-        : stageSceneProgress,
-    0,
-    1,
-  );
+  const stageBlackProgress = clamp((rawStageProgress - 0.78) / 0.1, 0, 1);
+  const stageBlackEase = stageBlackProgress * stageBlackProgress * (3 - 2 * stageBlackProgress);
+  const stageBlackRelease = rawFakeFooterProgress > 0.02 ? clamp((rawFakeFooterProgress - 0.02) / 0.22, 0, 1) : 0;
+  const sceneBlackoutOpacity = stageBlackEase * (1 - stageBlackRelease);
+  const transitionSceneProgress = clamp(stackSceneProgress, 0, 1);
 
   if (pathname === '/privacy-policy') return <LegalPage kind="privacy" locale={locale} setLocale={setLocale} />;
   if (pathname === '/terms-of-service') return <LegalPage kind="terms" locale={locale} setLocale={setLocale} />;
@@ -181,10 +172,6 @@ export default function App() {
     <>
       {!loaded && <LoadingScreen onDone={handleLoadingDone} />}
       <main className="site-shell">
-        <div className="global-scene-bg">
-          <SceneCrossfade progress={totalScrollProgress} heroDepth={heroDepthEase} />
-        </div>
-
         <HeroIntro
           copy={copy}
           locale={locale}
@@ -208,6 +195,8 @@ export default function App() {
             locale={locale}
             stageProgress={stageProgress}
             rawStageProgress={rawStageProgress}
+            sceneProgress={transitionSceneProgress}
+            sceneBlackoutOpacity={sceneBlackoutOpacity}
             stageStyle={{
               '--stage-progress': `${stageProgress}`,
               '--stage-ease': `${stageEase}`,

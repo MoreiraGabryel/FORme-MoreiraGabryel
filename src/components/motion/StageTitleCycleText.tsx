@@ -33,6 +33,7 @@ export function StageTitleCycleText<T extends ElementType = 'div'>({
   const [nextIndex, setNextIndex] = useState<number | null>(null);
   const [visibleLength, setVisibleLength] = useState(0);
   const [phase, setPhase] = useState<Phase>('idle');
+  const [layoutReady, setLayoutReady] = useState(false);
   const timeoutRef = useRef<number | null>(null);
   const rootRef = useRef<HTMLSpanElement | null>(null);
   const currentLineRef = useRef<HTMLSpanElement | null>(null);
@@ -41,10 +42,30 @@ export function StageTitleCycleText<T extends ElementType = 'div'>({
 
   const currentPhrase = safePhrases[currentIndex] ?? '';
   const upcomingPhrase = nextIndex === null ? '' : safePhrases[nextIndex] ?? '';
-  const longestPhrase = safePhrases.reduce((longest, phrase) => (phrase.length > longest.length ? phrase : longest), currentPhrase);
   const isIntro = phase === 'idle' || phase === 'typing' || phase === 'intro-hold';
   const isSteady = phase === 'steady';
   const isReel = phase === 'reel' && nextIndex !== null;
+
+  useEffect(() => {
+    let cancelled = false;
+    let frameId = 0;
+    setLayoutReady(false);
+
+    const markReady = () => {
+      if (!cancelled) setLayoutReady(true);
+    };
+
+    if (typeof document !== 'undefined' && 'fonts' in document) {
+      document.fonts.ready.then(markReady, markReady);
+    } else {
+      frameId = window.requestAnimationFrame(markReady);
+    }
+
+    return () => {
+      cancelled = true;
+      if (frameId) window.cancelAnimationFrame(frameId);
+    };
+  }, [safePhrases]);
 
   useEffect(() => {
     setCurrentIndex(0);
@@ -59,7 +80,7 @@ export function StageTitleCycleText<T extends ElementType = 'div'>({
       timeoutRef.current = null;
     }
 
-    if (!active || safePhrases.length === 0) return;
+    if (!active || !layoutReady || safePhrases.length === 0) return;
     if (phase === 'reel') return;
 
     if (phase === 'idle') {
@@ -99,7 +120,7 @@ export function StageTitleCycleText<T extends ElementType = 'div'>({
         window.clearTimeout(timeoutRef.current);
       }
     };
-  }, [active, currentIndex, currentPhrase.length, cycleHoldDurationMs, initialDelayMs, introHoldDurationMs, introTypingSpeedMs, phase, safePhrases, visibleLength]);
+  }, [active, currentIndex, currentPhrase.length, cycleHoldDurationMs, initialDelayMs, introHoldDurationMs, introTypingSpeedMs, layoutReady, phase, safePhrases, visibleLength]);
 
   useLayoutEffect(() => {
     if (!isReel || !currentLineRef.current || !nextLineRef.current || nextIndex === null) return;
@@ -200,7 +221,11 @@ export function StageTitleCycleText<T extends ElementType = 'div'>({
     <Component className={className} data-phase={phase} aria-live="polite" style={{'--reel-duration': `${reelDurationMs}ms`} as CSSProperties}>
       <span ref={rootRef} className="stage-title-cycle">
         <span className="stage-title-cycle-sizer" aria-hidden="true">
-          <span className="stage-title-cycle-content">{longestPhrase}</span>
+          {safePhrases.map((phrase) => (
+            <span key={phrase} className="stage-title-cycle-sizer-line">
+              <span className="stage-title-cycle-content">{phrase}</span>
+            </span>
+          ))}
         </span>
 
         {isIntro ? (

@@ -5,6 +5,7 @@ import {ScrollTrigger} from 'gsap/ScrollTrigger';
 import type {Locale} from '../../i18n/useTranslation';
 import {TECHNOLOGIES, TECHNOLOGIES_SECTION_COPY, type Technology} from '../../config/technologies';
 import {useIsMobile} from '../../hooks/useIsMobile';
+import {SceneCrossfade} from '../SceneCrossfade';
 import {StageTitleCycleText} from '../motion/StageTitleCycleText';
 import {AboutStage} from './AboutStage';
 
@@ -255,11 +256,15 @@ export function ScrollTransitionStage({
   locale,
   stageProgress,
   rawStageProgress,
+  sceneProgress,
+  sceneBlackoutOpacity,
   stageStyle,
 }: {
   locale: Locale;
   stageProgress: number;
   rawStageProgress: number;
+  sceneProgress: number;
+  sceneBlackoutOpacity: number;
   stageStyle: CSSProperties;
 }) {
   const isMobile = useIsMobile();
@@ -342,7 +347,7 @@ export function ScrollTransitionStage({
           anticipatePin: 1,
           invalidateOnRefresh: true,
           onUpdate: (self) => {
-            const nextInteractive = self.progress >= 0.86;
+            const nextInteractive = self.progress >= 0.94;
             if (nextInteractive !== isAboutInteractive) {
               isAboutInteractive = nextInteractive;
               setAboutStageInteractive(nextInteractive);
@@ -361,16 +366,16 @@ export function ScrollTransitionStage({
             y: reducedMotion ? -12 : -60,
             duration: 0.14,
           },
-          0.76,
+          0.78,
         )
         .to(
           stageTwoLayer,
           {
             autoAlpha: 1,
             y: 0,
-            duration: 0.14,
+            duration: 0.1,
           },
-          0.86,
+          0.9,
         );
     }, stageSectionRef);
 
@@ -543,10 +548,16 @@ export function ScrollTransitionStage({
       style={{
         ...stageStyle,
         '--stage2-exit-progress': stageExitProgress,
+        '--scene-blackout-opacity': sceneBlackoutOpacity,
       } as CSSProperties}
       onPointerLeave={handleStagePointerLeave}
     >
       <div ref={pinnedShellRef} className="technologies-pin-shell">
+        <div className="transition-scene-background" aria-hidden="true">
+          <SceneCrossfade progress={sceneProgress} />
+          <div className="transition-scene-blackout" />
+        </div>
+
         <div className="transition-backdrop technologies-backdrop" aria-hidden="true">
           <div className="technologies-backdrop-grid" />
           <div className="technologies-backdrop-radial" />
