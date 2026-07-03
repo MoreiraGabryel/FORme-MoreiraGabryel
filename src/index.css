@@ -51,12 +51,14 @@ html,
 body,
 #root {
   min-height: 100%;
+  background: #000;
+  overflow-x: hidden;
 }
 
 body {
   margin: 0;
   min-height: 100vh;
-  background: var(--background);
+  background: #000;
   color: var(--primary);
   font-family: var(--font-body);
   text-rendering: optimizeLegibility;
@@ -95,25 +97,15 @@ button {
 .site-shell {
   position: relative;
   overflow-x: clip;
-  background: linear-gradient(180deg, var(--bg-base) 0%, var(--bg-base-alt) 38%, var(--bg-surface-1) 100%);
-}
-
-.global-scene-bg {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-}
-
-.site-shell > :not(.global-scene-bg) {
-  position: relative;
-  z-index: 1;
+  background: #000;
 }
 
 .scene-crossfade {
   position: absolute;
   inset: 0;
+  z-index: 0;
   pointer-events: none;
+  background: #000;
 }
 
 .scene-frame {
@@ -157,6 +149,11 @@ button {
 }
 
 .hero-media {
+  background:
+    linear-gradient(180deg, rgba(5, 6, 8, 0.12), rgba(5, 6, 8, 0.24)),
+    url('/media/scene-0.webp') center / cover no-repeat,
+    #000;
+  transform-origin: 50% 45%;
   will-change: transform, opacity, filter;
 }
 
@@ -762,27 +759,14 @@ button {
   margin-top: 0;
   padding-top: 8svh;
   overflow: hidden;
-  background: transparent;
-}
-
-.transition-stage::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 34vh;
-  z-index: 1;
-  pointer-events: none;
-  background:
-    linear-gradient(180deg, transparent 0%, rgba(5, 6, 8, 0.34) 58%, #050608 100%);
-  opacity: calc(var(--stage-settle, 0) * 0.46);
+  background: #000;
+  isolation: isolate;
 }
 
 .sticky-stage {
   position: sticky;
   top: 0;
-  height: 100svh;
+  height: 100dvh;
   min-height: 100svh;
   overflow: hidden;
   margin-top: -2svh;
@@ -1188,6 +1172,8 @@ button {
   min-height: 250svh;
   margin-top: -32svh;
   padding-top: 0svh;
+  isolation: isolate;
+  background: #000;
 }
 
 .fake-footer-stage::before {
@@ -2347,6 +2333,31 @@ button {
 .technologies-pin-shell {
   position: relative;
   min-height: 100svh;
+  overflow: hidden;
+  isolation: isolate;
+  background: #000;
+}
+
+.transition-scene-background {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  background: #000;
+}
+
+.transition-scene-blackout {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 50% 42%, rgba(18, 26, 42, 0.1), transparent 34%),
+    #000;
+  opacity: var(--scene-blackout-opacity, 0);
+  transition: opacity 0.14s linear;
+  will-change: opacity;
 }
 
 .technologies-pin-shell > .technologies-backdrop {
@@ -2362,9 +2373,8 @@ button {
 
 .technologies-pin-shell .technologies-backdrop-radial {
   background:
-    radial-gradient(circle at 50% 46%, rgba(255, 255, 255, 0.055), transparent 14%),
-    radial-gradient(circle at 50% 50%, rgba(42, 57, 86, 0.08), transparent 36%),
-    linear-gradient(180deg, rgba(5, 6, 8, 0.04), rgba(5, 6, 8, 0.12) 58%, rgba(5, 6, 8, 0.28));
+    radial-gradient(circle at 50% 46%, rgba(255, 255, 255, 0.045), transparent 13%),
+    radial-gradient(circle at 50% 50%, rgba(42, 57, 86, 0.045), transparent 34%);
 }
 
 .technologies-pin-shell .technologies-backdrop-orbits {
@@ -2373,7 +2383,7 @@ button {
 
 .technologies-pin-shell .technologies-backdrop-particles {
   animation: none;
-  opacity: 0.22;
+  opacity: 0;
 }
 
 .technologies-pin-shell .technologies-backdrop-noise {
@@ -2396,9 +2406,7 @@ button {
   align-items: center;
   justify-content: center;
   padding: clamp(1.25rem, 2vw, 2rem);
-  background:
-    radial-gradient(circle at 50% 42%, rgba(18, 26, 42, 0.12), transparent 34%),
-    #050608;
+  background: transparent;
   pointer-events: none;
 }
 
@@ -2824,8 +2832,8 @@ button {
   pointer-events: none;
   z-index: 1;
   background:
-    radial-gradient(circle at center, rgba(18, 26, 42, 0.02), transparent 30%),
-    linear-gradient(180deg, rgba(5, 6, 8, 0.06), rgba(5, 6, 8, 0.08) 54%, rgba(5, 6, 8, 0.22));
+    radial-gradient(circle at center, rgba(18, 26, 42, 0.015), transparent 30%),
+    linear-gradient(180deg, rgba(5, 6, 8, 0.03), rgba(5, 6, 8, 0.045) 54%, rgba(5, 6, 8, 0.12));
 }
 
 .technologies-copy {
@@ -2926,8 +2934,18 @@ button {
 
 .typewriter-text-sizer,
 .stage-title-cycle-sizer {
+  display: grid;
+  width: 100%;
   visibility: hidden;
   pointer-events: none;
+}
+
+.stage-title-cycle-sizer-line {
+  grid-area: 1 / 1;
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
 }
 
 .typewriter-text-visual,
