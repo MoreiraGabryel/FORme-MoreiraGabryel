@@ -151,14 +151,14 @@ export default function App() {
   const fakeFooterTunnel = clamp((fakeFooterProgress - 0.01) / 0.62, 0, 1);
   const fakeFooterTunnelEase = fakeFooterTunnel * fakeFooterTunnel * (3 - 2 * fakeFooterTunnel);
   const fakeFooterSettle = clamp((fakeFooterProgress - 0.78) / 0.22, 0, 1);
-  const fakeFooterVideoActivation = clamp((fakeFooterProgress - 0.28) / 0.24, 0, 1);
+  const fakeFooterVideoActivation = clamp((fakeFooterProgress - 0.02) / 0.24, 0, 1);
   const upwardScrollBias = clamp(-scrollDirectionBias, 0, 1);
   const fakeFooterReverseWindow =
     clamp((fakeFooterProgress - 0.05) / 0.24, 0, 1) * clamp((1 - fakeFooterProgress) / 0.88, 0, 1);
   const fakeFooterReverse = upwardScrollBias * fakeFooterReverseWindow;
   const fakeFooterReverseEase = fakeFooterReverse * fakeFooterReverse * (3 - 2 * fakeFooterReverse);
 
-  const stackSceneProgress = 0.24 + clamp(rawStageProgress / 0.78, 0, 1) * 0.02;
+  const stackSceneProgress = clamp(rawStageProgress / 0.78, 0, 1) * 0.50;
   const stageBlackProgress = clamp((rawStageProgress - 0.78) / 0.1, 0, 1);
   const stageBlackEase = stageBlackProgress * stageBlackProgress * (3 - 2 * stageBlackProgress);
   const stageBlackRelease = rawFakeFooterProgress > 0.02 ? clamp((rawFakeFooterProgress - 0.02) / 0.22, 0, 1) : 0;
@@ -228,14 +228,14 @@ export default function App() {
               '--footer-entry-y': `${(1 - fakeFooterEase) * 5}`,
             } as CSSProperties}
             transitionVideoStyle={{
-              opacity: clamp((fakeFooterProgress + 0.14) / 0.38, 0, 1) * clamp((1 - fakeFooterProgress) / 0.52, 0, 1) * 0.72,
+              opacity: fakeFooterGate * clamp((fakeFooterProgress - 0.02) / 0.28, 0, 1) * clamp((1 - fakeFooterProgress) / 0.52, 0, 1) * 0.72,
             }}
             shellStyle={{
               transform: `translate3d(0, ${(1 - fakeFooterEase) * 0.24 - fakeFooterTunnelEase * 0.44 + fakeFooterReverseEase * 1.4 + fakeFooterSettle * 0.04}vh, 0) scale(${1.038 + fakeFooterTunnelEase * 0.03 - fakeFooterSettle * 0.002 - fakeFooterReverseEase * 0.012})`,
               opacity: 0.82 + fakeFooterEase * 0.06 - fakeFooterReverseEase * 0.02,
             }}
             videoStyle={{
-              opacity: (0.58 + fakeFooterTunnelEase * 0.1 - fakeFooterSettle * 0.008 - fakeFooterReverseEase * 0.04) * fakeFooterVideoActivation,
+              opacity: 0.22 + fakeFooterVideoActivation * 0.48 + fakeFooterTunnelEase * 0.08 - fakeFooterSettle * 0.008 - fakeFooterReverseEase * 0.04,
               transform: `translate3d(0, ${(1 - fakeFooterTunnelEase) * 2.5 - fakeFooterTunnelEase * 2.7 - fakeFooterSettle * 0.14 + fakeFooterReverseEase * 3.4}vh, 0) scale(${isLargeViewport ? 1.12 - fakeFooterTunnelEase * 0.12 - fakeFooterReverseEase * 0.03 : 1.2 - fakeFooterTunnelEase * 0.19 - fakeFooterSettle * 0.004 - fakeFooterReverseEase * 0.05})`,
               filter: isLargeViewport
                 ? `brightness(${0.8 + fakeFooterTunnelEase * 0.05 - fakeFooterReverseEase * 0.03}) contrast(${1.03 + fakeFooterTunnelEase * 0.02 - fakeFooterReverseEase * 0.02})`

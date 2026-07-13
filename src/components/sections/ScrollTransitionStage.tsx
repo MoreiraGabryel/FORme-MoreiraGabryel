@@ -6,7 +6,6 @@ import type {Locale} from '../../i18n/useTranslation';
 import {TECHNOLOGIES, TECHNOLOGIES_SECTION_COPY, type Technology} from '../../config/technologies';
 import {useIsMobile} from '../../hooks/useIsMobile';
 import {SceneCrossfade} from '../SceneCrossfade';
-import {StageTitleCycleText} from '../motion/StageTitleCycleText';
 import {AboutStage} from './AboutStage';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -274,8 +273,10 @@ export function ScrollTransitionStage({
   const [aboutStageInteractive, setAboutStageInteractive] = useState(false);
   const [hoveredTechnologyId, setHoveredTechnologyId] = useState<string | null>(null);
   const [activeTechnologyId, setActiveTechnologyId] = useState<string | null>(null);
+  const [backgroundSceneProgress, setBackgroundSceneProgress] = useState(sceneProgress);
   const stageSectionRef = useRef<HTMLElement | null>(null);
   const pinnedShellRef = useRef<HTMLDivElement | null>(null);
+  const sceneBackgroundRef = useRef<HTMLDivElement | null>(null);
   const stageOneLayerRef = useRef<HTMLDivElement | null>(null);
   const stageTwoLayerRef = useRef<HTMLDivElement | null>(null);
   const stageFieldRef = useRef<HTMLDivElement | null>(null);
@@ -316,14 +317,25 @@ export function ScrollTransitionStage({
   useLayoutEffect(() => {
     const section = stageSectionRef.current;
     const pinnedShell = pinnedShellRef.current;
+    const sceneBackground = sceneBackgroundRef.current;
     const stageOneLayer = stageOneLayerRef.current;
     const stageTwoLayer = stageTwoLayerRef.current;
 
-    if (!section || !pinnedShell || !stageOneLayer || !stageTwoLayer) return;
+    if (!section || !pinnedShell || !sceneBackground || !stageOneLayer || !stageTwoLayer) return;
 
     let isAboutInteractive = false;
+    const sceneProgressState = {value: sceneProgress};
 
     const ctx = gsap.context(() => {
+      setBackgroundSceneProgress(sceneProgress);
+
+      gsap.set(sceneBackground, {
+        scale: 1,
+        yPercent: 0,
+        transformOrigin: 'center center',
+        willChange: 'transform',
+      });
+
       gsap.set(stageOneLayer, {
         autoAlpha: 1,
         y: 0,
@@ -359,6 +371,24 @@ export function ScrollTransitionStage({
           },
         },
       })
+        .to(
+          sceneProgressState,
+          {
+            value: reducedMotion ? 0.42 : 0.5,
+            duration: 0.68,
+            onUpdate: () => setBackgroundSceneProgress(sceneProgressState.value),
+          },
+          0.12,
+        )
+        .to(
+          sceneBackground,
+          {
+            scale: reducedMotion ? 1.006 : 1.028,
+            yPercent: reducedMotion ? -0.4 : -1.8,
+            duration: 0.68,
+          },
+          0.12,
+        )
         .to(
           stageOneLayer,
           {
@@ -553,8 +583,8 @@ export function ScrollTransitionStage({
       onPointerLeave={handleStagePointerLeave}
     >
       <div ref={pinnedShellRef} className="technologies-pin-shell">
-        <div className="transition-scene-background" aria-hidden="true">
-          <SceneCrossfade progress={sceneProgress} />
+        <div ref={sceneBackgroundRef} className="transition-scene-background" aria-hidden="true">
+          <SceneCrossfade progress={backgroundSceneProgress} />
           <div className="transition-scene-blackout" />
         </div>
 
@@ -639,17 +669,14 @@ export function ScrollTransitionStage({
               <div className="technologies-copy-inner">
                 <div className="technologies-title-glow" aria-hidden="true" />
                 <div className="technologies-heading-stack">
-                  <StageTitleCycleText
-                    as="h2"
-                    phrases={sectionCopy.titlePhrases}
-                    active={stageActive}
-                    className="technologies-title"
-                    introTypingSpeedMs={24}
-                    introHoldDurationMs={980}
-                    cycleHoldDurationMs={2100}
-                    reelDurationMs={620}
-                    initialDelayMs={180}
-                  />
+                  <h2 className="technologies-title" aria-live="polite">
+                    <span
+                      key={`${locale}-${stageActive ? 'active' : 'idle'}`}
+                      className="hero-statement-line hero-statement-real"
+                    >
+                      {sectionCopy.titlePhrases[0]}
+                    </span>
+                  </h2>
                   <p className="technologies-subtitle">{sectionCopy.subtitle}</p>
                 </div>
                 <p className="technologies-instruction">{sectionCopy.instruction}</p>

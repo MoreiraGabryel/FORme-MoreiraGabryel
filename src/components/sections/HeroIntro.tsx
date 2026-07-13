@@ -109,6 +109,24 @@ export function HeroIntro({
 
       setIdle();
 
+      const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      gsap.fromTo(
+        media,
+        {scale: 1, yPercent: 0},
+        {
+          scale: prefersReducedMotion ? 1.006 : 1.022,
+          yPercent: prefersReducedMotion ? -0.5 : -2.2,
+          ease: 'none',
+          scrollTrigger: {
+            trigger: root,
+            start: 'top top',
+            end: 'bottom top',
+            scrub: prefersReducedMotion ? 0.1 : 0.6,
+            invalidateOnRefresh: true,
+          },
+        },
+      );
+
       let handoffTl: gsap.core.Timeline | null = null;
 
       const handleHandoff = (event: Event) => {
