@@ -1,8 +1,11 @@
 import {useLayoutEffect, useRef} from 'react';
 import type {CSSProperties, Dispatch, SetStateAction} from 'react';
 import {gsap} from 'gsap';
+import {ScrollTrigger} from 'gsap/ScrollTrigger';
 import type {Locale} from '../../i18n/useTranslation';
 import type {HomeCopy} from '../../config/homeContent';
+
+gsap.registerPlugin(ScrollTrigger);
 
 const HERO_SLICE_SEGMENTS = [
   [0, 13],
@@ -110,22 +113,43 @@ export function HeroIntro({
       setIdle();
 
       const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      gsap.fromTo(
-        media,
-        {scale: 1, yPercent: 0},
-        {
-          scale: prefersReducedMotion ? 1.006 : 1.022,
-          yPercent: prefersReducedMotion ? -0.5 : -2.2,
-          ease: 'none',
-          scrollTrigger: {
-            trigger: root,
-            start: 'top top',
-            end: 'bottom top',
-            scrub: prefersReducedMotion ? 0.1 : 0.6,
-            invalidateOnRefresh: true,
-          },
+      const heroScrollTimeline = gsap.timeline({
+        defaults: {ease: 'none'},
+        scrollTrigger: {
+          trigger: root,
+          start: 'top top',
+          end: () => `+=${Math.round(window.innerHeight * (prefersReducedMotion ? 0.72 : 0.92))}`,
+          scrub: prefersReducedMotion ? 0.12 : 0.6,
+          pin: root,
+          anticipatePin: 1,
+          invalidateOnRefresh: true,
         },
-      );
+      });
+
+      heroScrollTimeline
+        .fromTo(
+          media,
+          {scale: 1, yPercent: 0, filter: 'blur(0px) saturate(1) brightness(1)'},
+          {
+            scale: prefersReducedMotion ? 1.006 : 1.045,
+            yPercent: prefersReducedMotion ? -0.4 : -3.8,
+            filter: prefersReducedMotion
+              ? 'blur(0px) saturate(0.99) brightness(0.99)'
+              : 'blur(1.2px) saturate(0.92) brightness(0.86)',
+            duration: 1,
+          },
+          0,
+        )
+        .to(
+          frame,
+          {
+            autoAlpha: 0,
+            yPercent: prefersReducedMotion ? -1 : -7,
+            filter: `blur(${prefersReducedMotion ? 0 : 7}px)`,
+            duration: prefersReducedMotion ? 0.2 : 0.34,
+          },
+          prefersReducedMotion ? 0.78 : 0.64,
+        );
 
       let handoffTl: gsap.core.Timeline | null = null;
 
