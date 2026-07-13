@@ -1,8 +1,12 @@
-import {useEffect, useRef, useState} from 'react';
+import {useEffect, useLayoutEffect, useRef, useState} from 'react';
 import type {CSSProperties} from 'react';
+import {gsap} from 'gsap';
+import {ScrollTrigger} from 'gsap/ScrollTrigger';
 import type {HomeCopy} from '../../config/homeContent';
 import {CONTACT_LINKS} from '../../config/contact';
 import type {Locale} from '../../i18n/useTranslation';
+
+gsap.registerPlugin(ScrollTrigger);
 
 const footerVideoSrc = '/media/stage3-tunnel-loop.mp4';
 const transitionVideoSrc = '/media/stage2-to-3.mp4';
@@ -92,9 +96,50 @@ export function FakeFooterStage({
   videoActivation,
   transitionVideoEnabled,
 }: Props) {
+  const sectionRef = useRef<HTMLElement | null>(null);
+  const stickyRef = useRef<HTMLDivElement | null>(null);
   const transitionVideoRef = useRef<HTMLVideoElement | null>(null);
   const leadVideoRef = useRef<HTMLVideoElement | null>(null);
   const [canPlay, setCanPlay] = useState(false);
+
+  useLayoutEffect(() => {
+    const section = sectionRef.current;
+    const sticky = stickyRef.current;
+    if (!section || !sticky) return;
+
+    const ctx = gsap.context(() => {
+      gsap.set(section, {
+        '--fake-footer-unlock': 0,
+        '--fake-footer-final-black': 0,
+      });
+
+      gsap
+        .timeline({
+          defaults: {ease: 'none'},
+          scrollTrigger: {
+            trigger: section,
+            start: 'top top',
+            end: () => `+=${Math.round(window.innerHeight * 2.65)}`,
+            scrub: 0.65,
+            pin: sticky,
+            anticipatePin: 1,
+            invalidateOnRefresh: true,
+            onLeaveBack: () => {
+              gsap.set(section, {
+                '--fake-footer-unlock': 0,
+                '--fake-footer-final-black': 0,
+              });
+            },
+          },
+        })
+        .to({}, {duration: 0.68})
+        .to(section, {'--fake-footer-unlock': 1, duration: 0.18})
+        .to({}, {duration: 0.34})
+        .to(section, {'--fake-footer-final-black': 1, duration: 0.46});
+    }, section);
+
+    return () => ctx.revert();
+  }, []);
 
   useEffect(() => {
     const video = leadVideoRef.current;
@@ -157,40 +202,25 @@ export function FakeFooterStage({
     const video = leadVideoRef.current;
     if (!video) return;
 
-    const loopStart = 1.24;
-    const loopEnd = 7.35;
-
-    const syncVisibleLoopWindow = () => {
-      if (video.currentTime < loopStart || video.currentTime >= loopEnd) {
-        video.currentTime = loopStart;
-      }
-    };
-
     video.muted = true;
     video.defaultMuted = true;
     video.playsInline = true;
-    video.loop = false;
-    video.preload = 'metadata';
-
-    const handleLoadedMetadata = () => {
-      syncVisibleLoopWindow();
-    };
+    video.loop = true;
+    video.preload = 'auto';
 
     const handleTimeUpdate = () => {
-      if (video.currentTime >= loopEnd) {
-        video.currentTime = loopStart;
+      if (!video.duration || Number.isNaN(video.duration)) return;
+      const remaining = video.duration - video.currentTime;
+      if (remaining < 0.12) {
+        video.currentTime = 0.04;
         const playPromise = video.play();
         if (playPromise) playPromise.catch(() => undefined);
       }
     };
 
-    video.addEventListener('loadedmetadata', handleLoadedMetadata);
     video.addEventListener('timeupdate', handleTimeUpdate);
 
-    syncVisibleLoopWindow();
-
     return () => {
-      video.removeEventListener('loadedmetadata', handleLoadedMetadata);
       video.removeEventListener('timeupdate', handleTimeUpdate);
     };
   }, []);
@@ -199,12 +229,7 @@ export function FakeFooterStage({
     const video = leadVideoRef.current;
     if (!video) return;
 
-    const loopStart = 1.24;
-
-    if (!canPlay || videoActivation <= 0.08) {
-      if (Math.abs((video.currentTime || 0) - loopStart) > 0.06) {
-        video.currentTime = loopStart;
-      }
+    if (!canPlay) {
       video.pause();
       return;
     }
@@ -237,8 +262,8 @@ export function FakeFooterStage({
   ];
 
   return (
-    <section className="fake-footer-stage" style={stageStyle}>
-      <div className="fake-footer-sticky">
+    <section ref={sectionRef} className="fake-footer-stage" style={stageStyle}>
+      <div ref={stickyRef} className="fake-footer-sticky">
         <div className="fake-footer-media" aria-hidden="true">
           <div className="fake-footer-media-well" style={shellStyle}>
             <video
@@ -254,13 +279,13 @@ export function FakeFooterStage({
               ref={leadVideoRef}
               className="fake-footer-video"
               src={footerVideoSrc}
+              autoPlay
+              loop
               muted
               playsInline
-              preload="metadata"
+              preload="auto"
               style={videoStyle}
             />
-            <div className="fake-footer-bridge-haze" />
-            <div className="fake-footer-bridge-core" />
             <div className="fake-footer-tunnel-glow" />
             <div className="fake-footer-vignette" />
           </div>
@@ -326,7 +351,13 @@ export function FakeFooterStage({
               </div>
             </div>
           </div>
+
+          <div className="unlock-scroll-indicator" aria-hidden="true">
+            <span className="unlock-arrow">↓</span>
+          </div>
         </div>
+
+        <div className="fake-footer-final-black" aria-hidden="true" />
       </div>
     </section>
   );
