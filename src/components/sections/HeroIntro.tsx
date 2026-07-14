@@ -41,8 +41,6 @@ export function HeroIntro({
   const overlayRef = useRef<HTMLDivElement>(null);
   const frameRef = useRef<HTMLDivElement>(null);
   const topBarRef = useRef<HTMLElement>(null);
-  const brandMarkRef = useRef<HTMLAnchorElement>(null);
-  const brandCaptionRef = useRef<HTMLSpanElement>(null);
   const langSwitchRef = useRef<HTMLDivElement>(null);
   const introCopyRef = useRef<HTMLDivElement>(null);
   const titleWrapRef = useRef<HTMLDivElement>(null);
@@ -59,8 +57,6 @@ export function HeroIntro({
     const overlay = overlayRef.current;
     const frame = frameRef.current;
     const topBar = topBarRef.current;
-    const brandMark = brandMarkRef.current;
-    const brandCaption = brandCaptionRef.current;
     const langSwitch = langSwitchRef.current;
     const introCopy = introCopyRef.current;
     const titleWrap = titleWrapRef.current;
@@ -77,8 +73,6 @@ export function HeroIntro({
       !overlay ||
       !frame ||
       !topBar ||
-      !brandMark ||
-      !brandCaption ||
       !langSwitch ||
       !introCopy ||
       !titleWrap ||
@@ -95,12 +89,12 @@ export function HeroIntro({
     const ctx = gsap.context(() => {
       const setIdle = () => {
         root.classList.remove('is-handoff-active');
-        gsap.set(root, {'--hero-handoff': 0});
+        gsap.set(root, {'--hero-handoff': 0, '--hero-black-hold': 0});
         gsap.set(media, {opacity: 1, scale: 1, filter: 'blur(0px) saturate(1) brightness(1)'});
         gsap.set(overlay, {opacity: 1, filter: 'blur(0px) brightness(1)'});
         gsap.set(frame, {opacity: 1, scale: 1, filter: 'blur(0px)'});
         gsap.set(topBar, {opacity: 1, y: 0, filter: 'blur(0px)'});
-        gsap.set([brandMark, brandCaption, langSwitch], {opacity: 1, x: 0, y: 0, filter: 'blur(0px)'});
+        gsap.set(langSwitch, {opacity: 1, x: 0, y: 0, filter: 'blur(0px)'});
         gsap.set(introCopy, {opacity: 1, y: 0, scale: 1, filter: 'blur(0px)'});
         gsap.set(titleWrap, {opacity: 1});
         gsap.set(titleReal, {opacity: 1, y: 0, scale: 1, filter: 'blur(0px)'});
@@ -129,14 +123,14 @@ export function HeroIntro({
       heroScrollTimeline
         .fromTo(
           media,
-          {scale: 1, yPercent: 0, filter: 'blur(0px) saturate(1) brightness(1)'},
+          {opacity: 1, scale: 1, yPercent: 0, filter: 'blur(0px) saturate(1) brightness(1)'},
           {
             scale: prefersReducedMotion ? 1.006 : 1.045,
             yPercent: prefersReducedMotion ? -0.4 : -3.8,
             filter: prefersReducedMotion
               ? 'blur(0px) saturate(0.99) brightness(0.99)'
               : 'blur(1.2px) saturate(0.92) brightness(0.86)',
-            duration: 1,
+            duration: prefersReducedMotion ? 0.72 : 0.74,
           },
           0,
         )
@@ -146,9 +140,30 @@ export function HeroIntro({
             autoAlpha: 0,
             yPercent: prefersReducedMotion ? -1 : -7,
             filter: `blur(${prefersReducedMotion ? 0 : 7}px)`,
-            duration: prefersReducedMotion ? 0.2 : 0.34,
+            duration: prefersReducedMotion ? 0.16 : 0.28,
           },
-          prefersReducedMotion ? 0.78 : 0.64,
+          prefersReducedMotion ? 0.58 : 0.52,
+        )
+        .to(
+          media,
+          {
+            opacity: 0,
+            scale: prefersReducedMotion ? 1.008 : 1.055,
+            yPercent: prefersReducedMotion ? -0.5 : -4.2,
+            filter: prefersReducedMotion
+              ? 'blur(0px) saturate(0.96) brightness(0)'
+              : 'blur(5px) saturate(0.75) brightness(0)',
+            duration: prefersReducedMotion ? 0.14 : 0.16,
+          },
+          0.72,
+        )
+        .to(
+          root,
+          {
+            '--hero-black-hold': 1,
+            duration: prefersReducedMotion ? 0.14 : 0.12,
+          },
+          prefersReducedMotion ? 0.86 : 0.88,
         );
 
       let handoffTl: gsap.core.Timeline | null = null;
@@ -180,16 +195,6 @@ export function HeroIntro({
         gsap.set(topBar, {
           opacity: reducedMotion ? 0.56 : 0.38,
           y: reducedMotion ? -1 : -4,
-          filter: `blur(${reducedMotion ? 1 : 2.5}px)`,
-        });
-        gsap.set(brandMark, {
-          opacity: reducedMotion ? 0.7 : 0.56,
-          x: reducedMotion ? -1 : -4,
-          filter: `blur(${reducedMotion ? 1 : 2.5}px)`,
-        });
-        gsap.set(brandCaption, {
-          opacity: reducedMotion ? 0.58 : 0.38,
-          x: reducedMotion ? -1 : -3,
           filter: `blur(${reducedMotion ? 1 : 2.5}px)`,
         });
         gsap.set(langSwitch, {
@@ -286,20 +291,6 @@ export function HeroIntro({
             duration: reducedMotion ? 0.16 : 0.24,
             ease: 'power2.out',
           }, reducedMotion ? 0.18 : 0.26)
-          .to(brandMark, {
-            opacity: 1,
-            x: 0,
-            filter: 'blur(0px)',
-            duration: reducedMotion ? 0.16 : 0.22,
-            ease: 'power2.out',
-          }, reducedMotion ? 0.18 : 0.26)
-          .to(brandCaption, {
-            opacity: 1,
-            x: 0,
-            filter: 'blur(0px)',
-            duration: reducedMotion ? 0.16 : 0.22,
-            ease: 'power2.out',
-          }, reducedMotion ? 0.2 : 0.29)
           .to(langSwitch, {
             opacity: 1,
             x: 0,
@@ -347,7 +338,7 @@ export function HeroIntro({
     }, root);
 
     return () => ctx.revert();
-  }, [locale, phraseIndex]);
+  }, []);
 
   return (
     <section ref={rootRef} className="hero-stage" style={{'--hero-progress': `${heroProgress}`} as CSSProperties}>
@@ -357,13 +348,6 @@ export function HeroIntro({
 
       <div ref={frameRef} className="hero-frame">
         <header ref={topBarRef} className="top-bar">
-          <div className="brand-lockup">
-            <a ref={brandMarkRef} className="brand-mark" href="#home">
-              MoreiraGabryel
-            </a>
-            <span ref={brandCaptionRef} className="brand-caption">{copy.heroTag}</span>
-          </div>
-
           <div className="top-actions">
             <div
               ref={langSwitchRef}
