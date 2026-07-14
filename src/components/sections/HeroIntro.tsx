@@ -23,18 +23,12 @@ export function HeroIntro({
   setLocale,
   phraseIndex,
   heroProgress,
-  overlayStyle,
-  introStyle,
-  footerStyle,
 }: {
   copy: HomeCopy;
   locale: Locale;
   setLocale: Dispatch<SetStateAction<Locale>>;
   phraseIndex: number;
   heroProgress: number;
-  overlayStyle: CSSProperties;
-  introStyle: CSSProperties;
-  footerStyle: CSSProperties;
 }) {
   const rootRef = useRef<HTMLElement>(null);
   const mediaRef = useRef<HTMLDivElement>(null);
@@ -92,16 +86,16 @@ export function HeroIntro({
         gsap.set(root, {'--hero-handoff': 0, '--hero-black-hold': 0});
         gsap.set(media, {opacity: 1, scale: 1, filter: 'blur(0px) saturate(1) brightness(1)'});
         gsap.set(overlay, {opacity: 1, filter: 'blur(0px) brightness(1)'});
-        gsap.set(frame, {opacity: 1, scale: 1, filter: 'blur(0px)'});
-        gsap.set(topBar, {opacity: 1, y: 0, filter: 'blur(0px)'});
-        gsap.set(langSwitch, {opacity: 1, x: 0, y: 0, filter: 'blur(0px)'});
-        gsap.set(introCopy, {opacity: 1, y: 0, scale: 1, filter: 'blur(0px)'});
+        gsap.set(frame, {autoAlpha: 1, scale: 1, filter: 'blur(0px)'});
+        gsap.set(topBar, {autoAlpha: 1, y: 0, filter: 'blur(0px)'});
+        gsap.set(langSwitch, {autoAlpha: 1, x: 0, y: 0, filter: 'blur(0px)'});
+        gsap.set(introCopy, {autoAlpha: 1, y: 0, scale: 1, filter: 'blur(0px)'});
         gsap.set(titleWrap, {opacity: 1});
-        gsap.set(titleReal, {opacity: 1, y: 0, scale: 1, filter: 'blur(0px)'});
+        gsap.set(titleReal, {autoAlpha: 1, yPercent: 0, scale: 1, filter: 'blur(0px)', clipPath: 'inset(0% 0% 0% 0%)'});
         gsap.set(slices, {autoAlpha: 0, x: 0, y: 0, filter: 'blur(0px)'});
-        gsap.set([kicker, support], {opacity: 1, y: 0, filter: 'blur(0px)'});
-        gsap.set(footer, {opacity: 1, y: 0, filter: 'blur(0px)'});
-        gsap.set(cue, {opacity: 1, y: 0, filter: 'blur(0px)'});
+        gsap.set([kicker, support], {autoAlpha: 1, y: 0, filter: 'blur(0px)'});
+        gsap.set(footer, {autoAlpha: 1, y: 0, filter: 'blur(0px)'});
+        gsap.set(cue, {autoAlpha: 1, y: 0, filter: 'blur(0px)'});
       };
 
       setIdle();
@@ -112,7 +106,7 @@ export function HeroIntro({
         scrollTrigger: {
           trigger: root,
           start: 'top top',
-          end: () => `+=${Math.round(window.innerHeight * (prefersReducedMotion ? 0.72 : 0.92))}`,
+          end: () => `+=${Math.round(window.innerHeight * (prefersReducedMotion ? 1.1 : 1.6))}`,
           scrub: prefersReducedMotion ? 0.12 : 0.6,
           pin: root,
           anticipatePin: 1,
@@ -130,20 +124,58 @@ export function HeroIntro({
             filter: prefersReducedMotion
               ? 'blur(0px) saturate(0.99) brightness(0.99)'
               : 'blur(1.2px) saturate(0.92) brightness(0.86)',
-            duration: prefersReducedMotion ? 0.72 : 0.74,
+            duration: prefersReducedMotion ? 0.72 : 0.76,
           },
           0,
         )
-        .to(
-          frame,
-          {
+        .to(cue, {
             autoAlpha: 0,
-            yPercent: prefersReducedMotion ? -1 : -7,
-            filter: `blur(${prefersReducedMotion ? 0 : 7}px)`,
-            duration: prefersReducedMotion ? 0.16 : 0.28,
-          },
-          prefersReducedMotion ? 0.58 : 0.52,
-        )
+          y: prefersReducedMotion ? 0 : 18,
+          filter: `blur(${prefersReducedMotion ? 0 : 5}px)`,
+          duration: prefersReducedMotion ? 0.08 : 0.14,
+        }, prefersReducedMotion ? 0.64 : 0.56)
+        .to(footer, {
+          autoAlpha: 0,
+          y: prefersReducedMotion ? 0 : 16,
+          filter: `blur(${prefersReducedMotion ? 0 : 5}px)`,
+          duration: prefersReducedMotion ? 0.08 : 0.16,
+        }, prefersReducedMotion ? 0.66 : 0.6)
+        .to([kicker, support], {
+          autoAlpha: 0,
+          y: prefersReducedMotion ? 0 : -16,
+          filter: `blur(${prefersReducedMotion ? 0 : 6}px)`,
+          duration: prefersReducedMotion ? 0.08 : 0.17,
+          stagger: prefersReducedMotion ? 0 : 0.025,
+        }, prefersReducedMotion ? 0.68 : 0.62)
+        .to(slices, {
+          autoAlpha: prefersReducedMotion ? 0 : 0.22,
+          x: (index: number) => prefersReducedMotion ? 0 : [-18, -12, -7, 0, 7, 12, 18][index],
+          y: (index: number) => prefersReducedMotion ? 0 : (index - 3) * 1.5,
+          filter: `blur(${prefersReducedMotion ? 0 : 2}px)`,
+          duration: prefersReducedMotion ? 0.04 : 0.12,
+          stagger: prefersReducedMotion ? 0 : 0.008,
+        }, prefersReducedMotion ? 0.69 : 0.63)
+        .to(titleReal, {
+          autoAlpha: 0,
+          yPercent: prefersReducedMotion ? 0 : -12,
+          scale: prefersReducedMotion ? 1 : 0.985,
+          filter: `blur(${prefersReducedMotion ? 0 : 8}px)`,
+          clipPath: 'inset(0% 0% 100% 0%)',
+          duration: prefersReducedMotion ? 0.08 : 0.2,
+        }, prefersReducedMotion ? 0.7 : 0.65)
+        .to(slices, {
+          autoAlpha: 0,
+          x: (index: number) => prefersReducedMotion ? 0 : [-30, -22, -14, -4, 14, 22, 30][index],
+          filter: `blur(${prefersReducedMotion ? 0 : 8}px)`,
+          duration: prefersReducedMotion ? 0.05 : 0.15,
+          stagger: prefersReducedMotion ? 0 : 0.006,
+        }, prefersReducedMotion ? 0.74 : 0.73)
+        .to(topBar, {
+          autoAlpha: 0,
+          y: prefersReducedMotion ? 0 : -14,
+          filter: `blur(${prefersReducedMotion ? 0 : 5}px)`,
+          duration: prefersReducedMotion ? 0.08 : 0.16,
+        }, prefersReducedMotion ? 0.72 : 0.68)
         .to(
           media,
           {
@@ -153,17 +185,17 @@ export function HeroIntro({
             filter: prefersReducedMotion
               ? 'blur(0px) saturate(0.96) brightness(0)'
               : 'blur(5px) saturate(0.75) brightness(0)',
-            duration: prefersReducedMotion ? 0.14 : 0.16,
+            duration: prefersReducedMotion ? 0.12 : 0.14,
           },
-          0.72,
+          prefersReducedMotion ? 0.78 : 0.76,
         )
         .to(
           root,
           {
             '--hero-black-hold': 1,
-            duration: prefersReducedMotion ? 0.14 : 0.12,
+            duration: 0.1,
           },
-          prefersReducedMotion ? 0.86 : 0.88,
+          0.9,
         );
 
       let handoffTl: gsap.core.Timeline | null = null;
@@ -343,7 +375,7 @@ export function HeroIntro({
   return (
     <section ref={rootRef} className="hero-stage" style={{'--hero-progress': `${heroProgress}`} as CSSProperties}>
       <div ref={mediaRef} className="hero-media">
-        <div ref={overlayRef} className="hero-overlay" style={overlayStyle} />
+        <div ref={overlayRef} className="hero-overlay" />
       </div>
 
       <div ref={frameRef} className="hero-frame">
@@ -421,17 +453,19 @@ export function HeroIntro({
         </header>
 
         <div className="hero-center">
-          <div ref={introCopyRef} className="hero-intro-copy" style={introStyle}>
+          <div ref={introCopyRef} className="hero-intro-copy">
             <p ref={kickerRef} className="hero-kicker">{copy.heroSubtag}</p>
             <div className="hero-statement-wrap" aria-live="polite">
-              <div ref={titleWrapRef} key={`${locale}-${phraseIndex}`} className="hero-statement-handshake">
+              <div ref={titleWrapRef} className="hero-statement-handshake">
                 <span ref={titleRealRef} className="hero-statement-line hero-statement-real">
+                  <span key={`${locale}-${phraseIndex}`} className="hero-statement-phrase">
                   {copy.phrases[phraseIndex]}
+                </span>
                 </span>
                 <span className="hero-statement-slices" aria-hidden="true">
                   {HERO_SLICE_SEGMENTS.map(([start, end], index) => (
                     <span
-                      key={`${locale}-${phraseIndex}-${start}-${end}`}
+                      key={`${start}-${end}`}
                       ref={(node) => {
                         if (node) titleSliceRefs.current[index] = node;
                       }}
@@ -448,7 +482,7 @@ export function HeroIntro({
           </div>
         </div>
 
-        <footer ref={footerRef} className="hero-footer" style={footerStyle}>
+        <footer ref={footerRef} className="hero-footer">
           <p ref={cueRef} className="scroll-cue" aria-label={copy.scrollCue}>
             <span className="scroll-cue-label">{copy.scrollCue}</span>
             <span className="scroll-cue-arrows" aria-hidden="true">

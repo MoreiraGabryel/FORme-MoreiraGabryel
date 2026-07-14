@@ -109,7 +109,7 @@ export default function App() {
       const directionalImpulse = clamp(delta / Math.max(viewportHeight * 0.08, 48), -1, 1);
       directionBias = clamp(directionBias * 0.72 + directionalImpulse * 0.28, -1, 1);
 
-      const rawHero = currentScrollY / (viewportHeight * 0.92);
+      const rawHero = currentScrollY / (viewportHeight * 1.6);
       setScrollState({
         heroProgress: clamp(rawHero, 0, 1),
         rawStageProgress: resolveProgress(transitionSection, 0.22),
@@ -182,16 +182,6 @@ export default function App() {
           setLocale={setLocale}
           phraseIndex={phraseIndex}
           heroProgress={heroProgress}
-          overlayStyle={{opacity: 1 - heroProgress * 0.18}}
-          introStyle={{
-            opacity: 1 - heroProgress * 0.86 - heroHandoffEase * 0.22,
-            transform: `translate3d(0, ${heroProgress * -8 - heroHandoffEase * 5}vh, 0) scale(${1 - heroProgress * 0.04 - heroHandoffEase * 0.06})`,
-            filter: `blur(${heroProgress * 8 + heroHandoffEase * 6}px)`,
-          }}
-          footerStyle={{
-            opacity: 1 - heroProgress * 0.92 - heroHandoffEase * 0.26,
-            transform: `translate3d(0, ${heroProgress * 4 - heroHandoffEase * 4}vh, 0) scale(${1 - heroHandoffEase * 0.035})`,
-          }}
         />
 
         <section ref={transitionSectionRef}>

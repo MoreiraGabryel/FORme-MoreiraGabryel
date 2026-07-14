@@ -27,6 +27,7 @@ type FloatingTechnologySpec = {
 
 const DESKTOP_TECH_COUNT = 16;
 const MOBILE_TECH_COUNT = 8;
+const STAGE_SCENE_START = 0.24;
 const svgCache = new Map<string, string>();
 
 function randomBetween(min: number, max: number) {
@@ -274,7 +275,7 @@ export function ScrollTransitionStage({
   const [aboutStageInteractive, setAboutStageInteractive] = useState(false);
   const [hoveredTechnologyId, setHoveredTechnologyId] = useState<string | null>(null);
   const [activeTechnologyId, setActiveTechnologyId] = useState<string | null>(null);
-  const [backgroundSceneProgress, setBackgroundSceneProgress] = useState(sceneProgress);
+  const [backgroundSceneProgress, setBackgroundSceneProgress] = useState(() => Math.max(sceneProgress, STAGE_SCENE_START));
   const stageSectionRef = useRef<HTMLElement | null>(null);
   const pinnedShellRef = useRef<HTMLDivElement | null>(null);
   const sceneBackgroundRef = useRef<HTMLDivElement | null>(null);
@@ -347,10 +348,10 @@ export function ScrollTransitionStage({
 
     let isAboutInteractive = false;
     let splitTitle: ReturnType<typeof SplitText.create> | null = null;
-    const sceneProgressState = {value: sceneProgress};
+    const sceneProgressState = {value: Math.max(sceneProgress, STAGE_SCENE_START)};
 
     const ctx = gsap.context(() => {
-      setBackgroundSceneProgress(sceneProgress);
+      setBackgroundSceneProgress(sceneProgressState.value);
       splitTitle = SplitText.create(titleText, {type: 'chars', charsClass: 'technology-title-char'});
 
       gsap.set(sceneBackground, {
@@ -371,7 +372,8 @@ export function ScrollTransitionStage({
       gsap.set(titleGlow, {autoAlpha: 0, scale: reducedMotion ? 1 : 0.66});
       gsap.set(splitTitle.chars, {
         autoAlpha: 0,
-        yPercent: reducedMotion ? 0 : 76,
+        yPercent: reducedMotion ? 0 : 105,
+        rotationX: reducedMotion ? 0 : -72,
         scale: reducedMotion ? 1 : 0.88,
         filter: reducedMotion ? 'none' : 'blur(9px)',
         transformOrigin: '50% 100%',
@@ -400,7 +402,7 @@ export function ScrollTransitionStage({
           trigger: section,
           start: 'top top',
           end: () => `+=${Math.round(window.innerHeight * (reducedMotion ? 5.5 : 7.2))}`,
-          scrub: reducedMotion ? 0.18 : 0.92,
+          scrub: reducedMotion ? 0.18 : 0.72,
           pin: pinnedShell,
           anticipatePin: 1,
           invalidateOnRefresh: true,
@@ -424,41 +426,42 @@ export function ScrollTransitionStage({
             scale: 1,
             yPercent: 0,
             filter: 'blur(0px) brightness(1)',
-            duration: reducedMotion ? 0.12 : 0.2,
+            duration: reducedMotion ? 0.12 : 0.24,
           },
           0,
         )
         .to(
           stageBackdrop,
-          {autoAlpha: 1, scale: 1, duration: reducedMotion ? 0.1 : 0.18},
-          reducedMotion ? 0.02 : 0.05,
+          {autoAlpha: 1, scale: 1, duration: reducedMotion ? 0.1 : 0.2},
+          reducedMotion ? 0.02 : 0.07,
         )
         .to(
           titleGlow,
-          {autoAlpha: 0.72, scale: 1, duration: reducedMotion ? 0.08 : 0.16},
-          reducedMotion ? 0.04 : 0.07,
+          {autoAlpha: 0.72, scale: 1, duration: reducedMotion ? 0.08 : 0.2},
+          reducedMotion ? 0.04 : 0.12,
         )
         .to(
           splitTitle.chars,
           {
             autoAlpha: 1,
             yPercent: 0,
+            rotationX: 0,
             scale: 1,
             filter: 'blur(0px)',
-            duration: reducedMotion ? 0.08 : 0.14,
-            stagger: reducedMotion ? 0 : 0.007,
+            duration: reducedMotion ? 0.08 : 0.18,
+            stagger: reducedMotion ? 0 : 0.01,
           },
-          reducedMotion ? 0.06 : 0.09,
+          reducedMotion ? 0.06 : 0.12,
         )
         .to(
           subtitle,
-          {autoAlpha: 1, y: 0, filter: 'blur(0px)', duration: reducedMotion ? 0.08 : 0.14},
-          reducedMotion ? 0.1 : 0.18,
+          {autoAlpha: 1, y: 0, filter: 'blur(0px)', duration: reducedMotion ? 0.08 : 0.16},
+          reducedMotion ? 0.1 : 0.27,
         )
         .to(
           instruction,
-          {autoAlpha: 1, y: 0, filter: 'blur(0px)', duration: reducedMotion ? 0.08 : 0.14},
-          reducedMotion ? 0.14 : 0.25,
+          {autoAlpha: 1, y: 0, filter: 'blur(0px)', duration: reducedMotion ? 0.08 : 0.16},
+          reducedMotion ? 0.14 : 0.34,
         )
         .to(
           sceneProgressState,
@@ -467,7 +470,7 @@ export function ScrollTransitionStage({
             duration: 0.68,
             onUpdate: () => setBackgroundSceneProgress(sceneProgressState.value),
           },
-          0.12,
+          0.18,
         )
         .to(
           sceneBackground,
