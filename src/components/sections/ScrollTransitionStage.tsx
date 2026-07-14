@@ -2,13 +2,14 @@ import {useEffect, useLayoutEffect, useMemo, useRef, useState} from 'react';
 import type {CSSProperties} from 'react';
 import {gsap} from 'gsap';
 import {ScrollTrigger} from 'gsap/ScrollTrigger';
+import {SplitText} from 'gsap/SplitText';
 import type {Locale} from '../../i18n/useTranslation';
 import {TECHNOLOGIES, TECHNOLOGIES_SECTION_COPY, type Technology} from '../../config/technologies';
 import {useIsMobile} from '../../hooks/useIsMobile';
 import {SceneCrossfade} from '../SceneCrossfade';
 import {AboutStage} from './AboutStage';
 
-gsap.registerPlugin(ScrollTrigger);
+gsap.registerPlugin(ScrollTrigger, SplitText);
 
 type FloatingTechnologySpec = {
   id: string;
@@ -277,6 +278,11 @@ export function ScrollTransitionStage({
   const stageSectionRef = useRef<HTMLElement | null>(null);
   const pinnedShellRef = useRef<HTMLDivElement | null>(null);
   const sceneBackgroundRef = useRef<HTMLDivElement | null>(null);
+  const stageBackdropRef = useRef<HTMLDivElement | null>(null);
+  const titleTextRef = useRef<HTMLSpanElement | null>(null);
+  const titleGlowRef = useRef<HTMLDivElement | null>(null);
+  const subtitleRef = useRef<HTMLParagraphElement | null>(null);
+  const instructionRef = useRef<HTMLParagraphElement | null>(null);
   const stageOneLayerRef = useRef<HTMLDivElement | null>(null);
   const stageTwoLayerRef = useRef<HTMLDivElement | null>(null);
   const stageFieldRef = useRef<HTMLDivElement | null>(null);
@@ -318,22 +324,62 @@ export function ScrollTransitionStage({
     const section = stageSectionRef.current;
     const pinnedShell = pinnedShellRef.current;
     const sceneBackground = sceneBackgroundRef.current;
+    const stageBackdrop = stageBackdropRef.current;
+    const titleText = titleTextRef.current;
+    const titleGlow = titleGlowRef.current;
+    const subtitle = subtitleRef.current;
+    const instruction = instructionRef.current;
     const stageOneLayer = stageOneLayerRef.current;
     const stageTwoLayer = stageTwoLayerRef.current;
 
-    if (!section || !pinnedShell || !sceneBackground || !stageOneLayer || !stageTwoLayer) return;
+    if (
+      !section ||
+      !pinnedShell ||
+      !sceneBackground ||
+      !stageBackdrop ||
+      !titleText ||
+      !titleGlow ||
+      !subtitle ||
+      !instruction ||
+      !stageOneLayer ||
+      !stageTwoLayer
+    ) return;
 
     let isAboutInteractive = false;
+    let splitTitle: ReturnType<typeof SplitText.create> | null = null;
     const sceneProgressState = {value: sceneProgress};
 
     const ctx = gsap.context(() => {
       setBackgroundSceneProgress(sceneProgress);
+      splitTitle = SplitText.create(titleText, {type: 'chars', charsClass: 'technology-title-char'});
 
       gsap.set(sceneBackground, {
-        scale: 1,
-        yPercent: 0,
+        autoAlpha: 0,
+        scale: reducedMotion ? 1.012 : 1.06,
+        yPercent: reducedMotion ? 0 : 1.2,
+        filter: reducedMotion ? 'none' : 'blur(10px) brightness(0.42)',
         transformOrigin: 'center center',
-        willChange: 'transform',
+        willChange: 'transform, opacity, filter',
+      });
+
+      gsap.set(stageBackdrop, {
+        autoAlpha: 0,
+        scale: reducedMotion ? 1 : 0.96,
+        willChange: 'transform, opacity',
+      });
+
+      gsap.set(titleGlow, {autoAlpha: 0, scale: reducedMotion ? 1 : 0.66});
+      gsap.set(splitTitle.chars, {
+        autoAlpha: 0,
+        yPercent: reducedMotion ? 0 : 76,
+        scale: reducedMotion ? 1 : 0.88,
+        filter: reducedMotion ? 'none' : 'blur(9px)',
+        transformOrigin: '50% 100%',
+      });
+      gsap.set([subtitle, instruction], {
+        autoAlpha: 0,
+        y: reducedMotion ? 0 : 24,
+        filter: reducedMotion ? 'none' : 'blur(7px)',
       });
 
       gsap.set(stageOneLayer, {
@@ -372,6 +418,49 @@ export function ScrollTransitionStage({
         },
       })
         .to(
+          sceneBackground,
+          {
+            autoAlpha: 1,
+            scale: 1,
+            yPercent: 0,
+            filter: 'blur(0px) brightness(1)',
+            duration: reducedMotion ? 0.12 : 0.2,
+          },
+          0,
+        )
+        .to(
+          stageBackdrop,
+          {autoAlpha: 1, scale: 1, duration: reducedMotion ? 0.1 : 0.18},
+          reducedMotion ? 0.02 : 0.05,
+        )
+        .to(
+          titleGlow,
+          {autoAlpha: 0.72, scale: 1, duration: reducedMotion ? 0.08 : 0.16},
+          reducedMotion ? 0.04 : 0.07,
+        )
+        .to(
+          splitTitle.chars,
+          {
+            autoAlpha: 1,
+            yPercent: 0,
+            scale: 1,
+            filter: 'blur(0px)',
+            duration: reducedMotion ? 0.08 : 0.14,
+            stagger: reducedMotion ? 0 : 0.007,
+          },
+          reducedMotion ? 0.06 : 0.09,
+        )
+        .to(
+          subtitle,
+          {autoAlpha: 1, y: 0, filter: 'blur(0px)', duration: reducedMotion ? 0.08 : 0.14},
+          reducedMotion ? 0.1 : 0.18,
+        )
+        .to(
+          instruction,
+          {autoAlpha: 1, y: 0, filter: 'blur(0px)', duration: reducedMotion ? 0.08 : 0.14},
+          reducedMotion ? 0.14 : 0.25,
+        )
+        .to(
           sceneProgressState,
           {
             value: reducedMotion ? 0.42 : 0.5,
@@ -385,9 +474,9 @@ export function ScrollTransitionStage({
           {
             scale: reducedMotion ? 1.006 : 1.028,
             yPercent: reducedMotion ? -0.4 : -1.8,
-            duration: 0.68,
+            duration: 0.6,
           },
-          0.12,
+          0.2,
         )
         .to(
           stageOneLayer,
@@ -412,8 +501,9 @@ export function ScrollTransitionStage({
     return () => {
       setAboutStageInteractive(false);
       ctx.revert();
+      splitTitle?.revert();
     };
-  }, [reducedMotion]);
+  }, [locale, reducedMotion]);
 
   useEffect(() => {
     if (!activeTechnologyId) return;
@@ -588,7 +678,7 @@ export function ScrollTransitionStage({
           <div className="transition-scene-blackout" />
         </div>
 
-        <div className="transition-backdrop technologies-backdrop" aria-hidden="true">
+        <div ref={stageBackdropRef} className="transition-backdrop technologies-backdrop" aria-hidden="true">
           <div className="technologies-backdrop-grid" />
           <div className="technologies-backdrop-radial" />
           <div className="technologies-backdrop-orbits">
@@ -667,19 +757,20 @@ export function ScrollTransitionStage({
 
             <div className="transition-copy technologies-copy">
               <div className="technologies-copy-inner">
-                <div className="technologies-title-glow" aria-hidden="true" />
+                <div ref={titleGlowRef} className="technologies-title-glow" aria-hidden="true" />
                 <div className="technologies-heading-stack">
                   <h2 className="technologies-title" aria-live="polite">
                     <span
-                      key={`${locale}-${stageActive ? 'active' : 'idle'}`}
+                      ref={titleTextRef}
+                      key={locale}
                       className="hero-statement-line hero-statement-real"
                     >
                       {sectionCopy.titlePhrases[0]}
                     </span>
                   </h2>
-                  <p className="technologies-subtitle">{sectionCopy.subtitle}</p>
+                  <p ref={subtitleRef} className="technologies-subtitle">{sectionCopy.subtitle}</p>
                 </div>
-                <p className="technologies-instruction">{sectionCopy.instruction}</p>
+                <p ref={instructionRef} className="technologies-instruction">{sectionCopy.instruction}</p>
               </div>
             </div>
           </div>

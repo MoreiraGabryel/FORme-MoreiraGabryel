@@ -3004,6 +3004,15 @@ button {
   will-change: transform, filter;
 }
 
+.technologies-title .hero-statement-real {
+  animation: none;
+}
+
+.technology-title-char {
+  display: inline-block;
+  will-change: transform, opacity, filter;
+}
+
 .technologies-title .typewriter-text,
 .technologies-title .stage-title-cycle {
   width: 100%;
