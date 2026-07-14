@@ -171,6 +171,10 @@ export default function App() {
   return (
     <>
       {!loaded && <LoadingScreen onDone={handleLoadingDone} />}
+      <div className="persistent-brand-lockup brand-lockup" aria-label={`MoreiraGabryel - ${copy.heroTag}`}>
+        <a className="brand-mark" href="#home">MoreiraGabryel</a>
+        <span className="brand-caption">{copy.heroTag}</span>
+      </div>
       <main className="site-shell">
         <HeroIntro
           copy={copy}

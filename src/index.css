@@ -140,6 +140,7 @@ button {
 .hero-stage {
   min-height: 100svh;
   --hero-handoff: 0;
+  background: #000;
 }
 
 .hero-media,
@@ -319,6 +320,18 @@ button {
   align-items: center;
   gap: 0.9rem;
   flex-wrap: wrap;
+}
+
+.persistent-brand-lockup {
+  position: fixed;
+  top: max(1.5rem, env(safe-area-inset-top));
+  left: max(1.5rem, calc((100vw - 84rem) / 2));
+  z-index: 90;
+  pointer-events: auto;
+}
+
+.hero-stage .top-actions {
+  margin-left: auto;
 }
 
 .brand-mark,
