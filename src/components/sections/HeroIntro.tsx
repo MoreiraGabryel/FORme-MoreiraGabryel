@@ -17,6 +17,95 @@ const HERO_SLICE_SEGMENTS = [
   [87, 100],
 ] as const;
 
+
+const HERO_PHRASE_MOBILE_LINES: Record<string, string[]> = {
+  'Construo interfaces que sustentam produto, narrativa e performance.': [
+    'Construo interfaces',
+    'que sustentam',
+    'produto, narrativa',
+    'e performance.',
+  ],
+  'Transformo requisitos complexos em sistemas visuais claros e escaláveis.': [
+    'Transformo requisitos',
+    'complexos em sistemas',
+    'visuais claros',
+    'e escaláveis.',
+  ],
+  'Crio experiências digitais onde código, motion e usabilidade trabalham juntos.': [
+    'Crio experiências',
+    'digitais onde',
+    'código, motion',
+    'e usabilidade',
+    'trabalham juntos.',
+  ],
+  'Desenho fluxos que aproximam automação, performance e presença visual.': [
+    'Desenho fluxos',
+    'que aproximam',
+    'automação,',
+    'performance',
+    'e presença visual.',
+  ],
+  'Projeto camadas de interface para parecerem precisas antes mesmo do clique.': [
+    'Projeto camadas',
+    'de interface',
+    'precisas antes',
+    'mesmo do clique.',
+  ],
+  'Conecto front-end, lógica e direção visual em experiências com intenção real.': [
+    'Conecto front-end,',
+    'lógica e direção',
+    'visual em',
+    'experiências',
+    'com intenção real.',
+  ],
+  'I build interfaces that align product thinking, narrative, and performance.': [
+    'I build interfaces',
+    'that align',
+    'product thinking,',
+    'narrative',
+    'and performance.',
+  ],
+  'I turn complex requirements into visual systems that feel clear and scalable.': [
+    'I turn complex',
+    'requirements into',
+    'visual systems',
+    'that feel clear',
+    'and scalable.',
+  ],
+  'I create digital experiences where code, motion, and usability move together.': [
+    'I create digital',
+    'experiences where',
+    'code, motion,',
+    'and usability',
+    'move together.',
+  ],
+  'I design flows that connect automation, performance, and visual presence.': [
+    'I design flows',
+    'that connect',
+    'automation,',
+    'performance',
+    'and visual presence.',
+  ],
+  'I shape interface layers to feel precise before the first click happens.': [
+    'I shape interface',
+    'layers to feel',
+    'precise before',
+    'the first click',
+    'happens.',
+  ],
+  'I connect front-end logic and visual direction into experiences with intent.': [
+    'I connect front-end',
+    'logic and visual',
+    'direction into',
+    'experiences',
+    'with intent.',
+  ],
+};
+
+function getHeroPhraseMobileLines(phrase: string) {
+  return HERO_PHRASE_MOBILE_LINES[phrase] ?? [phrase];
+}
+
 export function HeroIntro({
   copy,
   locale,
@@ -30,6 +119,14 @@ export function HeroIntro({
   phraseIndex: number;
   heroProgress: number;
 }) {
+  const phrase = copy.phrases[phraseIndex];
+  const phraseMobileLines = getHeroPhraseMobileLines(phrase);
+  const phraseLineNodes = phraseMobileLines.map((line) => (
+    <span key={line} className="hero-statement-phrase-line">
+      {line}
+    </span>
+  ));
+
   const rootRef = useRef<HTMLElement>(null);
   const mediaRef = useRef<HTMLDivElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
@@ -83,7 +180,13 @@ export function HeroIntro({
     const ctx = gsap.context(() => {
       const setIdle = () => {
         root.classList.remove('is-handoff-active');
-        gsap.set(root, {'--hero-handoff': 0, '--hero-black-hold': 0});
+        root.classList.remove('is-hero-entering');
+        gsap.set(root, {
+          '--hero-handoff': 0,
+          '--hero-black-hold': 0,
+          '--hero-exit-sweep': '-18%',
+          '--hero-title-glow': 0,
+        });
         gsap.set(media, {opacity: 1, scale: 1, filter: 'blur(0px) saturate(1) brightness(1)'});
         gsap.set(overlay, {opacity: 1, filter: 'blur(0px) brightness(1)'});
         gsap.set(frame, {autoAlpha: 1, scale: 1, filter: 'blur(0px)'});
@@ -91,7 +194,13 @@ export function HeroIntro({
         gsap.set(langSwitch, {autoAlpha: 1, x: 0, y: 0, filter: 'blur(0px)'});
         gsap.set(introCopy, {autoAlpha: 1, y: 0, scale: 1, filter: 'blur(0px)'});
         gsap.set(titleWrap, {opacity: 1});
-        gsap.set(titleReal, {autoAlpha: 1, yPercent: 0, scale: 1, filter: 'blur(0px)', clipPath: 'inset(0% 0% 0% 0%)'});
+        gsap.set(titleReal, {
+          autoAlpha: 1,
+          yPercent: 0,
+          scale: 1,
+          filter: 'blur(0px)',
+          '--hero-title-mask': '140%',
+        });
         gsap.set(slices, {autoAlpha: 0, x: 0, y: 0, filter: 'blur(0px)'});
         gsap.set([kicker, support], {autoAlpha: 1, y: 0, filter: 'blur(0px)'});
         gsap.set(footer, {autoAlpha: 1, y: 0, filter: 'blur(0px)'});
@@ -101,12 +210,19 @@ export function HeroIntro({
       setIdle();
 
       const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const isMobileViewport = window.matchMedia('(max-width: 640px)').matches;
+      const mobileViewportHeight = Math.max(window.innerHeight, 1);
+      if (isMobileViewport) {
+        root.style.setProperty('--hero-mobile-height', `${Math.round(mobileViewportHeight)}px`);
+      } else {
+        root.style.removeProperty('--hero-mobile-height');
+      }
       const heroScrollTimeline = gsap.timeline({
         defaults: {ease: 'none'},
         scrollTrigger: {
           trigger: root,
           start: 'top top',
-          end: () => `+=${Math.round(window.innerHeight * (prefersReducedMotion ? 1.1 : 1.6))}`,
+          end: () => `+=${Math.round((isMobileViewport ? mobileViewportHeight : window.innerHeight) * (prefersReducedMotion ? 1.1 : 1.6))}`,
           scrub: prefersReducedMotion ? 0.12 : 0.6,
           pin: root,
           anticipatePin: 1,
@@ -128,54 +244,76 @@ export function HeroIntro({
           },
           0,
         )
+        .to(root, {
+          '--hero-handoff': prefersReducedMotion ? 0.28 : 0.72,
+          '--hero-exit-sweep': prefersReducedMotion ? '42%' : '118%',
+          '--hero-title-glow': prefersReducedMotion ? 0.25 : 1,
+          duration: prefersReducedMotion ? 0.12 : 0.36,
+        }, prefersReducedMotion ? 0.68 : 0.68)
         .to(cue, {
-            autoAlpha: 0,
-          y: prefersReducedMotion ? 0 : 18,
-          filter: `blur(${prefersReducedMotion ? 0 : 5}px)`,
-          duration: prefersReducedMotion ? 0.08 : 0.14,
-        }, prefersReducedMotion ? 0.64 : 0.56)
+          autoAlpha: 0,
+          y: prefersReducedMotion ? 0 : 20,
+          filter: `blur(${prefersReducedMotion ? 0 : 4}px)`,
+          duration: prefersReducedMotion ? 0.08 : 0.16,
+        }, prefersReducedMotion ? 0.7 : 0.72)
         .to(footer, {
           autoAlpha: 0,
-          y: prefersReducedMotion ? 0 : 16,
-          filter: `blur(${prefersReducedMotion ? 0 : 5}px)`,
-          duration: prefersReducedMotion ? 0.08 : 0.16,
-        }, prefersReducedMotion ? 0.66 : 0.6)
+          y: prefersReducedMotion ? 0 : 18,
+          filter: `blur(${prefersReducedMotion ? 0 : 4.5}px)`,
+          duration: prefersReducedMotion ? 0.08 : 0.18,
+        }, prefersReducedMotion ? 0.72 : 0.74)
         .to([kicker, support], {
           autoAlpha: 0,
-          y: prefersReducedMotion ? 0 : -16,
-          filter: `blur(${prefersReducedMotion ? 0 : 6}px)`,
-          duration: prefersReducedMotion ? 0.08 : 0.17,
-          stagger: prefersReducedMotion ? 0 : 0.025,
-        }, prefersReducedMotion ? 0.68 : 0.62)
+          y: prefersReducedMotion ? 0 : -18,
+          scale: prefersReducedMotion ? 1 : 0.992,
+          filter: `blur(${prefersReducedMotion ? 0 : 5}px)`,
+          duration: prefersReducedMotion ? 0.08 : 0.2,
+          stagger: prefersReducedMotion ? 0 : 0.032,
+        }, prefersReducedMotion ? 0.73 : 0.75)
         .to(slices, {
-          autoAlpha: prefersReducedMotion ? 0 : 0.22,
-          x: (index: number) => prefersReducedMotion ? 0 : [-18, -12, -7, 0, 7, 12, 18][index],
-          y: (index: number) => prefersReducedMotion ? 0 : (index - 3) * 1.5,
-          filter: `blur(${prefersReducedMotion ? 0 : 2}px)`,
-          duration: prefersReducedMotion ? 0.04 : 0.12,
-          stagger: prefersReducedMotion ? 0 : 0.008,
-        }, prefersReducedMotion ? 0.69 : 0.63)
+          autoAlpha: prefersReducedMotion ? 0 : (index: number) => [0.1, 0.16, 0.24, 0.34, 0.24, 0.16, 0.1][index],
+          x: (index: number) => prefersReducedMotion ? 0 : [-12, -8, -4, 0, 4, 8, 12][index],
+          y: (index: number) => prefersReducedMotion ? 0 : (index - 3) * 1.4,
+          filter: `blur(${prefersReducedMotion ? 0 : 1.1}px) brightness(${prefersReducedMotion ? 1 : 1.12})`,
+          duration: prefersReducedMotion ? 0.04 : 0.13,
+          stagger: prefersReducedMotion ? 0 : 0.01,
+        }, prefersReducedMotion ? 0.74 : 0.76)
+        .to(titleReal, {
+          autoAlpha: prefersReducedMotion ? 0.72 : 0.58,
+          yPercent: prefersReducedMotion ? 0 : -3,
+          scale: prefersReducedMotion ? 1 : 0.996,
+          filter: `blur(${prefersReducedMotion ? 0 : 1.6}px) brightness(${prefersReducedMotion ? 1 : 1.16})`,
+          '--hero-title-mask': prefersReducedMotion ? '92%' : '58%',
+          duration: prefersReducedMotion ? 0.08 : 0.16,
+        }, prefersReducedMotion ? 0.75 : 0.78)
         .to(titleReal, {
           autoAlpha: 0,
-          yPercent: prefersReducedMotion ? 0 : -12,
-          scale: prefersReducedMotion ? 1 : 0.985,
-          filter: `blur(${prefersReducedMotion ? 0 : 8}px)`,
-          clipPath: 'inset(0% 0% 100% 0%)',
+          yPercent: prefersReducedMotion ? 0 : -9,
+          scale: prefersReducedMotion ? 1 : 0.986,
+          filter: `blur(${prefersReducedMotion ? 0 : 5}px) brightness(${prefersReducedMotion ? 1 : 0.9})`,
+          '--hero-title-mask': prefersReducedMotion ? '140%' : '0%',
           duration: prefersReducedMotion ? 0.08 : 0.2,
-        }, prefersReducedMotion ? 0.7 : 0.65)
+        }, prefersReducedMotion ? 0.8 : 0.84)
         .to(slices, {
           autoAlpha: 0,
-          x: (index: number) => prefersReducedMotion ? 0 : [-30, -22, -14, -4, 14, 22, 30][index],
-          filter: `blur(${prefersReducedMotion ? 0 : 8}px)`,
-          duration: prefersReducedMotion ? 0.05 : 0.15,
-          stagger: prefersReducedMotion ? 0 : 0.006,
-        }, prefersReducedMotion ? 0.74 : 0.73)
+          x: (index: number) => prefersReducedMotion ? 0 : [-20, -14, -8, -3, 8, 14, 20][index],
+          y: (index: number) => prefersReducedMotion ? 0 : (index - 3) * 2.2,
+          filter: `blur(${prefersReducedMotion ? 0 : 5}px) brightness(${prefersReducedMotion ? 1 : 0.82})`,
+          duration: prefersReducedMotion ? 0.05 : 0.17,
+          stagger: prefersReducedMotion ? 0 : 0.008,
+        }, prefersReducedMotion ? 0.78 : 0.82)
+        .to(root, {
+          '--hero-handoff': 0,
+          '--hero-exit-sweep': prefersReducedMotion ? '42%' : '132%',
+          '--hero-title-glow': 0,
+          duration: prefersReducedMotion ? 0.06 : 0.12,
+        }, prefersReducedMotion ? 0.84 : 0.9)
         .to(topBar, {
           autoAlpha: 0,
           y: prefersReducedMotion ? 0 : -14,
           filter: `blur(${prefersReducedMotion ? 0 : 5}px)`,
           duration: prefersReducedMotion ? 0.08 : 0.16,
-        }, prefersReducedMotion ? 0.72 : 0.68)
+        }, prefersReducedMotion ? 0.78 : 0.83)
         .to(
           media,
           {
@@ -187,7 +325,7 @@ export function HeroIntro({
               : 'blur(5px) saturate(0.75) brightness(0)',
             duration: prefersReducedMotion ? 0.12 : 0.14,
           },
-          prefersReducedMotion ? 0.78 : 0.76,
+          prefersReducedMotion ? 0.86 : 0.88,
         )
         .to(
           root,
@@ -195,20 +333,28 @@ export function HeroIntro({
             '--hero-black-hold': 1,
             duration: 0.1,
           },
-          0.9,
+          0.96,
         );
 
       let handoffTl: gsap.core.Timeline | null = null;
+      let handoffResetCall: gsap.core.Tween | null = null;
+      let handoffFrame = 0;
 
-      const handleHandoff = (event: Event) => {
-        const detail = (event as CustomEvent<{reducedMotion?: boolean}>).detail ?? {};
-        const reducedMotion = !!detail.reducedMotion;
+      const finishHandoff = () => {
+        handoffResetCall?.kill();
+        handoffResetCall = null;
+        handoffTl = null;
+        setIdle();
+      };
+
+      const startHandoff = (reducedMotion: boolean) => {
         handoffTl?.kill();
+        handoffResetCall?.kill();
 
         const sliceOffsets = [-8, -5, -3, 0, 3, 5, 8];
         const sliceBlur = reducedMotion ? [0.9, 0.9, 0.8, 0.7, 0.8, 0.9, 0.9] : [2.8, 2.4, 2.1, 1.8, 2.1, 2.4, 2.8];
 
-        root.classList.add('is-handoff-active');
+        root.classList.add('is-handoff-active', 'is-hero-entering');
         gsap.set(root, {'--hero-handoff': 1});
         gsap.set(media, {
           opacity: reducedMotion ? 0.92 : 0.84,
@@ -268,7 +414,11 @@ export function HeroIntro({
           filter: `blur(${reducedMotion ? 2 : 6}px)`,
         });
 
-        handoffTl = gsap.timeline({defaults: {overwrite: 'auto'}})
+        handoffTl = gsap.timeline({
+          defaults: {overwrite: 'auto'},
+          onComplete: finishHandoff,
+          onInterrupt: finishHandoff,
+        })
           .to(root, {
             '--hero-handoff': 0.42,
             duration: reducedMotion ? 0.16 : 0.24,
@@ -356,15 +506,27 @@ export function HeroIntro({
             '--hero-handoff': 0,
             duration: reducedMotion ? 0.14 : 0.22,
             ease: 'sine.out',
-          }, reducedMotion ? 0.34 : 0.52)
-          .add(() => setIdle());
+          }, reducedMotion ? 0.44 : 0.64);
+
+        handoffResetCall = gsap.delayedCall(reducedMotion ? 0.74 : 0.96, finishHandoff);
+      };
+
+      const handleHandoff = (event: Event) => {
+        const detail = (event as CustomEvent<{reducedMotion?: boolean}>).detail ?? {};
+        window.cancelAnimationFrame(handoffFrame);
+        handoffFrame = window.requestAnimationFrame(() => {
+          handoffFrame = 0;
+          startHandoff(!!detail.reducedMotion);
+        });
       };
 
       window.addEventListener('mg:loading-handoff', handleHandoff as EventListener);
 
       return () => {
         window.removeEventListener('mg:loading-handoff', handleHandoff as EventListener);
+        window.cancelAnimationFrame(handoffFrame);
         handoffTl?.kill();
+        handoffResetCall?.kill();
         setIdle();
       };
     }, root);
@@ -459,8 +621,8 @@ export function HeroIntro({
               <div ref={titleWrapRef} className="hero-statement-handshake">
                 <span ref={titleRealRef} className="hero-statement-line hero-statement-real">
                   <span key={`${locale}-${phraseIndex}`} className="hero-statement-phrase">
-                  {copy.phrases[phraseIndex]}
-                </span>
+                    {phraseLineNodes}
+                  </span>
                 </span>
                 <span className="hero-statement-slices" aria-hidden="true">
                   {HERO_SLICE_SEGMENTS.map(([start, end], index) => (
@@ -472,7 +634,7 @@ export function HeroIntro({
                       className={`hero-statement-line hero-statement-slice hero-statement-slice-${index + 1}`}
                       style={{clipPath: `inset(0 ${100 - end}% 0 ${start}%)`}}
                     >
-                      {copy.phrases[phraseIndex]}
+                      {phraseLineNodes}
                     </span>
                   ))}
                 </span>

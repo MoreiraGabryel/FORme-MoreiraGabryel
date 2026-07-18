@@ -39,21 +39,6 @@ export default function App() {
   }, [locale]);
 
   useEffect(() => {
-    const phraseCount = copy.phrases.length;
-    const intervalId = window.setInterval(() => {
-      startTransition(() => {
-        setPhraseIndex((current) => {
-          if (phraseCount <= 1) return current;
-          let next = current;
-          while (next === current) next = Math.floor(Math.random() * phraseCount);
-          return next;
-        });
-      });
-    }, 3600);
-    return () => window.clearInterval(intervalId);
-  }, [copy.phrases]);
-
-  useEffect(() => {
     const phraseCount = copy.footerPhrases.length;
     const intervalId = window.setInterval(() => {
       startTransition(() => {
@@ -90,6 +75,9 @@ export default function App() {
     let frame = 0;
     let lastScrollY = window.scrollY;
     let directionBias = 0;
+    const mobileViewportQuery = window.matchMedia('(max-width: 640px)');
+    let wasMobileViewport = mobileViewportQuery.matches;
+    let mobileHeroViewportHeight = Math.max(window.innerHeight, 1);
 
     const resolveProgress = (section: HTMLElement, introRatio: number) => {
       const viewportHeight = Math.max(window.innerHeight, 1);
@@ -103,13 +91,19 @@ export default function App() {
 
     const updateProgress = () => {
       const viewportHeight = Math.max(window.innerHeight, 1);
+      const isMobileViewport = mobileViewportQuery.matches;
+      if (isMobileViewport && !wasMobileViewport) {
+        mobileHeroViewportHeight = viewportHeight;
+      }
+      wasMobileViewport = isMobileViewport;
+      const heroViewportHeight = isMobileViewport ? mobileHeroViewportHeight : viewportHeight;
       const currentScrollY = window.scrollY;
       const delta = currentScrollY - lastScrollY;
       lastScrollY = currentScrollY;
-      const directionalImpulse = clamp(delta / Math.max(viewportHeight * 0.08, 48), -1, 1);
+      const directionalImpulse = clamp(delta / Math.max(heroViewportHeight * 0.08, 48), -1, 1);
       directionBias = clamp(directionBias * 0.72 + directionalImpulse * 0.28, -1, 1);
 
-      const rawHero = currentScrollY / (viewportHeight * 1.6);
+      const rawHero = currentScrollY / (heroViewportHeight * 1.6);
       setScrollState({
         heroProgress: clamp(rawHero, 0, 1),
         rawStageProgress: resolveProgress(transitionSection, 0.22),
@@ -139,7 +133,7 @@ export default function App() {
   const stageHoldProgress = clamp((rawStageProgress - 0.78) / 0.14, 0, 1);
   const stageReleaseProgress = clamp((rawStageProgress - 0.92) / 0.08, 0, 1);
   const stageProgress = rawStageProgress < 0.78 ? stageReadProgress : 1;
-  const heroHandoff = clamp((heroProgress - 0.58) / 0.34, 0, 1);
+  const heroHandoff = clamp((heroProgress - 0.68) / 0.24, 0, 1);
   const heroHandoffEase = 1 - Math.pow(1 - heroHandoff, 3);
   const stageEase = 1 - Math.pow(1 - stageProgress, 3);
   const stageHoldEase = stageHoldProgress * stageHoldProgress * (3 - 2 * stageHoldProgress);

@@ -26,8 +26,22 @@ type FloatingTechnologySpec = {
 };
 
 const DESKTOP_TECH_COUNT = 16;
-const MOBILE_TECH_COUNT = 8;
+const MOBILE_TECH_COUNT = 12;
 const STAGE_SCENE_START = 0.24;
+const MOBILE_FLOAT_POINTS = [
+  {left: 0.16, top: 0.18},
+  {left: 0.84, top: 0.18},
+  {left: 0.1, top: 0.34},
+  {left: 0.9, top: 0.34},
+  {left: 0.14, top: 0.58},
+  {left: 0.86, top: 0.58},
+  {left: 0.22, top: 0.78},
+  {left: 0.78, top: 0.78},
+  {left: 0.36, top: 0.12},
+  {left: 0.64, top: 0.12},
+  {left: 0.3, top: 0.88},
+  {left: 0.7, top: 0.88},
+] as const;
 const svgCache = new Map<string, string>();
 
 function randomBetween(min: number, max: number) {
@@ -146,7 +160,7 @@ function getFallbackSafePoints(isMobile: boolean) {
 function createFloatingSpecs(items: Technology[], isMobile: boolean) {
   const orderedItems = shuffleArray(items);
   const placedPoints: Array<{left: number; top: number}> = [];
-  const minDistance = isMobile ? 0.17 : 0.092;
+  const minDistance = isMobile ? 0.13 : 0.092;
   const bandCounts = {top: 0, middle: 0, bottom: 0};
   const bandLimits = isMobile ? {top: 3, middle: 3, bottom: 2} : {top: 5, middle: 6, bottom: 5};
   const fallbackSafePoints = getFallbackSafePoints(isMobile);
@@ -155,9 +169,15 @@ function createFloatingSpecs(items: Technology[], isMobile: boolean) {
     let left: number | null = null;
     let top: number | null = null;
 
-    for (let attempt = 0; attempt < 240; attempt += 1) {
-      const candidateLeft = randomBetween(isMobile ? 0.11 : 0.07, isMobile ? 0.89 : 0.93);
-      const candidateTop = randomBetween(isMobile ? 0.1 : 0.07, isMobile ? 0.9 : 0.93);
+    if (isMobile) {
+      const mobilePoint = MOBILE_FLOAT_POINTS[index % MOBILE_FLOAT_POINTS.length];
+      left = mobilePoint.left;
+      top = mobilePoint.top;
+    }
+
+    for (let attempt = 0; left === null && top === null && attempt < 240; attempt += 1) {
+      const candidateLeft = randomBetween(0.07, 0.93);
+      const candidateTop = randomBetween(0.07, 0.93);
       const band = candidateTop < 0.34 ? 'top' : candidateTop > 0.68 ? 'bottom' : 'middle';
 
       if (bandCounts[band] >= bandLimits[band]) continue;
@@ -191,12 +211,12 @@ function createFloatingSpecs(items: Technology[], isMobile: boolean) {
 
     return {
       id: item.id,
-      size: Math.round(lerp(isMobile ? 34 : 48, isMobile ? 52 : 76, depth)),
+      size: Math.round(lerp(isMobile ? 30 : 48, isMobile ? 46 : 76, depth)),
       left,
       top,
       revealOrder: orderedItems.length <= 1 ? 0 : index / (orderedItems.length - 1),
-      driftAmplitudeX: lerp(isMobile ? 12 : 18, isMobile ? 28 : 52, depth),
-      driftAmplitudeY: lerp(isMobile ? 14 : 20, isMobile ? 32 : 56, depth),
+      driftAmplitudeX: lerp(isMobile ? 8 : 18, isMobile ? 20 : 52, depth),
+      driftAmplitudeY: lerp(isMobile ? 10 : 20, isMobile ? 24 : 56, depth),
       driftSpeed: lerp(0.00055, 0.0014, depth),
       driftOffset: randomBetween(0, Math.PI * 2),
       depth,
@@ -586,10 +606,10 @@ export function ScrollTransitionStage({
         const isActive = activeTechnologyIdRef.current === spec.id;
         const interactionStrength = isActive ? 1 : isHovered ? 0.72 : 0;
         const driftDamping = interactionStrength ? 0.28 : 1;
-        const revealOffset = spec.revealOrder * (isMobile ? 0.34 : 0.42);
-        const revealWindow = isMobile ? 0.34 : 0.28;
+        const revealOffset = spec.revealOrder * (isMobile ? 0.16 : 0.42);
+        const revealWindow = isMobile ? 0.42 : 0.28;
         const revealProgress = easeOutCubic(clamp((iconIntroProgress - revealOffset) / revealWindow, 0, 1));
-        const driftProgress = easeOutCubic(clamp((iconIntroProgress - revealOffset + 0.08) / 0.42, 0, 1));
+        const driftProgress = easeOutCubic(clamp((iconIntroProgress - revealOffset + (isMobile ? 0.06 : 0.08)) / (isMobile ? 0.36 : 0.42), 0, 1));
         const targetX = (spec.left - 0.5) * rect.width;
         const targetY = (spec.top - 0.5) * rect.height;
         const targetDistance = Math.hypot(targetX, targetY) || 1;
