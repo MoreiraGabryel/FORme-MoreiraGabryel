@@ -81,7 +81,7 @@ function AboutCardContent({card}: {card: AboutCard}) {
   );
 }
 
-export function AboutStage({
+export function AboutCardsStage({
   reducedMotion = false,
   isActive = false,
 }: {

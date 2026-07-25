@@ -110,7 +110,7 @@ export function FakeFooterStage({
     const ctx = gsap.context(() => {
       gsap.set(section, {
         '--fake-footer-unlock': 0,
-        '--fake-footer-final-black': 0,
+        '--fake-footer-exit-blackout': 0,
       });
 
       gsap
@@ -127,7 +127,7 @@ export function FakeFooterStage({
             onLeaveBack: () => {
               gsap.set(section, {
                 '--fake-footer-unlock': 0,
-                '--fake-footer-final-black': 0,
+                '--fake-footer-exit-blackout': 0,
               });
             },
           },
@@ -135,7 +135,7 @@ export function FakeFooterStage({
         .to({}, {duration: 0.68})
         .to(section, {'--fake-footer-unlock': 1, duration: 0.18})
         .to({}, {duration: 0.34})
-        .to(section, {'--fake-footer-final-black': 1, duration: 0.46});
+        .to(section, {'--fake-footer-exit-blackout': 1, duration: 0.46});
     }, section);
 
     return () => ctx.revert();
@@ -357,7 +357,7 @@ export function FakeFooterStage({
           </div>
         </div>
 
-        <div className="fake-footer-final-black" aria-hidden="true" />
+        <div className="fake-footer-exit-blackout" aria-hidden="true" />
       </div>
     </section>
   );

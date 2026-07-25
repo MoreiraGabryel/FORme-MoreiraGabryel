@@ -44,6 +44,14 @@ Thumbs.db
 .cache/
 coverage/
 .tmp-*/
+*.tsbuildinfo
+.eslintcache
+vite.config.*.timestamp-*
+
+# Local agent/session state - nunca faz parte do deploy
+.hermes/
+.omo/
+.codegraph
 
 # Local visual/source references
 backups/

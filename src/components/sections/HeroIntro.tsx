@@ -183,7 +183,6 @@ export function HeroIntro({
         root.classList.remove('is-hero-entering');
         gsap.set(root, {
           '--hero-handoff': 0,
-          '--hero-black-hold': 0,
           '--hero-exit-sweep': '-18%',
           '--hero-title-glow': 0,
         });
@@ -248,7 +247,7 @@ export function HeroIntro({
           '--hero-handoff': prefersReducedMotion ? 0.28 : 0.72,
           '--hero-exit-sweep': prefersReducedMotion ? '42%' : '118%',
           '--hero-title-glow': prefersReducedMotion ? 0.25 : 1,
-          duration: prefersReducedMotion ? 0.12 : 0.36,
+          duration: prefersReducedMotion ? 0.12 : 0.2,
         }, prefersReducedMotion ? 0.68 : 0.68)
         .to(cue, {
           autoAlpha: 0,
@@ -317,23 +316,23 @@ export function HeroIntro({
         .to(
           media,
           {
-            opacity: 0,
-            scale: prefersReducedMotion ? 1.008 : 1.055,
-            yPercent: prefersReducedMotion ? -0.5 : -4.2,
+            autoAlpha: 0,
+            scale: prefersReducedMotion ? 1 : isMobileViewport ? 1.16 : 1.28,
+            yPercent: 0,
             filter: prefersReducedMotion
-              ? 'blur(0px) saturate(0.96) brightness(0)'
-              : 'blur(5px) saturate(0.75) brightness(0)',
-            duration: prefersReducedMotion ? 0.12 : 0.14,
+              ? 'blur(0px) saturate(1) brightness(0.82)'
+              : 'blur(1.6px) saturate(0.88) brightness(0.48)',
+            duration: prefersReducedMotion ? 0.08 : 0.12,
           },
-          prefersReducedMotion ? 0.86 : 0.88,
+          prefersReducedMotion ? 0.88 : 0.88,
         )
         .to(
-          root,
+          overlay,
           {
-            '--hero-black-hold': 1,
-            duration: 0.1,
+            autoAlpha: 0,
+            duration: prefersReducedMotion ? 0.06 : 0.1,
           },
-          0.96,
+          prefersReducedMotion ? 0.9 : 0.9,
         );
 
       let handoffTl: gsap.core.Timeline | null = null;

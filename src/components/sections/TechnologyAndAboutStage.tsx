@@ -6,8 +6,7 @@ import {SplitText} from 'gsap/SplitText';
 import type {Locale} from '../../i18n/useTranslation';
 import {TECHNOLOGIES, TECHNOLOGIES_SECTION_COPY, type Technology} from '../../config/technologies';
 import {useIsMobile} from '../../hooks/useIsMobile';
-import {SceneCrossfade} from '../SceneCrossfade';
-import {AboutStage} from './AboutStage';
+import {AboutCardsStage} from './AboutCardsStage';
 
 gsap.registerPlugin(ScrollTrigger, SplitText);
 
@@ -27,7 +26,7 @@ type FloatingTechnologySpec = {
 
 const DESKTOP_TECH_COUNT = 16;
 const MOBILE_TECH_COUNT = 12;
-const STAGE_SCENE_START = 0.24;
+const SCENE_TWO_IMAGE = '/media/scene-1.webp';
 const MOBILE_FLOAT_POINTS = [
   {left: 0.16, top: 0.18},
   {left: 0.84, top: 0.18},
@@ -273,29 +272,21 @@ function InlineTechnologyIcon({
   );
 }
 
-export function ScrollTransitionStage({
+export function TechnologyAndAboutStage({
   locale,
-  stageProgress,
   rawStageProgress,
-  sceneProgress,
-  sceneBlackoutOpacity,
   stageStyle,
 }: {
   locale: Locale;
-  stageProgress: number;
   rawStageProgress: number;
-  sceneProgress: number;
-  sceneBlackoutOpacity: number;
   stageStyle: CSSProperties;
 }) {
   const isMobile = useIsMobile();
-  void stageProgress;
 
   const [reducedMotion, setReducedMotion] = useState(false);
   const [aboutStageInteractive, setAboutStageInteractive] = useState(false);
   const [hoveredTechnologyId, setHoveredTechnologyId] = useState<string | null>(null);
   const [activeTechnologyId, setActiveTechnologyId] = useState<string | null>(null);
-  const [backgroundSceneProgress, setBackgroundSceneProgress] = useState(() => Math.max(sceneProgress, STAGE_SCENE_START));
   const stageSectionRef = useRef<HTMLElement | null>(null);
   const pinnedShellRef = useRef<HTMLDivElement | null>(null);
   const sceneBackgroundRef = useRef<HTMLDivElement | null>(null);
@@ -368,19 +359,17 @@ export function ScrollTransitionStage({
 
     let isAboutInteractive = false;
     let splitTitle: ReturnType<typeof SplitText.create> | null = null;
-    const sceneProgressState = {value: Math.max(sceneProgress, STAGE_SCENE_START)};
 
     const ctx = gsap.context(() => {
-      setBackgroundSceneProgress(sceneProgressState.value);
       splitTitle = SplitText.create(titleText, {type: 'chars', charsClass: 'technology-title-char'});
 
       gsap.set(sceneBackground, {
         autoAlpha: 0,
-        scale: reducedMotion ? 1.012 : 1.06,
-        yPercent: reducedMotion ? 0 : 1.2,
-        filter: reducedMotion ? 'none' : 'blur(10px) brightness(0.42)',
+        scale: reducedMotion ? 1 : isMobile ? 1.2 : 1.45,
+        yPercent: 0,
+        filter: reducedMotion ? 'none' : 'blur(2px) brightness(0.72)',
         transformOrigin: 'center center',
-        willChange: 'transform, opacity, filter',
+        willChange: 'transform, opacity',
       });
 
       gsap.set(stageBackdrop, {
@@ -446,7 +435,7 @@ export function ScrollTransitionStage({
             scale: 1,
             yPercent: 0,
             filter: 'blur(0px) brightness(1)',
-            duration: reducedMotion ? 0.12 : 0.24,
+            duration: reducedMotion ? 0.06 : 0.08,
           },
           0,
         )
@@ -484,15 +473,6 @@ export function ScrollTransitionStage({
           reducedMotion ? 0.14 : 0.34,
         )
         .to(
-          sceneProgressState,
-          {
-            value: reducedMotion ? 0.42 : 0.5,
-            duration: 0.68,
-            onUpdate: () => setBackgroundSceneProgress(sceneProgressState.value),
-          },
-          0.18,
-        )
-        .to(
           sceneBackground,
           {
             scale: reducedMotion ? 1.006 : 1.028,
@@ -526,7 +506,7 @@ export function ScrollTransitionStage({
       ctx.revert();
       splitTitle?.revert();
     };
-  }, [locale, reducedMotion]);
+  }, [isMobile, locale, reducedMotion]);
 
   useEffect(() => {
     if (!activeTechnologyId) return;
@@ -691,14 +671,12 @@ export function ScrollTransitionStage({
       style={{
         ...stageStyle,
         '--stage2-exit-progress': stageExitProgress,
-        '--scene-blackout-opacity': sceneBlackoutOpacity,
       } as CSSProperties}
       onPointerLeave={handleStagePointerLeave}
     >
       <div ref={pinnedShellRef} className="technologies-pin-shell">
         <div ref={sceneBackgroundRef} className="transition-scene-background" aria-hidden="true">
-          <SceneCrossfade progress={backgroundSceneProgress} />
-          <div className="transition-scene-blackout" />
+          <img className="technology-scene-image" src={SCENE_TWO_IMAGE} alt="" />
         </div>
 
         <div ref={stageBackdropRef} className="transition-backdrop technologies-backdrop" aria-hidden="true">
@@ -801,7 +779,7 @@ export function ScrollTransitionStage({
 
         <div ref={stageTwoLayerRef} className={`about-stage-two-layer${aboutStageInteractive ? ' is-interactive' : ''}`}>
           <div className="about-stage-two-viewport">
-            <AboutStage reducedMotion={reducedMotion} isActive={aboutStageInteractive} />
+            <AboutCardsStage reducedMotion={reducedMotion} isActive={aboutStageInteractive} />
           </div>
         </div>
       </div>

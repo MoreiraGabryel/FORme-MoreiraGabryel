@@ -2,8 +2,9 @@ import {startTransition, useCallback, useEffect, useRef, useState} from 'react';
 import type {CSSProperties} from 'react';
 import {LoadingScreen} from './components/sections/LoadingScreen';
 import {HeroIntro} from './components/sections/HeroIntro';
-import {ScrollTransitionStage} from './components/sections/ScrollTransitionStage';
+import {TechnologyAndAboutStage} from './components/sections/TechnologyAndAboutStage';
 import {FakeFooterStage} from './components/sections/FakeFooterStage';
+import {FutureFooterStage} from './components/sections/FutureFooterStage';
 import {LegalPage} from './components/legal/LegalPage';
 import {HOME_COPY} from './config/homeContent';
 import {useTranslation} from './i18n/useTranslation';
@@ -30,8 +31,8 @@ export default function App() {
     isLargeViewport: false,
   });
   const {heroProgress, rawStageProgress, rawFakeFooterProgress, scrollDirectionBias, isLargeViewport} = scrollState;
-  const transitionSectionRef = useRef<HTMLElement | null>(null);
-  const fakeFooterSectionRef = useRef<HTMLElement | null>(null);
+  const journeySectionRef = useRef<HTMLDivElement | null>(null);
+  const fakeFooterSectionRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     setPhraseIndex(0);
@@ -57,8 +58,6 @@ export default function App() {
     const preloadImages = [
       '/media/scene-0.webp',
       '/media/scene-1.webp',
-      '/media/scene-2.webp',
-      '/media/scene-3.webp',
     ];
 
     preloadImages.forEach((src) => {
@@ -68,7 +67,7 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    const transitionSection = transitionSectionRef.current;
+    const transitionSection = journeySectionRef.current;
     const fakeFooterSection = fakeFooterSectionRef.current;
     if (!transitionSection || !fakeFooterSection) return;
 
@@ -152,12 +151,6 @@ export default function App() {
   const fakeFooterReverse = upwardScrollBias * fakeFooterReverseWindow;
   const fakeFooterReverseEase = fakeFooterReverse * fakeFooterReverse * (3 - 2 * fakeFooterReverse);
 
-  const stackSceneProgress = clamp(rawStageProgress / 0.78, 0, 1) * 0.50;
-  const stageBlackProgress = clamp((rawStageProgress - 0.78) / 0.1, 0, 1);
-  const stageBlackEase = stageBlackProgress * stageBlackProgress * (3 - 2 * stageBlackProgress);
-  const stageBlackRelease = rawFakeFooterProgress > 0.02 ? clamp((rawFakeFooterProgress - 0.02) / 0.22, 0, 1) : 0;
-  const sceneBlackoutOpacity = stageBlackEase * (1 - stageBlackRelease);
-  const transitionSceneProgress = clamp(stackSceneProgress, 0, 1);
 
   if (pathname === '/privacy-policy') return <LegalPage kind="privacy" locale={locale} setLocale={setLocale} />;
   if (pathname === '/terms-of-service') return <LegalPage kind="terms" locale={locale} setLocale={setLocale} />;
@@ -178,13 +171,10 @@ export default function App() {
           heroProgress={heroProgress}
         />
 
-        <section ref={transitionSectionRef}>
-          <ScrollTransitionStage
+        <div ref={journeySectionRef} className="technology-and-about-flow">
+          <TechnologyAndAboutStage
             locale={locale}
-            stageProgress={stageProgress}
             rawStageProgress={rawStageProgress}
-            sceneProgress={transitionSceneProgress}
-            sceneBlackoutOpacity={sceneBlackoutOpacity}
             stageStyle={{
               '--stage-progress': `${stageProgress}`,
               '--stage-ease': `${stageEase}`,
@@ -197,9 +187,9 @@ export default function App() {
               '--clip-reveal': `${heroHandoffEase}`,
             } as CSSProperties}
           />
-        </section>
+        </div>
 
-        <section ref={fakeFooterSectionRef}>
+        <div ref={fakeFooterSectionRef} className="fake-footer-flow">
           <FakeFooterStage
             copy={copy}
             locale={locale}
@@ -230,8 +220,9 @@ export default function App() {
                 : `saturate(${1.02 + fakeFooterTunnelEase * 0.12 - fakeFooterSettle * 0.008 - fakeFooterReverseEase * 0.05}) brightness(${0.78 + fakeFooterTunnelEase * 0.1 - fakeFooterSettle * 0.002 - fakeFooterReverseEase * 0.05}) contrast(${1.1 + fakeFooterTunnelEase * 0.05 - fakeFooterReverseEase * 0.02}) blur(${(1 - fakeFooterTunnelEase) * 0.52 + fakeFooterSettle * 0.1 + fakeFooterReverseEase * 0.82}px)`,
             }}
           />
-        </section>
+        </div>
 
+        <FutureFooterStage />
       </main>
     </>
   );
