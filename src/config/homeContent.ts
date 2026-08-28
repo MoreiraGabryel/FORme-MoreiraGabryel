@@ -48,7 +48,7 @@ export type HomeCopy = {
 
 export const HOME_COPY: Record<Locale, HomeCopy> = {
   pt: {
-    heroTag: 'Portfólio de desenvolvedor',
+    heroTag: 'Desenvolvedor Full-Stack',
     heroSubtag: 'Interfaces, sistemas e motion para produto digital.',
     heroSupport: 'Experiências visuais com foco em performance, automação e clareza de produto.',
     scrollCue: 'Role para iniciar',
@@ -105,7 +105,7 @@ export const HOME_COPY: Record<Locale, HomeCopy> = {
     ],
   },
   en: {
-    heroTag: 'Developer portfolio',
+    heroTag: 'Full-stack Developer',
     heroSubtag: 'Interfaces, systems, and motion for digital products.',
     heroSupport: 'Visual experiences shaped around performance, automation, and product clarity.',
     scrollCue: 'Scroll to start',
