@@ -37,10 +37,4 @@ Observacao:
 - `public/icons/` guarda icones estaticos
 - `public/media/` guarda imagens e videos usados nas cenas
 
-## Cuidados de manutencao
 
-- Preserve caminhos relativos para assets em `public/`
-- Evite versionar builds gerados em `dist/`
-- Mantenha arquivos fonte, backups e referencias visuais fora do repositorio quando nao forem usados em runtime
-- Antes de publicar, rode `npm run build` e confira o preview local
-- Mantenha a base leve: adicione bibliotecas apenas quando houver ganho real
