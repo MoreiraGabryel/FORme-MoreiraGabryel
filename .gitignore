@@ -64,3 +64,4 @@ fundo_site*.mp4
 # Cloudflare local output
 .wrangler/
 .dev.vars
+ISSUES.MD
