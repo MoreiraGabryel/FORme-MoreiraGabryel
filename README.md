@@ -15,7 +15,10 @@ Portfolio estatico em React + Vite + TypeScript, preparado para deploy no Cloudf
 - `npm run dev` inicia o Vite em `http://127.0.0.1:3000`
 - `npm run dev:fresh` libera a porta 3000, limpa o cache do Vite e inicia o servidor
 - `npm run dev:stop` encerra um processo Node/Vite ouvindo na porta 3000
+- `npm run lint` valida o código com ESLint
+- `npm run security:audit` valida dependências com `npm audit --audit-level=moderate`
 - `npm run build` remove `dist/`, executa o typecheck e gera um build novo
+- `npm run verify` executa lint, auditoria de dependências e build
 - `npm run preview` serve o build em `http://127.0.0.1:4173`
 
 Observacao:

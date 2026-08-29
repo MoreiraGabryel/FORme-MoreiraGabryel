@@ -1,21 +1,49 @@
-# Security Policy
+# Política de Segurança
 
-## Supported Versions
+## Escopo
 
-Use this section to tell people about which versions of your project are
-currently being supported with security updates.
+Este repositório mantém o portfólio estático MoreiraGabryel em React, Vite e TypeScript.
 
-| Version | Supported          |
-| ------- | ------------------ |
-| 5.1.x   | :white_check_mark: |
-| 5.0.x   | :x:                |
-| 4.0.x   | :white_check_mark: |
-| < 4.0   | :x:                |
+A aplicação não deve exigir segredos, tokens ou chaves para build, preview ou deploy estático.
 
-## Reporting a Vulnerability
+## Versões suportadas
 
-Use this section to tell people how to report a vulnerability.
+| Branch | Suporte |
+| --- | --- |
+| `main` | Suportada |
+| demais branches | Uso temporário para PRs |
 
-Tell them where to go, how often they can expect to get an update on a
-reported vulnerability, what to expect if the vulnerability is accepted or
-declined, etc.
+## Relato de vulnerabilidade
+
+Se encontrar uma falha de segurança:
+
+1. Abra uma issue privada, se o GitHub permitir.
+2. Se não houver issue privada disponível, reporte com o mínimo de detalhe explorável.
+3. Não publique tokens, chaves, payloads sensíveis ou dados pessoais.
+
+Inclua, quando possível:
+
+- área afetada;
+- passos de reprodução seguros;
+- impacto esperado;
+- versão/commit analisado.
+
+## Higiene de segurança
+
+Antes de publicar ou fazer deploy:
+
+```bash
+npm run verify
+```
+
+Esse gate executa:
+
+- lint;
+- auditoria de dependências com `npm audit --audit-level=moderate`;
+- typecheck e build de produção.
+
+## Segredos
+
+Arquivos `.env*`, credenciais, certificados e chaves privadas são ignorados pelo Git.
+
+O arquivo `.env.example` deve conter apenas exemplos sem valor real.
