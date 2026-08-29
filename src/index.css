@@ -111,14 +111,6 @@ button {
   z-index: 100;
 }
 
-.future-footer-stage {
-  position: relative;
-  min-height: 100svh;
-  min-height: 100dvh;
-  isolation: isolate;
-  background: #000;
-}
-
 .hero-stage,
 .transition-stage {
   position: relative;
