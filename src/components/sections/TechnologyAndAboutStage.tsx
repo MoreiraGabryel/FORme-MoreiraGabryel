@@ -224,6 +224,10 @@ function createFloatingSpecs(items: Technology[], isMobile: boolean) {
   });
 }
 
+const ABOUT_STAGE_ENTER_PROGRESS = 0.94;
+const ABOUT_STAGE_ENTER_DURATION = 0.06;
+const ABOUT_STAGE_INTERACTIVE_PROGRESS = 0.97;
+
 function InlineTechnologyIcon({
   src,
   label,
@@ -416,7 +420,7 @@ export function TechnologyAndAboutStage({
           anticipatePin: 1,
           invalidateOnRefresh: true,
           onUpdate: (self) => {
-            const nextInteractive = self.progress >= 0.94;
+            const nextInteractive = self.progress >= ABOUT_STAGE_INTERACTIVE_PROGRESS;
             if (nextInteractive !== isAboutInteractive) {
               isAboutInteractive = nextInteractive;
               setAboutStageInteractive(nextInteractive);
@@ -495,9 +499,9 @@ export function TechnologyAndAboutStage({
           {
             autoAlpha: 1,
             y: 0,
-            duration: 0.1,
+            duration: ABOUT_STAGE_ENTER_DURATION,
           },
-          0.9,
+          ABOUT_STAGE_ENTER_PROGRESS,
         );
     }, stageSectionRef);
 
