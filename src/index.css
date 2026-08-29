@@ -107,6 +107,10 @@ button {
   background: #000;
 }
 
+.technology-and-about-flow:has(.has-open-technology-card) {
+  z-index: 100;
+}
+
 .future-footer-stage {
   position: relative;
   min-height: 100svh;
@@ -3409,7 +3413,7 @@ button {
 .technology-modal-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 40;
+  z-index: 120;
   display: flex;
   align-items: center;
   justify-content: center;
