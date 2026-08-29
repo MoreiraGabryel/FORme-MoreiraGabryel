@@ -6,15 +6,55 @@ type AboutCard = {
   title: string;
   tag: string;
   contentType: 'paragraph' | 'list';
-  placeholder: string;
+  content: string | string[];
 };
 
 const ABOUT_CARDS: AboutCard[] = [
-  {id: 'who', title: 'Quem sou', tag: 'SOBRE', contentType: 'paragraph', placeholder: '[TEXTO_QUEM_SOU]'},
-  {id: 'experience', title: 'Experiências & Freelances', tag: 'TRABALHO', contentType: 'list', placeholder: '[LISTA_EXPERIENCIAS]'},
-  {id: 'education', title: 'Formação', tag: 'EDUCAÇÃO', contentType: 'list', placeholder: '[LISTA_FORMACAO]'},
-  {id: 'goals', title: 'Objetivos', tag: 'VISÃO', contentType: 'paragraph', placeholder: '[TEXTO_OBJETIVOS]'},
-  {id: 'languages', title: 'Idiomas', tag: 'IDIOMAS', contentType: 'list', placeholder: '[LISTA_IDIOMAS]'},
+  {
+    id: 'who',
+    title: 'Quem sou',
+    tag: 'SOBRE',
+    contentType: 'paragraph',
+    content:
+      'Sou desenvolvedor full-stack focado em transformar ideias em interfaces rápidas, claras e prontas para uso real, unindo front-end, automação e experiência visual.',
+  },
+  {
+    id: 'experience',
+    title: 'Experiências & Freelances',
+    tag: 'TRABALHO',
+    contentType: 'list',
+    content: [
+      'Portfólios, landing pages e interfaces com motion para marcas e produtos digitais.',
+      'Automações web e scripts que reduzem tarefas repetitivas e organizam fluxos internos.',
+      'Integração entre UI, APIs e dados para entregar experiências completas.',
+    ],
+  },
+  {
+    id: 'education',
+    title: 'Formação',
+    tag: 'EDUCAÇÃO',
+    contentType: 'list',
+    content: [
+      'Formação contínua em desenvolvimento web, React, TypeScript e boas práticas de produto.',
+      'Estudo prático de UI/UX, performance, acessibilidade e motion design.',
+      'Aprendizado guiado por projetos reais, documentação técnica e entrega em produção.',
+    ],
+  },
+  {
+    id: 'goals',
+    title: 'Objetivos',
+    tag: 'VISÃO',
+    contentType: 'paragraph',
+    content:
+      'Criar produtos digitais que pareçam premium, carreguem rápido e ajudem negócios a vender, organizar processos e apresentar valor com clareza.',
+  },
+  {
+    id: 'languages',
+    title: 'Idiomas',
+    tag: 'IDIOMAS',
+    contentType: 'list',
+    content: ['Português brasileiro — nativo.', 'Inglês técnico — leitura de documentação, ferramentas e código.'],
+  },
 ];
 
 function wrapIndex(index: number) {
@@ -71,12 +111,16 @@ function AboutCardIcon({cardId}: {cardId: string}) {
 
 function AboutCardContent({card}: {card: AboutCard}) {
   if (card.contentType === 'paragraph') {
-    return <p>{card.placeholder}</p>;
+    return <p>{card.content}</p>;
   }
+
+  const items = Array.isArray(card.content) ? card.content : [card.content];
 
   return (
     <ul>
-      <li>{card.placeholder}</li>
+      {items.map((item) => (
+        <li key={item}>{item}</li>
+      ))}
     </ul>
   );
 }
