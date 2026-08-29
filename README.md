@@ -29,7 +29,7 @@ Observacao:
 
 - Build command: `npm run build`
 - Output directory: `dist`
-- Node version: 20+
+- Node version: 22+
 
 ## Estrutura
 
