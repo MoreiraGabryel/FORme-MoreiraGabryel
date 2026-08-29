@@ -162,7 +162,7 @@ export default function App() {
         <a className="brand-mark" href="#home">MoreiraGabryel</a>
         <span className="brand-caption">{copy.heroTag}</span>
       </div>
-      <main className="site-shell">
+      <main id="home" className="site-shell">
         <HeroIntro
           copy={copy}
           locale={locale}
