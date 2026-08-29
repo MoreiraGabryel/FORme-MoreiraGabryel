@@ -39,6 +39,19 @@ export default function App() {
   }, [locale]);
 
   useEffect(() => {
+    const phraseCount = copy.phrases.length;
+    if (phraseCount <= 1) return;
+
+    const intervalId = window.setInterval(() => {
+      startTransition(() => {
+        setPhraseIndex((current) => (current + 1) % phraseCount);
+      });
+    }, 4200);
+
+    return () => window.clearInterval(intervalId);
+  }, [copy.phrases]);
+
+  useEffect(() => {
     const phraseCount = copy.footerPhrases.length;
     const intervalId = window.setInterval(() => {
       startTransition(() => {
