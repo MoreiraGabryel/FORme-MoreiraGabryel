@@ -1,6 +1,7 @@
 import type {Dispatch, SetStateAction} from 'react';
 import {LEGAL_CONTENT} from '../../config/legalContent';
 import type {Locale} from '../../i18n/useTranslation';
+import {LanguageSwitch} from '../common/LanguageSwitch';
 
 type Props = {
   locale: Locale;
@@ -37,14 +38,7 @@ export function LegalPage({locale, setLocale, kind}: Props) {
               </a>
             </nav>
 
-            <div className="lang-switch" aria-label={content.language}>
-              <button className={locale === 'pt' ? 'is-active' : undefined} type="button" onClick={() => setLocale('pt')}>
-                PT
-              </button>
-              <button className={locale === 'en' ? 'is-active' : undefined} type="button" onClick={() => setLocale('en')}>
-                EN
-              </button>
-            </div>
+            <LanguageSwitch locale={locale} setLocale={setLocale} label={content.language} />
           </div>
         </header>
 
