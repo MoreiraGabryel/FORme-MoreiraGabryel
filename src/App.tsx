@@ -4,7 +4,6 @@ import {LoadingScreen} from './components/sections/LoadingScreen';
 import {HeroIntro} from './components/sections/HeroIntro';
 import {TechnologyAndAboutStage} from './components/sections/TechnologyAndAboutStage';
 import {FakeFooterStage} from './components/sections/FakeFooterStage';
-import {FutureFooterStage} from './components/sections/FutureFooterStage';
 import {LegalPage} from './components/legal/LegalPage';
 import {HOME_COPY} from './config/homeContent';
 import {useTranslation} from './i18n/useTranslation';
@@ -221,8 +220,6 @@ export default function App() {
             }}
           />
         </div>
-
-        <FutureFooterStage />
       </main>
     </>
   );
