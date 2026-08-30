@@ -3003,6 +3003,10 @@ button {
   pointer-events: none;
 }
 
+.technologies-copy * {
+  pointer-events: none;
+}
+
 .technologies-copy-inner {
   position: relative;
   width: min(100%, 42rem);
