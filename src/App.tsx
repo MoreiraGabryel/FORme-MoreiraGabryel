@@ -13,6 +13,7 @@ import {
 } from './config/scenes';
 import type {SceneGeometry} from './config/scenes';
 import {useTranslation} from './i18n/useTranslation';
+import {getStableViewportHeight} from './utils/stableViewport';
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
@@ -130,17 +131,14 @@ export default function App() {
     let frame = 0;
     let lastScrollY = window.scrollY;
     let directionBias = 0;
-    const mobileViewportQuery = window.matchMedia('(max-width: 640px)');
     const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-    let wasMobileViewport = mobileViewportQuery.matches;
-    let mobileHeroViewportHeight = Math.max(window.innerHeight, 1);
 
     // O progresso é ancorado em `rect.top` e no comprimento declarado em
     // `config/scenes` — nunca em `offsetHeight`. O `pin` do ScrollTrigger insere
     // um spacer que altera a altura da seção, então medir altura aqui seria ler
     // um layout que o outro sistema muta: a cena passaria a ter duas durações.
     const resolveProgress = (section: HTMLElement, scene: SceneGeometry) => {
-      const viewportHeight = Math.max(window.innerHeight, 1);
+      const viewportHeight = getStableViewportHeight();
       const introOffset = viewportHeight * scene.leadInViewports;
       const available = Math.max(viewportHeight * scene.lengthInViewports - introOffset, 1);
       const travelled = -section.getBoundingClientRect().top - introOffset;
@@ -148,20 +146,14 @@ export default function App() {
     };
 
     const updateProgress = () => {
-      const viewportHeight = Math.max(window.innerHeight, 1);
-      const isMobileViewport = mobileViewportQuery.matches;
-      if (isMobileViewport && !wasMobileViewport) {
-        mobileHeroViewportHeight = viewportHeight;
-      }
-      wasMobileViewport = isMobileViewport;
-      const heroViewportHeight = isMobileViewport ? mobileHeroViewportHeight : viewportHeight;
+      const viewportHeight = getStableViewportHeight();
       const currentScrollY = window.scrollY;
       const delta = currentScrollY - lastScrollY;
       lastScrollY = currentScrollY;
-      const directionalImpulse = clamp(delta / Math.max(heroViewportHeight * 0.08, 48), -1, 1);
+      const directionalImpulse = clamp(delta / Math.max(viewportHeight * 0.08, 48), -1, 1);
       directionBias = clamp(directionBias * 0.72 + directionalImpulse * 0.28, -1, 1);
 
-      const rawHero = currentScrollY / (heroViewportHeight * 1.6);
+      const rawHero = currentScrollY / (viewportHeight * 1.6);
       const technologyScene = reducedMotionQuery.matches
         ? TECHNOLOGY_SCENE_REDUCED_MOTION
         : TECHNOLOGY_SCENE;
@@ -170,7 +162,7 @@ export default function App() {
         rawStageProgress: resolveProgress(transitionSection, technologyScene),
         rawFakeFooterProgress: resolveProgress(fakeFooterSection, FAKE_FOOTER_SCENE),
         scrollDirectionBias: directionBias,
-        isLargeViewport: window.innerWidth >= 1500 || window.innerHeight >= 920,
+        isLargeViewport: window.innerWidth >= 1500 || viewportHeight >= 920,
       });
     };
 

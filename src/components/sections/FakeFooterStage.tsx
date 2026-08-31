@@ -8,6 +8,7 @@ import {FAKE_FOOTER_SCENE} from '../../config/scenes';
 import {useAmbientVideo} from '../../hooks/useAmbientVideo';
 import {useScrubbedVideo} from '../../hooks/useScrubbedVideo';
 import type {Locale} from '../../i18n/useTranslation';
+import {getStableViewportHeight} from '../../utils/stableViewport';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -140,7 +141,7 @@ export function FakeFooterStage({
       ScrollTrigger.create({
         trigger: section,
         start: 'top top',
-        end: () => `+=${Math.round(window.innerHeight * FAKE_FOOTER_SCENE.lengthInViewports)}`,
+        end: () => `+=${Math.round(getStableViewportHeight() * FAKE_FOOTER_SCENE.lengthInViewports)}`,
         pin: sticky,
         anticipatePin: 1,
         invalidateOnRefresh: true,
