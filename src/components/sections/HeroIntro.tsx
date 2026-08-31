@@ -4,6 +4,7 @@ import {gsap} from 'gsap';
 import {ScrollTrigger} from 'gsap/ScrollTrigger';
 import type {Locale} from '../../i18n/useTranslation';
 import type {HomeCopy} from '../../config/homeContent';
+import {getStableViewportHeight} from '../../utils/stableViewport';
 import {LanguageSwitch} from '../common/LanguageSwitch';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -211,18 +212,12 @@ export function HeroIntro({
 
       const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       const isMobileViewport = window.matchMedia('(max-width: 640px)').matches;
-      const mobileViewportHeight = Math.max(window.innerHeight, 1);
-      if (isMobileViewport) {
-        root.style.setProperty('--hero-mobile-height', `${Math.round(mobileViewportHeight)}px`);
-      } else {
-        root.style.removeProperty('--hero-mobile-height');
-      }
       const heroScrollTimeline = gsap.timeline({
         defaults: {ease: 'none'},
         scrollTrigger: {
           trigger: root,
           start: 'top top',
-          end: () => `+=${Math.round((isMobileViewport ? mobileViewportHeight : window.innerHeight) * (prefersReducedMotion ? 1.1 : 1.6))}`,
+          end: () => `+=${Math.round(getStableViewportHeight() * (prefersReducedMotion ? 1.1 : 1.6))}`,
           scrub: prefersReducedMotion ? 0.12 : 0.6,
           pin: root,
           anticipatePin: 1,

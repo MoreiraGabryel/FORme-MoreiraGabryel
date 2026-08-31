@@ -7,6 +7,7 @@ import type {Locale} from '../../i18n/useTranslation';
 import {TECHNOLOGIES, TECHNOLOGIES_SECTION_COPY, type Technology} from '../../config/technologies';
 import {TECHNOLOGY_SCENE, TECHNOLOGY_SCENE_REDUCED_MOTION} from '../../config/scenes';
 import {useIsMobile} from '../../hooks/useIsMobile';
+import {getStableViewportHeight} from '../../utils/stableViewport';
 import {AboutCardsStage} from './AboutCardsStage';
 
 gsap.registerPlugin(ScrollTrigger, SplitText);
@@ -419,7 +420,7 @@ export function TechnologyAndAboutStage({
           start: 'top top',
           end: () =>
             `+=${Math.round(
-              window.innerHeight *
+              getStableViewportHeight() *
                 (reducedMotion
                   ? TECHNOLOGY_SCENE_REDUCED_MOTION.lengthInViewports
                   : TECHNOLOGY_SCENE.lengthInViewports),
