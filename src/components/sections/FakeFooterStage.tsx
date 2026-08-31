@@ -4,6 +4,7 @@ import {gsap} from 'gsap';
 import {ScrollTrigger} from 'gsap/ScrollTrigger';
 import type {HomeCopy} from '../../config/homeContent';
 import {CONTACT_LINKS} from '../../config/contact';
+import {FAKE_FOOTER_SCENE} from '../../config/scenes';
 import type {Locale} from '../../i18n/useTranslation';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -107,35 +108,19 @@ export function FakeFooterStage({
     const sticky = stickyRef.current;
     if (!section || !sticky) return;
 
+    // O ScrollTrigger cuida apenas do pin. `--fake-footer-unlock` e
+    // `--fake-footer-exit-blackout` são calculados no `App`, a partir do mesmo
+    // progresso que move o vídeo, o brilho e a escala. Enquanto viviam num
+    // timeline com `scrub`, corriam 0,65s atrás do resto da cena.
     const ctx = gsap.context(() => {
-      gsap.set(section, {
-        '--fake-footer-unlock': 0,
-        '--fake-footer-exit-blackout': 0,
+      ScrollTrigger.create({
+        trigger: section,
+        start: 'top top',
+        end: () => `+=${Math.round(window.innerHeight * FAKE_FOOTER_SCENE.lengthInViewports)}`,
+        pin: sticky,
+        anticipatePin: 1,
+        invalidateOnRefresh: true,
       });
-
-      gsap
-        .timeline({
-          defaults: {ease: 'none'},
-          scrollTrigger: {
-            trigger: section,
-            start: 'top top',
-            end: () => `+=${Math.round(window.innerHeight * 2.65)}`,
-            scrub: 0.65,
-            pin: sticky,
-            anticipatePin: 1,
-            invalidateOnRefresh: true,
-            onLeaveBack: () => {
-              gsap.set(section, {
-                '--fake-footer-unlock': 0,
-                '--fake-footer-exit-blackout': 0,
-              });
-            },
-          },
-        })
-        .to({}, {duration: 0.68})
-        .to(section, {'--fake-footer-unlock': 1, duration: 0.18})
-        .to({}, {duration: 0.34})
-        .to(section, {'--fake-footer-exit-blackout': 1, duration: 0.46});
     }, section);
 
     return () => ctx.revert();
