@@ -1,0 +1,20 @@
+# Fim de linha unico no repositorio: LF.
+#
+# Sem isto o repositorio ficou com 13 arquivos em CRLF, 23 em LF e 4 com os dois
+# dentro do mesmo arquivo. O efeito pratico nao e estetico: uma ferramenta que
+# normaliza ao salvar reescreve o arquivo inteiro, e um diff de 60 linhas reais
+# chega ao revisor com 380. Foi o que aconteceu com os quatro arquivos mistos.
+#
+# LF e a escolha certa aqui: o desenvolvimento e em Linux, o deploy e Cloudflare,
+# e os agentes que editam este repositorio escrevem LF por padrao.
+* text=auto eol=lf
+
+# Binarios: nunca tocar. Sem estas linhas o `text=auto` acima depende da
+# heuristica do git, e um .webp que comece com bytes parecidos com texto pode
+# ser corrompido na normalizacao.
+*.ico  binary
+*.mp4  binary
+*.webp binary
+
+# Mantem o diff de arquivos gerados fora da revisao humana.
+package-lock.json -diff

@@ -5,27 +5,47 @@ import {ScrollTrigger} from 'gsap/ScrollTrigger';
 import type {HomeCopy} from '../../config/homeContent';
 import {CONTACT_LINKS} from '../../config/contact';
 import {FAKE_FOOTER_SCENE} from '../../config/scenes';
+import {useAmbientVideo} from '../../hooks/useAmbientVideo';
+import {useScrubbedVideo} from '../../hooks/useScrubbedVideo';
 import type {Locale} from '../../i18n/useTranslation';
 import {getStableViewportHeight} from '../../utils/stableViewport';
 
 gsap.registerPlugin(ScrollTrigger);
 
-const footerVideoSrc = '/media/stage3-tunnel-loop.mp4';
-const transitionVideoSrc = '/media/stage2-to-3.mp4';
+// As duas peças do portal. A entrada é um plano único que atravessa a boca do
+// portal; o túnel é o ambiente do outro lado. Foram geradas travando o quadro
+// final da primeira como quadro inicial da segunda, por isso a passagem de uma
+// para a outra é uma dissolução curta e não um corte.
+const entryVideoSrc = '/media/portal-entrada.mp4';
+const ambientVideoSrc = '/media/portal-tunel-loop.mp4';
 // Primeiro quadro de cada clipe: evita o retângulo preto enquanto o vídeo decodifica.
-const footerVideoPoster = '/media/stage3-tunnel-loop-poster.webp';
-const transitionVideoPoster = '/media/stage2-to-3-poster.webp';
+const entryVideoPoster = '/media/portal-entrada-poster.webp';
+const ambientVideoPoster = '/media/portal-tunel-loop-poster.webp';
 
 type Props = {
   copy: HomeCopy;
   locale: Locale;
   footerPhraseIndex: number;
   stageStyle: CSSProperties;
-  videoStyle: CSSProperties;
-  transitionVideoStyle: CSSProperties;
   shellStyle: CSSProperties;
-  videoActivation: number;
-  transitionVideoEnabled: boolean;
+  /**
+   * Enquadramento comum às duas camadas de vídeo. Precisa ser o mesmo objeto nas
+   * duas: é o que garante que, na janela de troca, a dissolução aconteça entre
+   * quadros que coincidem também na tela, e não só no arquivo.
+   */
+  portalLayerStyle: CSSProperties;
+  /** Posição do plano de entrada, 0 a 1. Vira `currentTime` — o clipe não toca sozinho. */
+  entryProgress: number;
+  entryOpacity: number;
+  ambientOpacity: number;
+  /**
+   * Solta o loop do túnel. Fica falso durante a dissolve: parado no primeiro
+   * quadro ele é a imagem que casa com o último quadro da entrada, e a mistura
+   * acontece entre dois quadros idênticos por mais devagar que o leitor role.
+   * Se ele já estivesse rodando, um scroll parado no meio da troca deixaria as
+   * duas camadas em pontos diferentes do movimento — imagem dupla.
+   */
+  ambientPlaying: boolean;
 };
 
 type FooterIconName = 'github' | 'instagram' | 'linkedin' | 'whatsapp' | 'email';
@@ -95,17 +115,18 @@ export function FakeFooterStage({
   locale,
   footerPhraseIndex,
   stageStyle,
-  videoStyle,
-  transitionVideoStyle,
   shellStyle,
-  videoActivation,
-  transitionVideoEnabled,
+  portalLayerStyle,
+  entryProgress,
+  entryOpacity,
+  ambientOpacity,
+  ambientPlaying,
 }: Props) {
   const sectionRef = useRef<HTMLElement | null>(null);
   const stickyRef = useRef<HTMLDivElement | null>(null);
-  const transitionVideoRef = useRef<HTMLVideoElement | null>(null);
-  const leadVideoRef = useRef<HTMLVideoElement | null>(null);
-  const [canPlay, setCanPlay] = useState(false);
+  const entryVideoRef = useRef<HTMLVideoElement | null>(null);
+  const ambientVideoRef = useRef<HTMLVideoElement | null>(null);
+  const [isNearViewport, setIsNearViewport] = useState(false);
 
   useLayoutEffect(() => {
     const section = sectionRef.current;
@@ -130,15 +151,17 @@ export function FakeFooterStage({
     return () => ctx.revert();
   }, []);
 
+  // Nada de decodificar vídeo enquanto a cena está longe. Uma vez que ela
+  // encosta no viewport o observador se desliga: daí para frente quem decide o
+  // que roda é o progresso do scroll.
   useEffect(() => {
-    const video = leadVideoRef.current;
-    const mediaWell = video?.parentElement;
-    if (!video || !mediaWell) return;
+    const mediaWell = ambientVideoRef.current?.parentElement;
+    if (!mediaWell) return;
 
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          setCanPlay(true);
+          setIsNearViewport(true);
           observer.disconnect();
         }
       },
@@ -150,92 +173,8 @@ export function FakeFooterStage({
     return () => observer.disconnect();
   }, []);
 
-  useEffect(() => {
-    const video = transitionVideoRef.current;
-    if (!video) return;
-
-    video.muted = true;
-    video.defaultMuted = true;
-    video.playsInline = true;
-    video.loop = false;
-    video.preload = 'auto';
-  }, []);
-
-  useEffect(() => {
-    const video = transitionVideoRef.current;
-    if (!video) return;
-
-    if (!canPlay || !transitionVideoEnabled) {
-      video.pause();
-      if (Math.abs(video.currentTime) > 0.06) video.currentTime = 0;
-      return;
-    }
-
-    const section = video.closest('.fake-footer-stage') as HTMLElement | null;
-    if (section) {
-      const rect = section.getBoundingClientRect();
-      if (rect.top > getStableViewportHeight() * 0.92) {
-        video.pause();
-        return;
-      }
-    }
-
-    if (video.ended) return;
-    if (video.currentTime < 0.03) {
-      const playPromise = video.play();
-      if (playPromise) playPromise.catch(() => undefined);
-    }
-  }, [canPlay, transitionVideoEnabled]);
-
-  useEffect(() => {
-    const video = leadVideoRef.current;
-    if (!video) return;
-
-    video.muted = true;
-    video.defaultMuted = true;
-    video.playsInline = true;
-    video.loop = true;
-    video.preload = 'auto';
-
-    const handleTimeUpdate = () => {
-      if (!video.duration || Number.isNaN(video.duration)) return;
-      const remaining = video.duration - video.currentTime;
-      if (remaining < 0.12) {
-        video.currentTime = 0.04;
-        const playPromise = video.play();
-        if (playPromise) playPromise.catch(() => undefined);
-      }
-    };
-
-    video.addEventListener('timeupdate', handleTimeUpdate);
-
-    return () => {
-      video.removeEventListener('timeupdate', handleTimeUpdate);
-    };
-  }, []);
-
-  useEffect(() => {
-    const video = leadVideoRef.current;
-    if (!video) return;
-
-    if (!canPlay) {
-      video.pause();
-      return;
-    }
-
-    const section = video.closest('.fake-footer-stage') as HTMLElement | null;
-    if (section) {
-      const rect = section.getBoundingClientRect();
-      if (rect.top > getStableViewportHeight() * 0.92) {
-        video.pause();
-        return;
-      }
-    }
-
-    video.playbackRate = 0.35 + videoActivation * 0.65;
-    const playPromise = video.play();
-    if (playPromise) playPromise.catch(() => undefined);
-  }, [canPlay, videoActivation]);
+  useScrubbedVideo(entryVideoRef, entryProgress, {enabled: isNearViewport});
+  useAmbientVideo(ambientVideoRef, {active: isNearViewport && ambientPlaying});
 
   const socialLinks: FooterLink[] = [
     {label: copy.socialInstagram, href: CONTACT_LINKS.instagram, icon: 'instagram'},
@@ -256,26 +195,25 @@ export function FakeFooterStage({
         <div className="fake-footer-media" aria-hidden="true">
           <div className="fake-footer-media-well" style={shellStyle}>
             <video
-              ref={transitionVideoRef}
-              className="fake-footer-transition-video"
-              src={transitionVideoSrc}
-              poster={transitionVideoPoster}
-              muted
-              playsInline
-              preload="auto"
-              style={transitionVideoStyle}
-            />
-            <video
-              ref={leadVideoRef}
-              className="fake-footer-video"
-              src={footerVideoSrc}
-              poster={footerVideoPoster}
-              autoPlay
+              ref={ambientVideoRef}
+              className="fake-footer-ambient-video"
+              src={ambientVideoSrc}
+              poster={ambientVideoPoster}
               loop
               muted
               playsInline
               preload="auto"
-              style={videoStyle}
+              style={{...portalLayerStyle, opacity: ambientOpacity}}
+            />
+            <video
+              ref={entryVideoRef}
+              className="fake-footer-entry-video"
+              src={entryVideoSrc}
+              poster={entryVideoPoster}
+              muted
+              playsInline
+              preload="auto"
+              style={{...portalLayerStyle, opacity: entryOpacity}}
             />
             <div className="fake-footer-tunnel-glow" />
             <div className="fake-footer-vignette" />
