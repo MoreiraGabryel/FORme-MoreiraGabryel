@@ -6,11 +6,30 @@ import {TechnologyAndAboutStage} from './components/sections/TechnologyAndAboutS
 import {FakeFooterStage} from './components/sections/FakeFooterStage';
 import {LegalPage} from './components/legal/LegalPage';
 import {HOME_COPY} from './config/homeContent';
+import {
+  FAKE_FOOTER_SCENE,
+  TECHNOLOGY_SCENE,
+  TECHNOLOGY_SCENE_REDUCED_MOTION,
+} from './config/scenes';
+import type {SceneGeometry} from './config/scenes';
 import {useTranslation} from './i18n/useTranslation';
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
 }
+
+function smoothstep(value: number) {
+  return value * value * (3 - 2 * value);
+}
+
+// Beats do rodapé falso, em fração de `fakeFooterProgress`. Vinham de um timeline
+// GSAP com `scrub`, que corria 0,65s atrás das CSS custom properties calculadas
+// aqui. Agora saem do mesmo progresso que o resto da cena — os valores foram
+// convertidos da escala do timeline para esta, então o disparo continua no mesmo
+// ponto do scroll; só o atraso desapareceu.
+const FAKE_FOOTER_UNLOCK_START = 0.485;
+const FAKE_FOOTER_UNLOCK_END = 0.58;
+const FAKE_FOOTER_BLACKOUT_START = 0.758;
 
 function FinalBlackoutStage() {
   // TODO: animação autoral
@@ -92,17 +111,20 @@ export default function App() {
     let lastScrollY = window.scrollY;
     let directionBias = 0;
     const mobileViewportQuery = window.matchMedia('(max-width: 640px)');
+    const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
     let wasMobileViewport = mobileViewportQuery.matches;
     let mobileHeroViewportHeight = Math.max(window.innerHeight, 1);
 
-    const resolveProgress = (section: HTMLElement, introRatio: number) => {
+    // O progresso é ancorado em `rect.top` e no comprimento declarado em
+    // `config/scenes` — nunca em `offsetHeight`. O `pin` do ScrollTrigger insere
+    // um spacer que altera a altura da seção, então medir altura aqui seria ler
+    // um layout que o outro sistema muta: a cena passaria a ter duas durações.
+    const resolveProgress = (section: HTMLElement, scene: SceneGeometry) => {
       const viewportHeight = Math.max(window.innerHeight, 1);
-      const rect = section.getBoundingClientRect();
-      const sectionTop = window.scrollY + rect.top;
-      const introOffset = viewportHeight * introRatio;
-      const available = Math.max(section.offsetHeight - window.innerHeight - introOffset, 1);
-      const raw = (window.scrollY - (sectionTop + introOffset)) / available;
-      return clamp(raw, 0, 1);
+      const introOffset = viewportHeight * scene.leadInViewports;
+      const available = Math.max(viewportHeight * scene.lengthInViewports - introOffset, 1);
+      const travelled = -section.getBoundingClientRect().top - introOffset;
+      return clamp(travelled / available, 0, 1);
     };
 
     const updateProgress = () => {
@@ -120,10 +142,13 @@ export default function App() {
       directionBias = clamp(directionBias * 0.72 + directionalImpulse * 0.28, -1, 1);
 
       const rawHero = currentScrollY / (heroViewportHeight * 1.6);
+      const technologyScene = reducedMotionQuery.matches
+        ? TECHNOLOGY_SCENE_REDUCED_MOTION
+        : TECHNOLOGY_SCENE;
       setScrollState({
         heroProgress: clamp(rawHero, 0, 1),
-        rawStageProgress: resolveProgress(transitionSection, 0.22),
-        rawFakeFooterProgress: resolveProgress(fakeFooterSection, -0.42),
+        rawStageProgress: resolveProgress(transitionSection, technologyScene),
+        rawFakeFooterProgress: resolveProgress(fakeFooterSection, FAKE_FOOTER_SCENE),
         scrollDirectionBias: directionBias,
         isLargeViewport: window.innerWidth >= 1500 || window.innerHeight >= 920,
       });
@@ -137,11 +162,13 @@ export default function App() {
     updateProgress();
     window.addEventListener('scroll', requestUpdate, {passive: true});
     window.addEventListener('resize', requestUpdate);
+    reducedMotionQuery.addEventListener('change', requestUpdate);
 
     return () => {
       window.cancelAnimationFrame(frame);
       window.removeEventListener('scroll', requestUpdate);
       window.removeEventListener('resize', requestUpdate);
+      reducedMotionQuery.removeEventListener('change', requestUpdate);
     };
   }, []);
 
@@ -152,21 +179,31 @@ export default function App() {
   const heroHandoff = clamp((heroProgress - 0.68) / 0.24, 0, 1);
   const heroHandoffEase = 1 - Math.pow(1 - heroHandoff, 3);
   const stageEase = 1 - Math.pow(1 - stageProgress, 3);
-  const stageHoldEase = stageHoldProgress * stageHoldProgress * (3 - 2 * stageHoldProgress);
-  const stageSettleEase = stageReleaseProgress * stageReleaseProgress * (3 - 2 * stageReleaseProgress);
+  const stageHoldEase = smoothstep(stageHoldProgress);
+  const stageSettleEase = smoothstep(stageReleaseProgress);
 
   const fakeFooterGate = rawStageProgress >= 0.92 ? 1 : 0;
   const fakeFooterProgress = fakeFooterGate === 0 ? 0 : clamp((rawFakeFooterProgress - 0.01) / 0.99, 0, 1);
   const fakeFooterEase = 1 - Math.pow(1 - fakeFooterProgress, 3);
   const fakeFooterTunnel = clamp((fakeFooterProgress - 0.01) / 0.62, 0, 1);
-  const fakeFooterTunnelEase = fakeFooterTunnel * fakeFooterTunnel * (3 - 2 * fakeFooterTunnel);
+  const fakeFooterTunnelEase = smoothstep(fakeFooterTunnel);
   const fakeFooterSettle = clamp((fakeFooterProgress - 0.78) / 0.22, 0, 1);
   const fakeFooterVideoActivation = clamp((fakeFooterProgress - 0.02) / 0.24, 0, 1);
   const upwardScrollBias = clamp(-scrollDirectionBias, 0, 1);
   const fakeFooterReverseWindow =
     clamp((fakeFooterProgress - 0.05) / 0.24, 0, 1) * clamp((1 - fakeFooterProgress) / 0.88, 0, 1);
   const fakeFooterReverse = upwardScrollBias * fakeFooterReverseWindow;
-  const fakeFooterReverseEase = fakeFooterReverse * fakeFooterReverse * (3 - 2 * fakeFooterReverse);
+  const fakeFooterReverseEase = smoothstep(fakeFooterReverse);
+  const fakeFooterUnlock = smoothstep(
+    clamp(
+      (fakeFooterProgress - FAKE_FOOTER_UNLOCK_START) / (FAKE_FOOTER_UNLOCK_END - FAKE_FOOTER_UNLOCK_START),
+      0,
+      1,
+    ),
+  );
+  const fakeFooterExitBlackout = smoothstep(
+    clamp((fakeFooterProgress - FAKE_FOOTER_BLACKOUT_START) / (1 - FAKE_FOOTER_BLACKOUT_START), 0, 1),
+  );
 
 
   if (pathname === '/privacy-policy') return <LegalPage kind="privacy" locale={locale} setLocale={setLocale} />;
@@ -219,6 +256,8 @@ export default function App() {
               '--fake-footer-tunnel': `${fakeFooterTunnelEase}`,
               '--fake-footer-settle': `${fakeFooterSettle}`,
               '--fake-footer-reverse': `${fakeFooterReverseEase}`,
+              '--fake-footer-unlock': `${fakeFooterUnlock}`,
+              '--fake-footer-exit-blackout': `${fakeFooterExitBlackout}`,
               '--footer-clip': `${fakeFooterEase}`,
               '--footer-entry-y': `${(1 - fakeFooterEase) * 5}`,
             } as CSSProperties}
