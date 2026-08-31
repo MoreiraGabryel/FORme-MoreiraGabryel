@@ -6,6 +6,7 @@ import type {HomeCopy} from '../../config/homeContent';
 import {CONTACT_LINKS} from '../../config/contact';
 import {FAKE_FOOTER_SCENE} from '../../config/scenes';
 import type {Locale} from '../../i18n/useTranslation';
+import {getStableViewportHeight} from '../../utils/stableViewport';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -119,7 +120,7 @@ export function FakeFooterStage({
       ScrollTrigger.create({
         trigger: section,
         start: 'top top',
-        end: () => `+=${Math.round(window.innerHeight * FAKE_FOOTER_SCENE.lengthInViewports)}`,
+        end: () => `+=${Math.round(getStableViewportHeight() * FAKE_FOOTER_SCENE.lengthInViewports)}`,
         pin: sticky,
         anticipatePin: 1,
         invalidateOnRefresh: true,
@@ -173,7 +174,7 @@ export function FakeFooterStage({
     const section = video.closest('.fake-footer-stage') as HTMLElement | null;
     if (section) {
       const rect = section.getBoundingClientRect();
-      if (rect.top > window.innerHeight * 0.92) {
+      if (rect.top > getStableViewportHeight() * 0.92) {
         video.pause();
         return;
       }
@@ -225,7 +226,7 @@ export function FakeFooterStage({
     const section = video.closest('.fake-footer-stage') as HTMLElement | null;
     if (section) {
       const rect = section.getBoundingClientRect();
-      if (rect.top > window.innerHeight * 0.92) {
+      if (rect.top > getStableViewportHeight() * 0.92) {
         video.pause();
         return;
       }
