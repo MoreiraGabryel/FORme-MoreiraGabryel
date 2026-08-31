@@ -107,6 +107,13 @@ button {
   background: #000;
 }
 
+.final-blackout-stage {
+  position: relative;
+  z-index: 10;
+  min-height: 100dvh;
+  background: #000;
+}
+
 .technology-and-about-flow:has(.has-open-technology-card) {
   z-index: 100;
 }
