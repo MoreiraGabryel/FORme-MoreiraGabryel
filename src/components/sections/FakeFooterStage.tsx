@@ -11,6 +11,9 @@ gsap.registerPlugin(ScrollTrigger);
 
 const footerVideoSrc = '/media/stage3-tunnel-loop.mp4';
 const transitionVideoSrc = '/media/stage2-to-3.mp4';
+// Primeiro quadro de cada clipe: evita o retângulo preto enquanto o vídeo decodifica.
+const footerVideoPoster = '/media/stage3-tunnel-loop-poster.webp';
+const transitionVideoPoster = '/media/stage2-to-3-poster.webp';
 
 type Props = {
   copy: HomeCopy;
@@ -255,6 +258,7 @@ export function FakeFooterStage({
               ref={transitionVideoRef}
               className="fake-footer-transition-video"
               src={transitionVideoSrc}
+              poster={transitionVideoPoster}
               muted
               playsInline
               preload="auto"
@@ -264,6 +268,7 @@ export function FakeFooterStage({
               ref={leadVideoRef}
               className="fake-footer-video"
               src={footerVideoSrc}
+              poster={footerVideoPoster}
               autoPlay
               loop
               muted
