@@ -29,7 +29,9 @@ Observacao:
 
 - Build command: `npm run build`
 - Output directory: `dist`
-- Node version: 22+
+- Node version: 22+ (alinhar com o CI em `.github/workflows/quality-gate.yml`)
+- `public/_redirects` faz o fallback SPA (`/* /index.html 200`) para as rotas legais funcionarem em acesso direto
+- `public/_headers` define cabecalhos de seguranca e cache dos assets
 
 ## Estrutura
 
