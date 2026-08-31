@@ -64,4 +64,7 @@ fundo_site*.mp4
 # Cloudflare local output
 .wrangler/
 .dev.vars
+
+# Local working notes - fora do repo publico
 ISSUES.MD
+.docs/

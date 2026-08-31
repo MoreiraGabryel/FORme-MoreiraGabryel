@@ -12,6 +12,11 @@ function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
 }
 
+function FinalBlackoutStage() {
+  // TODO: animação autoral
+  return <section className="final-blackout-stage" data-section="final-blackout" aria-hidden="true" />;
+}
+
 export default function App() {
   const [loaded, setLoaded] = useState(false);
   const {locale, setLocale} = useTranslation();
@@ -233,6 +238,8 @@ export default function App() {
             }}
           />
         </div>
+
+        <FinalBlackoutStage />
       </main>
     </>
   );
