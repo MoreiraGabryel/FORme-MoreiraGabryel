@@ -224,7 +224,9 @@ function createFloatingSpecs(items: Technology[], isMobile: boolean) {
   });
 }
 
+const STAGE_ONE_EXIT_PROGRESS = 0.78;
 const ABOUT_STAGE_ENTER_PROGRESS = 0.94;
+const STAGE_ONE_EXIT_DURATION = ABOUT_STAGE_ENTER_PROGRESS - STAGE_ONE_EXIT_PROGRESS;
 const ABOUT_STAGE_ENTER_DURATION = 0.06;
 const ABOUT_STAGE_INTERACTIVE_PROGRESS = 0.97;
 
@@ -490,9 +492,9 @@ export function TechnologyAndAboutStage({
           {
             autoAlpha: 0,
             y: reducedMotion ? -12 : -60,
-            duration: 0.14,
+            duration: STAGE_ONE_EXIT_DURATION,
           },
-          0.78,
+          STAGE_ONE_EXIT_PROGRESS,
         )
         .to(
           stageTwoLayer,
