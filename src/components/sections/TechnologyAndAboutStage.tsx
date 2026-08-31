@@ -5,6 +5,7 @@ import {ScrollTrigger} from 'gsap/ScrollTrigger';
 import {SplitText} from 'gsap/SplitText';
 import type {Locale} from '../../i18n/useTranslation';
 import {TECHNOLOGIES, TECHNOLOGIES_SECTION_COPY, type Technology} from '../../config/technologies';
+import {TECHNOLOGY_SCENE, TECHNOLOGY_SCENE_REDUCED_MOTION} from '../../config/scenes';
 import {useIsMobile} from '../../hooks/useIsMobile';
 import {AboutCardsStage} from './AboutCardsStage';
 
@@ -416,7 +417,13 @@ export function TechnologyAndAboutStage({
         scrollTrigger: {
           trigger: section,
           start: 'top top',
-          end: () => `+=${Math.round(window.innerHeight * (reducedMotion ? 5.5 : 7.2))}`,
+          end: () =>
+            `+=${Math.round(
+              window.innerHeight *
+                (reducedMotion
+                  ? TECHNOLOGY_SCENE_REDUCED_MOTION.lengthInViewports
+                  : TECHNOLOGY_SCENE.lengthInViewports),
+            )}`,
           scrub: reducedMotion ? 0.18 : 0.72,
           pin: pinnedShell,
           anticipatePin: 1,
