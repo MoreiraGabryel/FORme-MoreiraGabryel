@@ -1303,8 +1303,8 @@ button {
   mix-blend-mode: normal;
 }
 
-.fake-footer-transition-video,
-.fake-footer-video {
+.fake-footer-ambient-video,
+.fake-footer-entry-video {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -1314,12 +1314,15 @@ button {
   will-change: transform, opacity, filter;
 }
 
-.fake-footer-transition-video {
+/* O túnel é a cama da cena; o plano de entrada roda por cima e entrega a
+   opacidade para ele na janela de troca. As duas camadas nunca somam brilho:
+   uma sobe exatamente o quanto a outra desce. */
+.fake-footer-ambient-video {
   z-index: 1;
   mix-blend-mode: normal;
 }
 
-.fake-footer-video {
+.fake-footer-entry-video {
   z-index: 2;
   mix-blend-mode: normal;
 }
