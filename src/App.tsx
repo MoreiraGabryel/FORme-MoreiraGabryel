@@ -32,6 +32,26 @@ const FAKE_FOOTER_UNLOCK_START = 0.485;
 const FAKE_FOOTER_UNLOCK_END = 0.58;
 const FAKE_FOOTER_BLACKOUT_START = 0.758;
 
+// As duas peças do portal, em fração de `fakeFooterProgress`.
+//
+// A entrada é um plano único scrubbado: a posição do scroll escreve
+// `currentTime`, então ela anda na descida e volta na subida. Ela ocupa os
+// primeiros 63% da cena, e nesse trecho a rolagem inteira do rodapé gasta 1740px
+// para 124 quadros — cerca de 14px de rolagem por quadro.
+//
+// A troca para o loop do túnel começa exatamente onde a entrada acaba, e não
+// antes: durante a dissolve inteira a entrada segura o último quadro e o túnel
+// mostra o primeiro. Esses dois quadros são o mesmo por construção — os clipes
+// foram gerados travando um como o outro, e a diferença medida entre eles é RMSE
+// 0,0201, metade de um passo comum entre quadros vizinhos dentro da entrada.
+// Misturar quadros ainda em movimento com o início do túnel desperdiçaria isso.
+//
+// A janela é curta de propósito. Como os quadros coincidem, até um corte seco
+// passaria despercebido; a dissolve existe só para cobrir o tempo do decoder.
+const PORTAL_ENTRY_SPAN = 0.63;
+const PORTAL_HANDOFF_START = 0.63;
+const PORTAL_HANDOFF_END = 0.665;
+
 function FinalBlackoutStage() {
   // TODO: animação autoral
   return <section className="final-blackout-stage" data-section="final-blackout" aria-hidden="true" />;
@@ -197,6 +217,24 @@ export default function App() {
     clamp((fakeFooterProgress - FAKE_FOOTER_BLACKOUT_START) / (1 - FAKE_FOOTER_BLACKOUT_START), 0, 1),
   );
 
+  const portalEntryProgress = clamp(fakeFooterProgress / PORTAL_ENTRY_SPAN, 0, 1);
+  const portalHandoff = smoothstep(
+    clamp(
+      (fakeFooterProgress - PORTAL_HANDOFF_START) / (PORTAL_HANDOFF_END - PORTAL_HANDOFF_START),
+      0,
+      1,
+    ),
+  );
+  // Exposição do portal: quanto do vídeo aparece por cima do preto. É uma só
+  // para as duas camadas, repartida pela dissolve — por isso a troca não muda o
+  // brilho da cena, só qual clipe está entregando a imagem.
+  const portalExposure =
+    0.22 +
+    fakeFooterVideoActivation * 0.48 +
+    fakeFooterTunnelEase * 0.08 -
+    fakeFooterSettle * 0.008 -
+    fakeFooterReverseEase * 0.04;
+
 
   if (pathname === '/privacy-policy') return <LegalPage kind="privacy" locale={locale} setLocale={setLocale} />;
   if (pathname === '/terms-of-service') return <LegalPage kind="terms" locale={locale} setLocale={setLocale} />;
@@ -240,8 +278,10 @@ export default function App() {
             copy={copy}
             locale={locale}
             footerPhraseIndex={footerPhraseIndex}
-            videoActivation={fakeFooterVideoActivation}
-            transitionVideoEnabled={fakeFooterGate === 1}
+            entryProgress={portalEntryProgress}
+            entryOpacity={portalExposure * (1 - portalHandoff)}
+            ambientOpacity={portalExposure * portalHandoff}
+            ambientPlaying={portalHandoff >= 1}
             stageStyle={{
               '--fake-footer-progress': `${fakeFooterProgress}`,
               '--fake-footer-ease': `${fakeFooterEase}`,
@@ -253,15 +293,11 @@ export default function App() {
               '--footer-clip': `${fakeFooterEase}`,
               '--footer-entry-y': `${(1 - fakeFooterEase) * 5}`,
             } as CSSProperties}
-            transitionVideoStyle={{
-              opacity: fakeFooterGate * clamp((fakeFooterProgress - 0.02) / 0.28, 0, 1) * clamp((1 - fakeFooterProgress) / 0.52, 0, 1) * 0.72,
-            }}
             shellStyle={{
               transform: `translate3d(0, ${(1 - fakeFooterEase) * 0.24 - fakeFooterTunnelEase * 0.44 + fakeFooterReverseEase * 1.4 + fakeFooterSettle * 0.04}vh, 0) scale(${1.038 + fakeFooterTunnelEase * 0.03 - fakeFooterSettle * 0.002 - fakeFooterReverseEase * 0.012})`,
               opacity: 0.82 + fakeFooterEase * 0.06 - fakeFooterReverseEase * 0.02,
             }}
-            videoStyle={{
-              opacity: 0.22 + fakeFooterVideoActivation * 0.48 + fakeFooterTunnelEase * 0.08 - fakeFooterSettle * 0.008 - fakeFooterReverseEase * 0.04,
+            portalLayerStyle={{
               transform: `translate3d(0, ${(1 - fakeFooterTunnelEase) * 2.5 - fakeFooterTunnelEase * 2.7 - fakeFooterSettle * 0.14 + fakeFooterReverseEase * 3.4}vh, 0) scale(${isLargeViewport ? 1.12 - fakeFooterTunnelEase * 0.12 - fakeFooterReverseEase * 0.03 : 1.2 - fakeFooterTunnelEase * 0.19 - fakeFooterSettle * 0.004 - fakeFooterReverseEase * 0.05})`,
               filter: isLargeViewport
                 ? `brightness(${0.8 + fakeFooterTunnelEase * 0.05 - fakeFooterReverseEase * 0.03}) contrast(${1.03 + fakeFooterTunnelEase * 0.02 - fakeFooterReverseEase * 0.02})`
