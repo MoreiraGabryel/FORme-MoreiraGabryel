@@ -14,6 +14,7 @@
 
 :root {
   color-scheme: dark;
+  --stable-vh: 100svh;
   --bg-base: #050608;
   --bg-base-alt: #0A0C10;
   --bg-surface-1: #111318;
@@ -110,7 +111,7 @@ button {
 .final-blackout-stage {
   position: relative;
   z-index: 10;
-  min-height: 100dvh;
+  min-height: var(--stable-vh);
   background: #000;
 }
 
@@ -124,7 +125,7 @@ button {
 }
 
 .hero-stage {
-  min-height: 100svh;
+  min-height: var(--stable-vh);
   --hero-handoff: 0;
   --hero-exit-sweep: -18%;
   --hero-title-glow: 0;
@@ -266,7 +267,7 @@ button {
 
 .hero-frame {
   display: flex;
-  min-height: 100svh;
+  min-height: var(--stable-vh);
   flex-direction: column;
   padding: 1.5rem;
   will-change: transform, opacity, filter;
@@ -833,7 +834,7 @@ button {
 }
 
 .transition-stage {
-  min-height: 320svh;
+  min-height: calc(var(--stable-vh) * 3.2);
   margin-top: 0;
   padding-top: 0;
   overflow: hidden;
@@ -844,8 +845,8 @@ button {
 .sticky-stage {
   position: sticky;
   top: 0;
-  height: 100dvh;
-  min-height: 100svh;
+  height: var(--stable-vh);
+  min-height: var(--stable-vh);
   overflow: hidden;
   margin-top: -2svh;
   transform: translate3d(0, calc(var(--stage-entry-y, 0) * 1vh), 0);
@@ -960,7 +961,7 @@ button {
   position: relative;
   z-index: 2;
   display: grid;
-  min-height: 100svh;
+  min-height: var(--stable-vh);
   align-items: start;
   gap: clamp(2rem, 4vw, 4.75rem);
   padding: 12vh 1.5rem 8vh;
@@ -1249,7 +1250,7 @@ button {
   --fake-footer-unlock: 0;
   --fake-footer-exit-blackout: 0;
   position: relative;
-  min-height: 100svh;
+  min-height: var(--stable-vh);
   margin-top: 0;
   padding-top: 0svh;
   isolation: isolate;
@@ -1259,7 +1260,7 @@ button {
 .fake-footer-sticky {
   position: relative;
   top: 0;
-  min-height: 100dvh;
+  min-height: var(--stable-vh);
   overflow: clip;
   background: linear-gradient(180deg, var(--bg-base-alt) 0%, var(--bg-base) 72%, var(--bg-base) 100%);
   transform: translate3d(0, calc(var(--footer-entry-y, 0) * 1vh), 0);
@@ -1372,7 +1373,7 @@ button {
   display: grid;
   grid-template-rows: minmax(0, 1fr) auto;
   row-gap: clamp(0.9rem, 2.2vh, 1.45rem);
-  min-height: 100dvh;
+  min-height: var(--stable-vh);
   width: 100%;
   margin: 0 auto;
   padding: clamp(4.4rem, 7vh, 5.8rem) clamp(1.35rem, 2.4vw, 2rem) clamp(1.3rem, 2.7vh, 2rem);
@@ -2106,7 +2107,7 @@ button {
 
   .hero-stage,
   .hero-frame {
-    min-height: var(--hero-mobile-height, 100svh);
+    min-height: var(--stable-vh);
   }
 
   .lang-switch {
@@ -2167,7 +2168,7 @@ button {
 
   .fake-footer-stage {
     margin-top: 0;
-    min-height: 100svh;
+    min-height: var(--stable-vh);
   }
 
   .legal-page {
@@ -2243,12 +2244,12 @@ button {
 
 .technologies-stage {
   --technology-edge-margin: 48px;
-  min-height: 300svh;
+  min-height: calc(var(--stable-vh) * 3);
 }
 
 .technologies-pin-shell {
   position: relative;
-  min-height: 100svh;
+  min-height: var(--stable-vh);
   overflow: hidden;
   isolation: isolate;
   background: #000;
@@ -2349,7 +2350,7 @@ button {
 .about-coverflow-viewport {
   position: relative;
   width: 100%;
-  min-height: min(100svh, 52rem);
+  min-height: min(var(--stable-vh), 52rem);
   display: grid;
   place-items: center;
   perspective: 1800px;
@@ -2361,7 +2362,7 @@ button {
 .about-coverflow-track {
   position: relative;
   width: 100%;
-  height: min(32rem, 72svh);
+  height: min(32rem, calc(var(--stable-vh) * 0.72));
   transform-style: preserve-3d;
 }
 
@@ -2755,7 +2756,7 @@ button {
   position: relative;
   z-index: 3;
   display: flex;
-  min-height: 100svh;
+  min-height: var(--stable-vh);
   align-items: center;
   justify-content: center;
   padding: 8vh 1.5rem 7vh;
@@ -3238,7 +3239,7 @@ button {
 @media (max-width: 720px) {
   .technologies-stage {
     --technology-edge-margin: 18px;
-    min-height: 285svh;
+    min-height: calc(var(--stable-vh) * 2.85);
   }
 
   .technologies-copy {
@@ -3307,7 +3308,7 @@ button {
   }
 
   .about-coverflow-viewport {
-    min-height: calc(100svh - 7rem);
+    min-height: calc(var(--stable-vh) - 7rem);
     perspective: none;
   }
 

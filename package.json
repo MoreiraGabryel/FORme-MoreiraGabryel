@@ -11,8 +11,9 @@
     "preview": "vite preview --host 127.0.0.1 --port 4173",
     "preview:fresh": "node scripts/preview-fresh.cjs",
     "lint": "eslint .",
+    "test:viewport": "node --test tests/stableViewport.test.mts",
     "security:audit": "npm audit --audit-level=moderate",
-    "verify": "npm run lint && npm run security:audit && npm run build"
+    "verify": "npm run lint && npm run test:viewport && npm run security:audit && npm run build"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",
