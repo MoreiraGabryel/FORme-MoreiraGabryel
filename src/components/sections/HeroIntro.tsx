@@ -4,6 +4,7 @@ import {gsap} from 'gsap';
 import {ScrollTrigger} from 'gsap/ScrollTrigger';
 import type {Locale} from '../../i18n/useTranslation';
 import type {HomeCopy} from '../../config/homeContent';
+import {HERO_SCENE, HERO_SCENE_REDUCED_MOTION} from '../../config/scenes';
 import {getStableViewportHeight} from '../../utils/stableViewport';
 import {LanguageSwitch} from '../common/LanguageSwitch';
 
@@ -139,8 +140,6 @@ export function HeroIntro({
   const titleWrapRef = useRef<HTMLDivElement>(null);
   const titleRealRef = useRef<HTMLSpanElement>(null);
   const titleSliceRefs = useRef<HTMLSpanElement[]>([]);
-  const kickerRef = useRef<HTMLParagraphElement>(null);
-  const supportRef = useRef<HTMLParagraphElement>(null);
   const footerRef = useRef<HTMLElement>(null);
   const cueRef = useRef<HTMLParagraphElement>(null);
 
@@ -154,8 +153,6 @@ export function HeroIntro({
     const introCopy = introCopyRef.current;
     const titleWrap = titleWrapRef.current;
     const titleReal = titleRealRef.current;
-    const kicker = kickerRef.current;
-    const support = supportRef.current;
     const footer = footerRef.current;
     const cue = cueRef.current;
     const slices = titleSliceRefs.current.slice(0, HERO_SLICE_SEGMENTS.length);
@@ -170,8 +167,6 @@ export function HeroIntro({
       !introCopy ||
       !titleWrap ||
       !titleReal ||
-      !kicker ||
-      !support ||
       !footer ||
       !cue ||
       slices.length !== HERO_SLICE_SEGMENTS.length
@@ -203,7 +198,6 @@ export function HeroIntro({
           '--hero-title-mask': '140%',
         });
         gsap.set(slices, {autoAlpha: 0, x: 0, y: 0, filter: 'blur(0px)'});
-        gsap.set([kicker, support], {autoAlpha: 1, y: 0, filter: 'blur(0px)'});
         gsap.set(footer, {autoAlpha: 1, y: 0, filter: 'blur(0px)'});
         gsap.set(cue, {autoAlpha: 1, y: 0, filter: 'blur(0px)'});
       };
@@ -217,7 +211,11 @@ export function HeroIntro({
         scrollTrigger: {
           trigger: root,
           start: 'top top',
-          end: () => `+=${Math.round(getStableViewportHeight() * (prefersReducedMotion ? 1.1 : 1.6))}`,
+          end: () =>
+            `+=${Math.round(
+              getStableViewportHeight() *
+                (prefersReducedMotion ? HERO_SCENE_REDUCED_MOTION : HERO_SCENE).lengthInViewports,
+            )}`,
           scrub: prefersReducedMotion ? 0.12 : 0.6,
           pin: root,
           anticipatePin: 1,
@@ -257,14 +255,6 @@ export function HeroIntro({
           filter: `blur(${prefersReducedMotion ? 0 : 4.5}px)`,
           duration: prefersReducedMotion ? 0.08 : 0.18,
         }, prefersReducedMotion ? 0.72 : 0.74)
-        .to([kicker, support], {
-          autoAlpha: 0,
-          y: prefersReducedMotion ? 0 : -18,
-          scale: prefersReducedMotion ? 1 : 0.992,
-          filter: `blur(${prefersReducedMotion ? 0 : 5}px)`,
-          duration: prefersReducedMotion ? 0.08 : 0.2,
-          stagger: prefersReducedMotion ? 0 : 0.032,
-        }, prefersReducedMotion ? 0.73 : 0.75)
         .to(slices, {
           autoAlpha: prefersReducedMotion ? 0 : (index: number) => [0.1, 0.16, 0.24, 0.34, 0.24, 0.16, 0.1][index],
           x: (index: number) => prefersReducedMotion ? 0 : [-12, -8, -4, 0, 4, 8, 12][index],
@@ -350,7 +340,12 @@ export function HeroIntro({
         const sliceBlur = reducedMotion ? [0.9, 0.9, 0.8, 0.7, 0.8, 0.9, 0.9] : [2.8, 2.4, 2.1, 1.8, 2.1, 2.4, 2.8];
 
         root.classList.add('is-handoff-active', 'is-hero-entering');
-        gsap.set(root, {'--hero-handoff': 1});
+        gsap.set(root, {
+          '--hero-handoff': 1,
+          // Barra de luz posicionada acima do título; o sweep abaixo a faz
+          // descer atravessando as letras, uma vez, na entrada.
+          '--hero-exit-sweep': reducedMotion ? '-18%' : '-55%',
+        });
         gsap.set(media, {
           opacity: reducedMotion ? 0.92 : 0.84,
           scale: reducedMotion ? 1.006 : 1.014,
@@ -382,21 +377,16 @@ export function HeroIntro({
           filter: 'blur(0px)',
         });
         gsap.set(titleReal, {
-          opacity: reducedMotion ? 0.9 : 0.82,
-          y: reducedMotion ? 0.5 : 3,
-          scale: 1,
-          filter: `blur(${reducedMotion ? 0.9 : 2.2}px)`,
+          opacity: reducedMotion ? 0.9 : 0.78,
+          y: reducedMotion ? 0.5 : 6,
+          scale: reducedMotion ? 1 : 0.986,
+          filter: `blur(${reducedMotion ? 0.9 : 3.4}px)`,
         });
         gsap.set(slices, {
           autoAlpha: 0,
           y: 0,
           x: (index: number) => sliceOffsets[index],
           filter: (index: number) => `blur(${sliceBlur[index]}px)`,
-        });
-        gsap.set([kicker, support], {
-          opacity: reducedMotion ? 0.4 : 0.16,
-          y: reducedMotion ? 3 : 10,
-          filter: `blur(${reducedMotion ? 2 : 5}px)`,
         });
         gsap.set(footer, {
           opacity: reducedMotion ? 0.32 : 0.08,
@@ -439,6 +429,14 @@ export function HeroIntro({
             duration: reducedMotion ? 0.22 : 0.34,
             ease: 'power3.out',
           }, 0.03)
+          .to(root, {
+            // Sweep de luz descendo pelo título, uma vez. A opacidade da barra
+            // acompanha `--hero-handoff` (que cai a seguir), então ela varre e
+            // some — um wipe, não uma barra parada.
+            '--hero-exit-sweep': reducedMotion ? '-18%' : '165%',
+            duration: reducedMotion ? 0.2 : 0.52,
+            ease: 'power2.inOut',
+          }, reducedMotion ? 0 : 0.04)
           .to(slices, {
             autoAlpha: (index: number) => (reducedMotion ? 0.12 : index === 3 ? 0.32 : index === 2 || index === 4 ? 0.24 : 0.17),
             x: 0,
@@ -452,8 +450,8 @@ export function HeroIntro({
             y: 0,
             scale: 1,
             filter: 'blur(0px)',
-            duration: reducedMotion ? 0.16 : 0.28,
-            ease: 'power3.out',
+            duration: reducedMotion ? 0.16 : 0.34,
+            ease: 'power4.out',
           }, 0.16)
           .to(slices, {
             autoAlpha: 0,
@@ -475,14 +473,6 @@ export function HeroIntro({
             duration: reducedMotion ? 0.16 : 0.22,
             ease: 'power2.out',
           }, reducedMotion ? 0.22 : 0.32)
-          .to([kicker, support], {
-            opacity: 1,
-            y: 0,
-            filter: 'blur(0px)',
-            duration: reducedMotion ? 0.18 : 0.28,
-            ease: 'power2.out',
-            stagger: reducedMotion ? 0.02 : 0.05,
-          }, reducedMotion ? 0.24 : 0.34)
           .to(footer, {
             opacity: 1,
             y: 0,
@@ -544,7 +534,6 @@ export function HeroIntro({
 
         <div className="hero-center">
           <div ref={introCopyRef} className="hero-intro-copy">
-            <p ref={kickerRef} className="hero-kicker">{copy.heroSubtag}</p>
             <div className="hero-statement-wrap" aria-live="polite">
               <div ref={titleWrapRef} className="hero-statement-handshake">
                 <span ref={titleRealRef} className="hero-statement-line hero-statement-real">
@@ -568,13 +557,11 @@ export function HeroIntro({
                 </span>
               </div>
             </div>
-            <p ref={supportRef} className="hero-support">{copy.heroSupport}</p>
           </div>
         </div>
 
         <footer ref={footerRef} className="hero-footer">
           <p ref={cueRef} className="scroll-cue" aria-label={copy.scrollCue}>
-            <span className="scroll-cue-label">{copy.scrollCue}</span>
             <span className="scroll-cue-arrows" aria-hidden="true">
               <span />
               <span />
