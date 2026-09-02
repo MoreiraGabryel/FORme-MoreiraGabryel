@@ -8,11 +8,14 @@ import {LegalPage} from './components/legal/LegalPage';
 import {HOME_COPY} from './config/homeContent';
 import {
   FAKE_FOOTER_SCENE,
+  HERO_SCENE,
+  HERO_SCENE_REDUCED_MOTION,
   TECHNOLOGY_SCENE,
   TECHNOLOGY_SCENE_REDUCED_MOTION,
 } from './config/scenes';
 import type {SceneGeometry} from './config/scenes';
 import {useTranslation} from './i18n/useTranslation';
+import {useSmoothScroll} from './hooks/useSmoothScroll';
 import {getStableViewportHeight} from './utils/stableViewport';
 
 function clamp(value: number, min: number, max: number) {
@@ -36,8 +39,14 @@ const FAKE_FOOTER_BLACKOUT_START = 0.758;
 //
 // A entrada é um plano único scrubbado: a posição do scroll escreve
 // `currentTime`, então ela anda na descida e volta na subida. Ela ocupa os
-// primeiros 63% da cena, e nesse trecho a rolagem inteira do rodapé gasta 1740px
-// para 124 quadros — cerca de 14px de rolagem por quadro.
+// primeiros 63% da cena.
+//
+// Essa fração é o que torna o comprimento da cena mensurável, e não uma questão
+// de gosto: num viewport de ~1040px, 63% de 3,8 alturas dão ~2490px para 123
+// quadros, ou ~20px de rolagem por quadro. Como um entalhe de roda de mouse anda
+// ~100px, cada entalhe avança 5 quadros — 0,2s de vídeo, que ainda lê como
+// movimento. Com os 2,65 anteriores eram 14px/quadro: 7 quadros por entalhe, e
+// aí a passagem lê como salto. Ver `config/scenes`.
 //
 // A troca para o loop do túnel começa exatamente onde a entrada acaba, e não
 // antes: durante a dissolve inteira a entrada segura o último quadro e o túnel
@@ -63,6 +72,9 @@ export default function App() {
   const handleLoadingDone = useCallback(() => {
     setLoaded(true);
   }, []);
+  // Scroll suave (Lenis) entra só depois do Loading, que trava o scroll
+  // enquanto está montado. Ver `useSmoothScroll`.
+  useSmoothScroll(loaded);
   const pathname = typeof window === 'undefined' ? '/' : window.location.pathname.replace(/\/+$/, '') || '/';
   const copy = HOME_COPY[locale];
   const [phraseIndex, setPhraseIndex] = useState(0);
@@ -70,11 +82,19 @@ export default function App() {
   const [scrollState, setScrollState] = useState({
     heroProgress: 0,
     rawStageProgress: 0,
+    rawStageApproach: 0,
     rawFakeFooterProgress: 0,
     scrollDirectionBias: 0,
     isLargeViewport: false,
   });
-  const {heroProgress, rawStageProgress, rawFakeFooterProgress, scrollDirectionBias, isLargeViewport} = scrollState;
+  const {
+    heroProgress,
+    rawStageProgress,
+    rawStageApproach,
+    rawFakeFooterProgress,
+    scrollDirectionBias,
+    isLargeViewport,
+  } = scrollState;
   const journeySectionRef = useRef<HTMLDivElement | null>(null);
   const fakeFooterSectionRef = useRef<HTMLDivElement | null>(null);
 
@@ -145,6 +165,20 @@ export default function App() {
       return clamp(travelled / available, 0, 1);
     };
 
+    // Aproximação: 0 quando o topo da seção está na base da tela, 1 quando
+    // encosta no topo. É exatamente o trecho em que a seção entra em campo,
+    // antes de o `pin` começar.
+    //
+    // Existe porque a entrada da etapa 2 era dirigida por `heroProgress`, que
+    // fecha junto com o pin do hero. Medido: ela terminava em 1568px de rolagem
+    // e a seção só ficava visível em 1625px — a animação inteira acontecia fora
+    // da tela, e a etapa chegava já opaca e já assentada. Ancorada aqui, ela
+    // roda na janela em que a seção de fato aparece.
+    const resolveApproach = (section: HTMLElement) => {
+      const viewportHeight = getStableViewportHeight();
+      return clamp(1 - section.getBoundingClientRect().top / viewportHeight, 0, 1);
+    };
+
     const updateProgress = () => {
       const viewportHeight = getStableViewportHeight();
       const currentScrollY = window.scrollY;
@@ -153,13 +187,21 @@ export default function App() {
       const directionalImpulse = clamp(delta / Math.max(viewportHeight * 0.08, 48), -1, 1);
       directionBias = clamp(directionBias * 0.72 + directionalImpulse * 0.28, -1, 1);
 
-      const rawHero = currentScrollY / (viewportHeight * 1.6);
+      // O hero é o único medido por `scrollY` puro: ele começa fixado no topo,
+      // então `rect.top` fica preso em 0 e não serve de origem para
+      // `resolveProgress`. O comprimento tem de sair de `config/scenes` mesmo
+      // assim — enquanto era `1.6` escrito à mão aqui e no `HeroIntro`, o modo
+      // `prefers-reduced-motion` terminava o timeline em 1.1 com este progresso
+      // ainda subindo até 1.6.
+      const heroScene = reducedMotionQuery.matches ? HERO_SCENE_REDUCED_MOTION : HERO_SCENE;
+      const rawHero = currentScrollY / (viewportHeight * heroScene.lengthInViewports);
       const technologyScene = reducedMotionQuery.matches
         ? TECHNOLOGY_SCENE_REDUCED_MOTION
         : TECHNOLOGY_SCENE;
       setScrollState({
         heroProgress: clamp(rawHero, 0, 1),
         rawStageProgress: resolveProgress(transitionSection, technologyScene),
+        rawStageApproach: resolveApproach(transitionSection),
         rawFakeFooterProgress: resolveProgress(fakeFooterSection, FAKE_FOOTER_SCENE),
         scrollDirectionBias: directionBias,
         isLargeViewport: window.innerWidth >= 1500 || viewportHeight >= 920,
@@ -188,8 +230,19 @@ export default function App() {
   const stageHoldProgress = clamp((rawStageProgress - 0.78) / 0.14, 0, 1);
   const stageReleaseProgress = clamp((rawStageProgress - 0.92) / 0.08, 0, 1);
   const stageProgress = rawStageProgress < 0.78 ? stageReadProgress : 1;
-  const heroHandoff = clamp((heroProgress - 0.68) / 0.24, 0, 1);
-  const heroHandoffEase = 1 - Math.pow(1 - heroHandoff, 3);
+  // `heroHandoffEase` vivia aqui e alimentava a entrada da etapa 2. Saiu: era a
+  // origem errada. O `--hero-handoff` do próprio hero continua existindo, mas é
+  // animado pelo GSAP no timeline do `HeroIntro`, sobre `.hero-stage` — outro
+  // elemento, outra função. Só o nome era compartilhado.
+
+  // A entrada da etapa 2 sai da aproximação da própria seção, não do progresso
+  // do hero. Os dois últimos décimos ficam de fora (`/ 0.86`) para a etapa
+  // terminar de entrar um pouco antes de encostar no topo: assim ela está
+  // assentada quando o `pin` assume, em vez de ainda estar se movendo no quadro
+  // exato em que a cena de tecnologia começa. É a emenda entre as duas coisas
+  // que se via como sobreposição.
+  const stageApproach = clamp(rawStageApproach / 0.86, 0, 1);
+  const stageApproachEase = 1 - Math.pow(1 - stageApproach, 3);
   const stageEase = 1 - Math.pow(1 - stageProgress, 3);
   const stageHoldEase = smoothstep(stageHoldProgress);
   const stageSettleEase = smoothstep(stageReleaseProgress);
@@ -262,13 +315,12 @@ export default function App() {
             stageStyle={{
               '--stage-progress': `${stageProgress}`,
               '--stage-ease': `${stageEase}`,
-              '--hero-handoff': `${heroHandoffEase}`,
-              '--stage-entry-y': `${(1 - heroHandoffEase) * 6}`,
+              '--hero-handoff': `${stageApproachEase}`,
+              '--stage-entry-y': `${(1 - stageApproachEase) * 6}`,
               '--stage-hold': `${stageHoldEase}`,
               '--stage-settle': `${stageSettleEase}`,
               '--stage-perf-tier': isLargeViewport ? '1' : '0',
               '--stage-active': rawStageProgress > 0.02 && rawStageProgress < 0.985 ? '1' : '0',
-              '--clip-reveal': `${heroHandoffEase}`,
             } as CSSProperties}
           />
         </div>
