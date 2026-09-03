@@ -165,15 +165,7 @@ export default function App() {
       return clamp(travelled / available, 0, 1);
     };
 
-    // Aproximação: 0 quando o topo da seção está na base da tela, 1 quando
-    // encosta no topo. É exatamente o trecho em que a seção entra em campo,
-    // antes de o `pin` começar.
-    //
-    // Existe porque a entrada da etapa 2 era dirigida por `heroProgress`, que
-    // fecha junto com o pin do hero. Medido: ela terminava em 1568px de rolagem
-    // e a seção só ficava visível em 1625px — a animação inteira acontecia fora
-    // da tela, e a etapa chegava já opaca e já assentada. Ancorada aqui, ela
-    // roda na janela em que a seção de fato aparece.
+  
     const resolveApproach = (section: HTMLElement) => {
       const viewportHeight = getStableViewportHeight();
       return clamp(1 - section.getBoundingClientRect().top / viewportHeight, 0, 1);
@@ -187,12 +179,7 @@ export default function App() {
       const directionalImpulse = clamp(delta / Math.max(viewportHeight * 0.08, 48), -1, 1);
       directionBias = clamp(directionBias * 0.72 + directionalImpulse * 0.28, -1, 1);
 
-      // O hero é o único medido por `scrollY` puro: ele começa fixado no topo,
-      // então `rect.top` fica preso em 0 e não serve de origem para
-      // `resolveProgress`. O comprimento tem de sair de `config/scenes` mesmo
-      // assim — enquanto era `1.6` escrito à mão aqui e no `HeroIntro`, o modo
-      // `prefers-reduced-motion` terminava o timeline em 1.1 com este progresso
-      // ainda subindo até 1.6.
+      
       const heroScene = reducedMotionQuery.matches ? HERO_SCENE_REDUCED_MOTION : HERO_SCENE;
       const rawHero = currentScrollY / (viewportHeight * heroScene.lengthInViewports);
       const technologyScene = reducedMotionQuery.matches
@@ -230,17 +217,7 @@ export default function App() {
   const stageHoldProgress = clamp((rawStageProgress - 0.78) / 0.14, 0, 1);
   const stageReleaseProgress = clamp((rawStageProgress - 0.92) / 0.08, 0, 1);
   const stageProgress = rawStageProgress < 0.78 ? stageReadProgress : 1;
-  // `heroHandoffEase` vivia aqui e alimentava a entrada da etapa 2. Saiu: era a
-  // origem errada. O `--hero-handoff` do próprio hero continua existindo, mas é
-  // animado pelo GSAP no timeline do `HeroIntro`, sobre `.hero-stage` — outro
-  // elemento, outra função. Só o nome era compartilhado.
-
-  // A entrada da etapa 2 sai da aproximação da própria seção, não do progresso
-  // do hero. Os dois últimos décimos ficam de fora (`/ 0.86`) para a etapa
-  // terminar de entrar um pouco antes de encostar no topo: assim ela está
-  // assentada quando o `pin` assume, em vez de ainda estar se movendo no quadro
-  // exato em que a cena de tecnologia começa. É a emenda entre as duas coisas
-  // que se via como sobreposição.
+  
   const stageApproach = clamp(rawStageApproach / 0.86, 0, 1);
   const stageApproachEase = 1 - Math.pow(1 - stageApproach, 3);
   const stageEase = 1 - Math.pow(1 - stageProgress, 3);
@@ -278,9 +255,7 @@ export default function App() {
       1,
     ),
   );
-  // Exposição do portal: quanto do vídeo aparece por cima do preto. É uma só
-  // para as duas camadas, repartida pela dissolve — por isso a troca não muda o
-  // brilho da cena, só qual clipe está entregando a imagem.
+  
   const portalExposure =
     0.22 +
     fakeFooterVideoActivation * 0.48 +
