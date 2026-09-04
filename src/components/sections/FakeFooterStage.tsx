@@ -12,10 +12,7 @@ import {getStableViewportHeight} from '../../utils/stableViewport';
 
 gsap.registerPlugin(ScrollTrigger);
 
-// As duas peças do portal. A entrada é um plano único que atravessa a boca do
-// portal; o túnel é o ambiente do outro lado. Foram geradas travando o quadro
-// final da primeira como quadro inicial da segunda, por isso a passagem de uma
-// para a outra é uma dissolução curta e não um corte.
+
 const entryVideoSrc = '/media/portal-entrada.mp4';
 const ambientVideoSrc = '/media/portal-tunel-loop.mp4';
 // Primeiro quadro de cada clipe: evita o retângulo preto enquanto o vídeo decodifica.
