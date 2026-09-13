@@ -2889,8 +2889,11 @@ button {
   perspective: 700px;
 }
 
-.technologies-title .hero-statement-real {
-  animation: none;
+/* Classe própria. O título usava `.hero-statement-line` do Hero, cujo font-size
+   (até 9.25rem) vencia o clamp da etapa por estar no span, e não no h2. */
+.technologies-title-text {
+  display: inline-block;
+  max-width: 100%;
 }
 
 .technology-title-char {
