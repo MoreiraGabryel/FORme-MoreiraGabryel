@@ -1,18 +1,17 @@
 import {startTransition, useCallback, useEffect, useRef, useState} from 'react';
 import type {CSSProperties} from 'react';
+import {gsap} from 'gsap';
 import {LoadingScreen} from './components/sections/LoadingScreen';
 import {HeroIntro} from './components/sections/HeroIntro';
-import {TechnologyAndAboutStage} from './components/sections/TechnologyAndAboutStage';
+import {
+  CARDS_EXIT_PROGRESS,
+  STAGE_ONE_EXIT_PROGRESS,
+  TechnologyAndAboutStage,
+} from './components/sections/TechnologyAndAboutStage';
 import {FakeFooterStage} from './components/sections/FakeFooterStage';
 import {LegalPage} from './components/legal/LegalPage';
 import {HOME_COPY} from './config/homeContent';
-import {
-  FAKE_FOOTER_SCENE,
-  HERO_SCENE,
-  HERO_SCENE_REDUCED_MOTION,
-  TECHNOLOGY_SCENE,
-  TECHNOLOGY_SCENE_REDUCED_MOTION,
-} from './config/scenes';
+import {FAKE_FOOTER_SCENE, HERO_SCENE, HERO_SCENE_REDUCED_MOTION} from './config/scenes';
 import type {SceneGeometry} from './config/scenes';
 import {useTranslation} from './i18n/useTranslation';
 import {useSmoothScroll} from './hooks/useSmoothScroll';
@@ -98,6 +97,14 @@ export default function App() {
   const journeySectionRef = useRef<HTMLDivElement | null>(null);
   const fakeFooterSectionRef = useRef<HTMLDivElement | null>(null);
 
+  // O progresso da cena de tecnologia vem do ScrollTrigger dela, não de uma
+  // segunda medição aqui: era daí que saía o descompasso entre as duas fases.
+  const handleStageProgress = useCallback((progress: number) => {
+    setScrollState((current) =>
+      current.rawStageProgress === progress ? current : {...current, rawStageProgress: progress},
+    );
+  }, []);
+
   useEffect(() => {
     setPhraseIndex(0);
     setFooterPhraseIndex(0);
@@ -148,7 +155,6 @@ export default function App() {
     const fakeFooterSection = fakeFooterSectionRef.current;
     if (!transitionSection || !fakeFooterSection) return;
 
-    let frame = 0;
     let lastScrollY = window.scrollY;
     let directionBias = 0;
     const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -182,49 +188,59 @@ export default function App() {
       
       const heroScene = reducedMotionQuery.matches ? HERO_SCENE_REDUCED_MOTION : HERO_SCENE;
       const rawHero = currentScrollY / (viewportHeight * heroScene.lengthInViewports);
-      const technologyScene = reducedMotionQuery.matches
-        ? TECHNOLOGY_SCENE_REDUCED_MOTION
-        : TECHNOLOGY_SCENE;
-      setScrollState({
+      setScrollState((current) => ({
+        ...current,
         heroProgress: clamp(rawHero, 0, 1),
-        rawStageProgress: resolveProgress(transitionSection, technologyScene),
         rawStageApproach: resolveApproach(transitionSection),
         rawFakeFooterProgress: resolveProgress(fakeFooterSection, FAKE_FOOTER_SCENE),
         scrollDirectionBias: directionBias,
         isLargeViewport: window.innerWidth >= 1500 || viewportHeight >= 920,
-      });
+      }));
     };
 
+    // No ticker do GSAP em vez de um rAF próprio: assim este update e o
+    // `onUpdate` do ScrollTrigger caem no mesmo tick e o React agrupa os dois
+    // num único render por frame. O flag evita trabalho em frame parado.
+    let pending = false;
     const requestUpdate = () => {
-      window.cancelAnimationFrame(frame);
-      frame = window.requestAnimationFrame(updateProgress);
+      pending = true;
+    };
+    const tick = () => {
+      if (!pending) return;
+      pending = false;
+      updateProgress();
     };
 
     updateProgress();
+    gsap.ticker.add(tick);
     window.addEventListener('scroll', requestUpdate, {passive: true});
     window.addEventListener('resize', requestUpdate);
     reducedMotionQuery.addEventListener('change', requestUpdate);
 
     return () => {
-      window.cancelAnimationFrame(frame);
+      gsap.ticker.remove(tick);
       window.removeEventListener('scroll', requestUpdate);
       window.removeEventListener('resize', requestUpdate);
       reducedMotionQuery.removeEventListener('change', requestUpdate);
     };
   }, []);
 
-  const stageReadProgress = clamp(rawStageProgress / 0.78, 0, 1);
-  const stageHoldProgress = clamp((rawStageProgress - 0.78) / 0.14, 0, 1);
-  const stageReleaseProgress = clamp((rawStageProgress - 0.92) / 0.08, 0, 1);
-  const stageProgress = rawStageProgress < 0.78 ? stageReadProgress : 1;
-  
+  const stageReadProgress = clamp(rawStageProgress / STAGE_ONE_EXIT_PROGRESS, 0, 1);
+  const stageReleaseProgress = clamp(
+    (rawStageProgress - CARDS_EXIT_PROGRESS) / (1 - CARDS_EXIT_PROGRESS),
+    0,
+    1,
+  );
+  const stageProgress = rawStageProgress < STAGE_ONE_EXIT_PROGRESS ? stageReadProgress : 1;
+
   const stageApproach = clamp(rawStageApproach / 0.86, 0, 1);
   const stageApproachEase = 1 - Math.pow(1 - stageApproach, 3);
   const stageEase = 1 - Math.pow(1 - stageProgress, 3);
-  const stageHoldEase = smoothstep(stageHoldProgress);
   const stageSettleEase = smoothstep(stageReleaseProgress);
 
-  const fakeFooterGate = rawStageProgress >= 0.92 ? 1 : 0;
+  // Só depois do recuo dos cards terminar. Em 0.92 o portal já ficava armado
+  // com os cards ainda em cena, e era isso que embolava a transição.
+  const fakeFooterGate = rawStageProgress >= 0.995 ? 1 : 0;
   const fakeFooterProgress = fakeFooterGate === 0 ? 0 : clamp((rawFakeFooterProgress - 0.01) / 0.99, 0, 1);
   const fakeFooterEase = 1 - Math.pow(1 - fakeFooterProgress, 3);
   const fakeFooterTunnel = clamp((fakeFooterProgress - 0.01) / 0.62, 0, 1);
@@ -287,15 +303,13 @@ export default function App() {
           <TechnologyAndAboutStage
             locale={locale}
             rawStageProgress={rawStageProgress}
+            onProgress={handleStageProgress}
             stageStyle={{
               '--stage-progress': `${stageProgress}`,
               '--stage-ease': `${stageEase}`,
               '--hero-handoff': `${stageApproachEase}`,
               '--stage-entry-y': `${(1 - stageApproachEase) * 6}`,
-              '--stage-hold': `${stageHoldEase}`,
               '--stage-settle': `${stageSettleEase}`,
-              '--stage-perf-tier': isLargeViewport ? '1' : '0',
-              '--stage-active': rawStageProgress > 0.02 && rawStageProgress < 0.985 ? '1' : '0',
             } as CSSProperties}
           />
         </div>

@@ -359,6 +359,22 @@ export function AboutCardsStage({
             </button>
           </div>
         </div>
+
+        <div className="about-coverflow-dots">
+          {ABOUT_CARDS.map((card, index) => (
+            <button
+              key={card.id}
+              type="button"
+              className={`about-coverflow-dot${index === activeIndex ? ' is-active' : ''}`}
+              aria-current={index === activeIndex ? 'true' : undefined}
+              aria-label={card.title}
+              onClick={() => {
+                setFlippedCardId(null);
+                setActiveIndex(index);
+              }}
+            />
+          ))}
+        </div>
       </div>
     </div>
   );
