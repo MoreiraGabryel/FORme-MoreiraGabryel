@@ -388,7 +388,12 @@ export function TechnologyAndAboutStage({
     let splitTitle: ReturnType<typeof SplitText.create> | null = null;
 
     const ctx = gsap.context(() => {
-      splitTitle = SplitText.create(titleText, {type: 'chars', charsClass: 'technology-title-char'});
+      // `words` junto de `chars`: sem o agrupamento por palavra, cada caractere
+      // vira um inline-block solto e a linha pode quebrar no meio da palavra.
+      splitTitle = SplitText.create(titleText, {
+        type: 'words,chars',
+        charsClass: 'technology-title-char',
+      });
 
       gsap.set(sceneBackground, {
         autoAlpha: 0,
@@ -824,7 +829,7 @@ export function TechnologyAndAboutStage({
                     <span
                       ref={titleTextRef}
                       key={locale}
-                      className="hero-statement-line hero-statement-real"
+                      className="technologies-title-text"
                     >
                       {sectionCopy.titlePhrases[0]}
                     </span>
