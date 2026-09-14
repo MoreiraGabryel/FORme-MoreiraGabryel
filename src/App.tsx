@@ -82,6 +82,7 @@ export default function App() {
     heroProgress: 0,
     rawStageProgress: 0,
     rawStageApproach: 0,
+    rawFakeFooterApproach: 0,
     rawFakeFooterProgress: 0,
     scrollDirectionBias: 0,
     isLargeViewport: false,
@@ -90,6 +91,7 @@ export default function App() {
     heroProgress,
     rawStageProgress,
     rawStageApproach,
+    rawFakeFooterApproach,
     rawFakeFooterProgress,
     scrollDirectionBias,
     isLargeViewport,
@@ -192,6 +194,7 @@ export default function App() {
         ...current,
         heroProgress: clamp(rawHero, 0, 1),
         rawStageApproach: resolveApproach(transitionSection),
+        rawFakeFooterApproach: resolveApproach(fakeFooterSection),
         rawFakeFooterProgress: resolveProgress(fakeFooterSection, FAKE_FOOTER_SCENE),
         scrollDirectionBias: directionBias,
         isLargeViewport: window.innerWidth >= 1500 || viewportHeight >= 920,
@@ -240,6 +243,9 @@ export default function App() {
 
   // Só depois do recuo dos cards terminar. Em 0.92 o portal já ficava armado
   // com os cards ainda em cena, e era isso que embolava a transição.
+  // A janela entre o fim do pin da tecnologia e o `top top` do rodapé: 1
+  // viewport exato, que é onde a entrada acontece.
+  const fakeFooterEntrance = smoothstep(rawFakeFooterApproach);
   const fakeFooterGate = rawStageProgress >= 0.995 ? 1 : 0;
   const fakeFooterProgress = fakeFooterGate === 0 ? 0 : clamp((rawFakeFooterProgress - 0.01) / 0.99, 0, 1);
   const fakeFooterEase = 1 - Math.pow(1 - fakeFooterProgress, 3);
@@ -272,8 +278,11 @@ export default function App() {
     ),
   );
   
+  // O 0.22 era constante: no primeiro quadro da cena a imagem já entrava a 22%,
+  // e antes dela havia 1 viewport de rolagem sem nada. Agora esse mesmo valor
+  // nasce ao longo da aproximação, e a ativação da cena continua de onde parou.
   const portalExposure =
-    0.22 +
+    fakeFooterEntrance * 0.22 +
     fakeFooterVideoActivation * 0.48 +
     fakeFooterTunnelEase * 0.08 -
     fakeFooterSettle * 0.008 -
@@ -332,7 +341,7 @@ export default function App() {
               '--fake-footer-unlock': `${fakeFooterUnlock}`,
               '--fake-footer-exit-blackout': `${fakeFooterExitBlackout}`,
               '--footer-clip': `${fakeFooterEase}`,
-              '--footer-entry-y': `${(1 - fakeFooterEase) * 5}`,
+              '--fake-footer-entrance': `${fakeFooterEntrance}`,
             } as CSSProperties}
             shellStyle={{
               transform: `translate3d(0, ${(1 - fakeFooterEase) * 0.24 - fakeFooterTunnelEase * 0.44 + fakeFooterReverseEase * 1.4 + fakeFooterSettle * 0.04}vh, 0) scale(${1.038 + fakeFooterTunnelEase * 0.03 - fakeFooterSettle * 0.002 - fakeFooterReverseEase * 0.012})`,

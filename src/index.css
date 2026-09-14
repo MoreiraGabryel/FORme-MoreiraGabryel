@@ -1231,7 +1231,10 @@ button {
   min-height: var(--stable-vh);
   overflow: clip;
   background: linear-gradient(180deg, var(--bg-base-alt) 0%, var(--bg-base) 72%, var(--bg-base) 100%);
-  transform: translate3d(0, calc(var(--footer-entry-y, 0) * 1vh), 0);
+  /* Sem transform aqui: o `pin` grava o transform inline no elemento fixado e
+     congela o valor do engate, o que só deixava um deslocamento de 5vh. A
+     entrada é o desvanecer abaixo, que o pin não toca. */
+  opacity: var(--fake-footer-entrance, 1);
   isolation: isolate;
 }
 
