@@ -29,10 +29,11 @@ const HERO_PHRASE_MOBILE_LINES: Record<string, string[]> = {
     'e performance.',
   ],
   'Transformo requisitos complexos em sistemas visuais claros e escaláveis.': [
-    'Transformo requisitos',
-    'complexos em sistemas',
-    'visuais claros',
-    'e escaláveis.',
+    'Transformo',
+    'requisitos',
+    'complexos em',
+    'sistemas visuais',
+    'claros e escaláveis.',
   ],
   'Crio experiências digitais onde código, motion e usabilidade trabalham juntos.': [
     'Crio experiências',
@@ -51,6 +52,7 @@ const HERO_PHRASE_MOBILE_LINES: Record<string, string[]> = {
   'Projeto camadas de interface para parecerem precisas antes mesmo do clique.': [
     'Projeto camadas',
     'de interface',
+    'para parecerem',
     'precisas antes',
     'mesmo do clique.',
   ],
@@ -65,7 +67,7 @@ const HERO_PHRASE_MOBILE_LINES: Record<string, string[]> = {
     'I build interfaces',
     'that align',
     'product thinking,',
-    'narrative',
+    'narrative,',
     'and performance.',
   ],
   'I turn complex requirements into visual systems that feel clear and scalable.': [
@@ -86,7 +88,7 @@ const HERO_PHRASE_MOBILE_LINES: Record<string, string[]> = {
     'I design flows',
     'that connect',
     'automation,',
-    'performance',
+    'performance,',
     'and visual presence.',
   ],
   'I shape interface layers to feel precise before the first click happens.': [
