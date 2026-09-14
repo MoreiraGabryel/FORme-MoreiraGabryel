@@ -236,6 +236,12 @@ const ABOUT_STAGE_INTERACTIVE_PROGRESS = ABOUT_STAGE_ENTER_PROGRESS + ABOUT_STAG
 export const CARDS_EXIT_PROGRESS = 0.92;
 const CARDS_EXIT_DURATION = 1 - CARDS_EXIT_PROGRESS;
 
+// O fundo sai logo depois dos cards: primeiro o assunto deixa o palco, depois o
+// palco apaga. Sem isto a imagem da cena ficava acesa até o pin soltar, e o
+// rodapé entrava por cima dela.
+const SCENE_EXIT_PROGRESS = 0.94;
+const SCENE_EXIT_DURATION = 1 - SCENE_EXIT_PROGRESS;
+
 function InlineTechnologyIcon({
   src,
   label,
@@ -556,6 +562,17 @@ export function TechnologyAndAboutStage({
             duration: CARDS_EXIT_DURATION,
           },
           CARDS_EXIT_PROGRESS,
+        )
+        // Avanço leve enquanto apaga: a câmera entra na cena em vez de a cena
+        // sumir parada, e o portal do rodapé recebe esse mesmo sentido.
+        .to(
+          [sceneBackground, stageBackdrop],
+          {
+            autoAlpha: 0,
+            scale: reducedMotion ? 1 : 1.09,
+            duration: SCENE_EXIT_DURATION,
+          },
+          SCENE_EXIT_PROGRESS,
         );
     }, stageSectionRef);
 
