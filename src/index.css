@@ -3378,7 +3378,9 @@ button {
 
   .about-coverflow-viewport {
     min-height: calc(var(--stable-vh) - 9.75rem);
-    perspective: none;
+    /* 1200px dá ao card de 88vw o mesmo trapézio que os 1800px dão ao de
+       desktop. Sem perspectiva, o `z` e o `rotateY` do tween não projetam. */
+    perspective: 1200px;
   }
 
   .about-coverflow-track {
