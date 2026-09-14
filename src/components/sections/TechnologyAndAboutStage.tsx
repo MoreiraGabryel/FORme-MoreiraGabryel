@@ -226,11 +226,21 @@ function createFloatingSpecs(items: Technology[], isMobile: boolean) {
   });
 }
 
-const STAGE_ONE_EXIT_PROGRESS = 0.78;
-const ABOUT_STAGE_ENTER_PROGRESS = 0.94;
+// Fases da cena, em fração do progresso do ScrollTrigger. O timeline soma 1.0,
+// então cada posição aqui é lida direto como fração da rolagem da cena.
+export const STAGE_ONE_EXIT_PROGRESS = 0.56;
+const ABOUT_STAGE_ENTER_PROGRESS = 0.67;
 const STAGE_ONE_EXIT_DURATION = ABOUT_STAGE_ENTER_PROGRESS - STAGE_ONE_EXIT_PROGRESS;
-const ABOUT_STAGE_ENTER_DURATION = 0.06;
-const ABOUT_STAGE_INTERACTIVE_PROGRESS = 0.97;
+const ABOUT_STAGE_ENTER_DURATION = 0.05;
+const ABOUT_STAGE_INTERACTIVE_PROGRESS = ABOUT_STAGE_ENTER_PROGRESS + ABOUT_STAGE_ENTER_DURATION;
+export const CARDS_EXIT_PROGRESS = 0.92;
+const CARDS_EXIT_DURATION = 1 - CARDS_EXIT_PROGRESS;
+
+// O fundo sai logo depois dos cards: primeiro o assunto deixa o palco, depois o
+// palco apaga. Sem isto a imagem da cena ficava acesa até o pin soltar, e o
+// rodapé entrava por cima dela.
+const SCENE_EXIT_PROGRESS = 0.94;
+const SCENE_EXIT_DURATION = 1 - SCENE_EXIT_PROGRESS;
 
 function InlineTechnologyIcon({
   src,
@@ -284,10 +294,12 @@ export function TechnologyAndAboutStage({
   locale,
   rawStageProgress,
   stageStyle,
+  onProgress,
 }: {
   locale: Locale;
   rawStageProgress: number;
   stageStyle: CSSProperties;
+  onProgress: (progress: number) => void;
 }) {
   const isMobile = useIsMobile();
 
@@ -315,6 +327,7 @@ export function TechnologyAndAboutStage({
   const hoveredTechnologyIdRef = useRef<string | null>(null);
   const activeTechnologyIdRef = useRef<string | null>(null);
   const rawStageProgressRef = useRef(rawStageProgress);
+  const onProgressRef = useRef(onProgress);
   const OUTRO_DURATION = 680;
 
   const sectionCopy = TECHNOLOGIES_SECTION_COPY[locale];
@@ -328,9 +341,21 @@ export function TechnologyAndAboutStage({
     [activeTechnologyId, visibleTechnologies],
   );
 
-  const stageActive = rawStageProgress > 0.02 && rawStageProgress < 0.985;
-  const stageExitProgress = clamp((rawStageProgress - 0.78) / 0.16, 0, 1);
+  // Gate do rAF de deriva dos ícones: termina junto com o stage one, para não
+  // rodar durante os 3 viewports em que só os cards estão em cena.
+  const stageActive = rawStageProgress > 0.02 && rawStageProgress < ABOUT_STAGE_ENTER_PROGRESS;
+  const stageExitProgress = clamp(
+    (rawStageProgress - STAGE_ONE_EXIT_PROGRESS) / STAGE_ONE_EXIT_DURATION,
+    0,
+    1,
+  );
   const stageLeaving = stageExitProgress > 0.001;
+  const cardsHoldProgress = clamp(
+    (rawStageProgress - ABOUT_STAGE_INTERACTIVE_PROGRESS) /
+      (CARDS_EXIT_PROGRESS - ABOUT_STAGE_INTERACTIVE_PROGRESS),
+    0,
+    1,
+  );
 
   useEffect(() => {
     const media = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -369,7 +394,12 @@ export function TechnologyAndAboutStage({
     let splitTitle: ReturnType<typeof SplitText.create> | null = null;
 
     const ctx = gsap.context(() => {
-      splitTitle = SplitText.create(titleText, {type: 'chars', charsClass: 'technology-title-char'});
+      // `words` junto de `chars`: sem o agrupamento por palavra, cada caractere
+      // vira um inline-block solto e a linha pode quebrar no meio da palavra.
+      splitTitle = SplitText.create(titleText, {
+        type: 'words,chars',
+        charsClass: 'technology-title-char',
+      });
 
       gsap.set(sceneBackground, {
         autoAlpha: 0,
@@ -410,7 +440,9 @@ export function TechnologyAndAboutStage({
       gsap.set(stageTwoLayer, {
         autoAlpha: 0,
         y: reducedMotion ? 16 : 88,
-        willChange: 'transform, opacity',
+        scale: 1,
+        filter: 'blur(0px)',
+        willChange: 'transform, opacity, filter',
       });
 
       gsap.timeline({
@@ -429,8 +461,13 @@ export function TechnologyAndAboutStage({
           pin: pinnedShell,
           anticipatePin: 1,
           invalidateOnRefresh: true,
+          // Recarregar no meio da cena não dispara `onUpdate`: sem isto o `App`
+          // ficaria em progresso 0 com a cena já rolada.
+          onRefresh: (self) => onProgressRef.current(self.progress),
           onUpdate: (self) => {
-            const nextInteractive = self.progress >= ABOUT_STAGE_INTERACTIVE_PROGRESS;
+            onProgressRef.current(self.progress);
+            const nextInteractive =
+              self.progress >= ABOUT_STAGE_INTERACTIVE_PROGRESS && self.progress < CARDS_EXIT_PROGRESS;
             if (nextInteractive !== isAboutInteractive) {
               isAboutInteractive = nextInteractive;
               setAboutStageInteractive(nextInteractive);
@@ -512,6 +549,30 @@ export function TechnologyAndAboutStage({
             duration: ABOUT_STAGE_ENTER_DURATION,
           },
           ABOUT_STAGE_ENTER_PROGRESS,
+        )
+        // Recuo em profundidade antes do rodapé falso. A camada está fora de um
+        // contexto com `perspective`, então a escala faz o trabalho do eixo Z:
+        // 0.67 é a projeção de z −900 sob os 1800px do coverflow.
+        .to(
+          stageTwoLayer,
+          {
+            autoAlpha: 0,
+            scale: reducedMotion ? 0.92 : 0.67,
+            filter: reducedMotion ? 'blur(0px)' : 'blur(14px)',
+            duration: CARDS_EXIT_DURATION,
+          },
+          CARDS_EXIT_PROGRESS,
+        )
+        // Avanço leve enquanto apaga: a câmera entra na cena em vez de a cena
+        // sumir parada, e o portal do rodapé recebe esse mesmo sentido.
+        .to(
+          [sceneBackground, stageBackdrop],
+          {
+            autoAlpha: 0,
+            scale: reducedMotion ? 1 : 1.09,
+            duration: SCENE_EXIT_DURATION,
+          },
+          SCENE_EXIT_PROGRESS,
         );
     }, stageSectionRef);
 
@@ -550,6 +611,12 @@ export function TechnologyAndAboutStage({
   useEffect(() => {
     rawStageProgressRef.current = rawStageProgress;
   }, [rawStageProgress]);
+
+  // Via ref porque o timeline só remonta em [isMobile, locale, reducedMotion];
+  // a prop não pode entrar nas dependências sem rebuildar a cena a cada render.
+  useEffect(() => {
+    onProgressRef.current = onProgress;
+  }, [onProgress]);
 
   useEffect(() => {
     if (stageActive && !previousStageActiveRef.current) {
@@ -685,6 +752,7 @@ export function TechnologyAndAboutStage({
       style={{
         ...stageStyle,
         '--stage2-exit-progress': stageExitProgress,
+        '--cards-hold': cardsHoldProgress,
       } as CSSProperties}
       onPointerLeave={handleStagePointerLeave}
     >
@@ -778,7 +846,7 @@ export function TechnologyAndAboutStage({
                     <span
                       ref={titleTextRef}
                       key={locale}
-                      className="hero-statement-line hero-statement-real"
+                      className="technologies-title-text"
                     >
                       {sectionCopy.titlePhrases[0]}
                     </span>

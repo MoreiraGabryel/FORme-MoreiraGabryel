@@ -1231,7 +1231,10 @@ button {
   min-height: var(--stable-vh);
   overflow: clip;
   background: linear-gradient(180deg, var(--bg-base-alt) 0%, var(--bg-base) 72%, var(--bg-base) 100%);
-  transform: translate3d(0, calc(var(--footer-entry-y, 0) * 1vh), 0);
+  /* Sem transform aqui: o `pin` grava o transform inline no elemento fixado e
+     congela o valor do engate, o que só deixava um deslocamento de 5vh. A
+     entrada é o desvanecer abaixo, que o pin não toca. */
+  opacity: var(--fake-footer-entrance, 1);
   isolation: isolate;
 }
 
@@ -2377,11 +2380,13 @@ button {
 .about-coverflow-viewport {
   position: relative;
   width: 100%;
-  min-height: min(var(--stable-vh), 52rem);
+  min-height: min(calc(var(--stable-vh) - 5rem), 52rem);
   display: grid;
   place-items: center;
   perspective: 1800px;
-  perspective-origin: 50% 48%;
+  /* Micro-parallax do hold: a câmera desliza enquanto a rolagem corre sem
+     navegar, para o trecho não ler como scroll travado. */
+  perspective-origin: calc(50% + (var(--cards-hold, 0) - 0.5) * 5%) 48%;
   overflow: hidden;
   touch-action: pan-y;
 }
@@ -2391,6 +2396,43 @@ button {
   width: 100%;
   height: min(32rem, calc(var(--stable-vh) * 0.72));
   transform-style: preserve-3d;
+  transform: rotateY(calc((var(--cards-hold, 0) - 0.5) * 3deg));
+}
+
+.about-coverflow-dots {
+  display: flex;
+  justify-content: center;
+  gap: 0.35rem;
+  margin-top: 1.25rem;
+}
+
+.about-coverflow-dot {
+  box-sizing: content-box;
+  width: 0.5rem;
+  height: 0.5rem;
+  padding: 0.5rem;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.24);
+  background-clip: content-box;
+  cursor: pointer;
+  transition:
+    background 0.28s ease,
+    transform 0.28s ease;
+}
+
+.about-coverflow-dot:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.about-coverflow-dot.is-active {
+  background: var(--accent-primary);
+  transform: scale(1.3);
+}
+
+.about-coverflow-dot:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
 }
 
 .about-coverflow-card {
@@ -2850,8 +2892,11 @@ button {
   perspective: 700px;
 }
 
-.technologies-title .hero-statement-real {
-  animation: none;
+/* Classe própria. O título usava `.hero-statement-line` do Hero, cujo font-size
+   (até 9.25rem) vencia o clamp da etapa por estar no span, e não no h2. */
+.technologies-title-text {
+  display: inline-block;
+  max-width: 100%;
 }
 
 .technology-title-char {
@@ -3335,12 +3380,15 @@ button {
   }
 
   .about-coverflow-viewport {
-    min-height: calc(var(--stable-vh) - 7rem);
-    perspective: none;
+    min-height: calc(var(--stable-vh) - 9.75rem);
+    /* 1200px dá ao card de 88vw o mesmo trapézio que os 1800px dão ao de
+       desktop. Sem perspectiva, o `z` e o `rotateY` do tween não projetam. */
+    perspective: 1200px;
   }
 
   .about-coverflow-track {
     height: 23rem;
+    transform: none;
   }
 
   .about-coverflow-card {
@@ -3400,6 +3448,10 @@ button {
   .about-coverflow-card-shell,
   .about-coverflow-card-flip {
     transform-style: flat;
+  }
+
+  .about-coverflow-track {
+    transform: none;
   }
 
   .about-coverflow-card.is-open .about-coverflow-card-flip {
