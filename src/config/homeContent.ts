@@ -5,9 +5,6 @@ export type HomeCopy = {
   heroSubtag: string;
   heroSupport: string;
   scrollCue: string;
-  stageTwo: string;
-  stageTwoTitle: string;
-  stageTwoBody: string;
   motionMeter: string;
   stageThree: string;
   stageThreeTitle: string;
@@ -52,9 +49,6 @@ export const HOME_COPY: Record<Locale, HomeCopy> = {
     heroSubtag: 'Interfaces, sistemas e motion para produto digital.',
     heroSupport: 'Experiências visuais com foco em performance, automação e clareza de produto.',
     scrollCue: 'Role para iniciar',
-    stageTwo: 'Etapa 02 / Campo em movimento',
-    stageTwoTitle: 'Agora o campo visual fica sustentado apenas pelo vídeo, pronto para receber conteúdo depois.',
-    stageTwoBody: 'O movimento continua discreto e escuro, funcionando como base viva para os próximos módulos sem poluir a composição.',
     motionMeter: 'Presença do vídeo em cena',
     stageThree: 'Etapa 03 / Encerramento imersivo',
     stageThreeTitle: 'O layout passa a parecer encerrado, mas o scroll continua puxando a cena para dentro do fundo.',
@@ -109,9 +103,6 @@ export const HOME_COPY: Record<Locale, HomeCopy> = {
     heroSubtag: 'Interfaces, systems, and motion for digital products.',
     heroSupport: 'Visual experiences shaped around performance, automation, and product clarity.',
     scrollCue: 'Scroll to start',
-    stageTwo: 'Stage 02 / Motion field',
-    stageTwoTitle: 'The visual field is now sustained only by the video, ready to receive future content.',
-    stageTwoBody: 'The motion stays dark and restrained, acting as a living base for upcoming modules without polluting the composition.',
     motionMeter: 'Video presence on stage',
     stageThree: 'Stage 03 / False footer',
     stageThreeTitle: 'The layout starts to feel finished, yet the scroll keeps pulling the scene deeper into the background.',
