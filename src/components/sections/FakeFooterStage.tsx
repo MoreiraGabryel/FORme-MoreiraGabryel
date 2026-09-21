@@ -9,6 +9,8 @@ import {useAmbientVideo} from '../../hooks/useAmbientVideo';
 import {useScrubbedVideo} from '../../hooks/useScrubbedVideo';
 import type {Locale} from '../../i18n/useTranslation';
 import {getStableViewportHeight} from '../../utils/stableViewport';
+import {getFooterStatementMotion} from '../../utils/footerStatementMotion';
+import {getFooterStatementLines} from '../../utils/footerStatementLines';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -121,9 +123,42 @@ export function FakeFooterStage({
 }: Props) {
   const sectionRef = useRef<HTMLElement | null>(null);
   const stickyRef = useRef<HTMLDivElement | null>(null);
+  const statementRef = useRef<HTMLHeadingElement | null>(null);
   const entryVideoRef = useRef<HTMLVideoElement | null>(null);
   const ambientVideoRef = useRef<HTMLVideoElement | null>(null);
   const [isNearViewport, setIsNearViewport] = useState(false);
+  const [reducedMotion, setReducedMotion] = useState(false);
+  const [isCompactViewport, setIsCompactViewport] = useState(false);
+
+  useEffect(() => {
+    const media = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const update = () => setReducedMotion(media.matches);
+    update();
+    media.addEventListener('change', update);
+    return () => media.removeEventListener('change', update);
+  }, []);
+
+  useEffect(() => {
+    const media = window.matchMedia('(max-width: 640px)');
+    const update = () => setIsCompactViewport(media.matches);
+    update();
+    media.addEventListener('change', update);
+    return () => media.removeEventListener('change', update);
+  }, []);
+
+  useLayoutEffect(() => {
+    const statement = statementRef.current;
+    if (!statement) return;
+
+    const characters = Array.from(statement.querySelectorAll<HTMLElement>('.fake-footer-statement-char'));
+    const motion = getFooterStatementMotion(reducedMotion);
+    const ctx = gsap.context(() => {
+      gsap.set(characters, motion.from);
+      if (motion.to) gsap.to(characters, motion.to);
+    }, statement);
+
+    return () => ctx.revert();
+  }, [footerPhraseIndex, isCompactViewport, locale, reducedMotion]);
 
   useLayoutEffect(() => {
     const section = sectionRef.current;
@@ -185,6 +220,7 @@ export function FakeFooterStage({
     {label: copy.privacyLabel, href: withLocale('/privacy-policy', locale)},
     {label: copy.termsLabel, href: withLocale('/terms-of-service', locale)},
   ];
+  const statementLines = getFooterStatementLines(copy.footerPhrases[footerPhraseIndex], isCompactViewport);
 
   return (
     <section ref={sectionRef} className="fake-footer-stage" style={stageStyle}>
@@ -221,16 +257,18 @@ export function FakeFooterStage({
           <div className="fake-footer-layout">
             <div className="fake-footer-left-column">
               <div className="fake-footer-cta-block fake-footer-cta-block-centered">
-                <p className="editorial-kicker">{copy.stageThree}</p>
                 <div className="fake-footer-statement-wrap" aria-live="polite">
-                  <h2 key={`${locale}-${footerPhraseIndex}`} className="fake-footer-statement-line">
-                    {copy.footerPhrases[footerPhraseIndex].split('').map((char, index) => (
-                      <span
-                        key={`${locale}-${footerPhraseIndex}-${index}`}
-                        className="fake-footer-statement-char"
-                        style={{'--char-index': `${index}`} as CSSProperties}
-                      >
-                        {char === ' ' ? '\u00A0' : char}
+                  <h2 ref={statementRef} key={`${locale}-${footerPhraseIndex}`} className="fake-footer-statement-line">
+                    {statementLines.map((line, lineIndex) => (
+                      <span key={`${locale}-${footerPhraseIndex}-${lineIndex}`} className="fake-footer-statement-editorial-line">
+                        {line.split('').map((char, characterIndex) => (
+                          <span
+                            key={`${locale}-${footerPhraseIndex}-${lineIndex}-${characterIndex}`}
+                            className="fake-footer-statement-char"
+                          >
+                            {char === ' ' ? '\u00A0' : char}
+                          </span>
+                        ))}
                       </span>
                     ))}
                   </h2>
