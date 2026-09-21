@@ -1,5 +1,6 @@
 import {useEffect, useLayoutEffect, useMemo, useRef, useState} from 'react';
 import {gsap} from 'gsap';
+import {ABOUT_CARDS_AUTOPLAY_DELAY, canAutoAdvanceAboutCards} from '../../utils/aboutCardsAutoplay';
 
 type AboutCard = {
   id: string;
@@ -135,6 +136,8 @@ export function AboutCardsStage({
   const [activeIndex, setActiveIndex] = useState(0);
   const [flippedCardId, setFlippedCardId] = useState<string | null>(null);
   const [hoveredCardId, setHoveredCardId] = useState<string | null>(null);
+  const [isFocusWithin, setIsFocusWithin] = useState(false);
+  const [isPageVisible, setIsPageVisible] = useState(() => typeof document === 'undefined' || !document.hidden);
   const viewportRef = useRef<HTMLDivElement | null>(null);
   const cardRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const touchStartRef = useRef<{x: number; y: number; time: number} | null>(null);
@@ -230,6 +233,33 @@ export function AboutCardsStage({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isActive]);
 
+  useEffect(() => {
+    const updatePageVisibility = () => setIsPageVisible(!document.hidden);
+
+    updatePageVisibility();
+    document.addEventListener('visibilitychange', updatePageVisibility);
+    return () => document.removeEventListener('visibilitychange', updatePageVisibility);
+  }, []);
+
+  const canAutoAdvance = canAutoAdvanceAboutCards({
+    isActive,
+    isCardOpen: flippedCardId !== null,
+    isHovered: hoveredCardId !== null,
+    isFocusWithin,
+    isPageVisible,
+    reducedMotion,
+  });
+
+  useEffect(() => {
+    if (!canAutoAdvance) return;
+
+    const intervalId = window.setInterval(() => {
+      setActiveIndex((current) => wrapIndex(current + 1));
+    }, ABOUT_CARDS_AUTOPLAY_DELAY);
+
+    return () => window.clearInterval(intervalId);
+  }, [activeIndex, canAutoAdvance]);
+
   const activeCardId = activeCard.id;
 
   const cardStates = useMemo(
@@ -279,7 +309,15 @@ export function AboutCardsStage({
   };
 
   return (
-    <div className={`about-stage${reducedMotion ? ' is-reduced-motion' : ''}`}>
+    <div
+      className={`about-stage${reducedMotion ? ' is-reduced-motion' : ''}`}
+      onFocusCapture={() => setIsFocusWithin(true)}
+      onBlurCapture={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+          setIsFocusWithin(false);
+        }
+      }}
+    >
       <div className="about-stage-shell">
         <div
           ref={viewportRef}
