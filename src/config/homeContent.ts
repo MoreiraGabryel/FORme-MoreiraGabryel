@@ -1,4 +1,5 @@
 import type {Locale} from '../i18n/useTranslation';
+import type {FooterStatementPhrase} from '../utils/footerStatementLines';
 
 export type HomeCopy = {
   heroTag: string;
@@ -35,7 +36,7 @@ export type HomeCopy = {
   footerStatusTitle: string;
   footerStatusBody: string;
   footerCopyright: string;
-  footerPhrases: string[];
+  footerPhrases: FooterStatementPhrase[];
   language: string;
   placeholderEyebrow: string;
   placeholderTitle: string;
@@ -80,10 +81,12 @@ export const HOME_COPY: Record<Locale, HomeCopy> = {
     footerStatusBody: 'Escolha um canal, envie contexto e eu respondo com a melhor rota para seguir o projeto.',
     footerCopyright: '© 2026 MoreiraGabryel. Todos os direitos reservados.',
     footerPhrases: [
-      'Vamos fechar seu projeto?',
-      'Disponível para contrato.',
-      'Execução premium.',
-      'Vamos conversar?',
+      {desktop: ['Vamos criar', 'algo memorável.'], mobile: ['Vamos criar', 'algo memorável.']},
+      {desktop: ['Seu projeto', 'começa aqui.'], mobile: ['Seu projeto', 'começa aqui.']},
+      {desktop: ['Interfaces com', 'impacto real.'], mobile: ['Interfaces com', 'impacto real.']},
+      {desktop: ['Ideia clara.', 'Execução precisa.'], mobile: ['Ideia clara.', 'Execução precisa.']},
+      {desktop: ['Disponível para', 'novos desafios.'], mobile: ['Disponível para', 'novos desafios.']},
+      {desktop: ['Vamos tirar', 'do papel.'], mobile: ['Vamos tirar', 'do papel.']},
     ],
     language: 'Idioma',
     placeholderEyebrow: 'Próxima funcionalidade',
@@ -134,10 +137,12 @@ export const HOME_COPY: Record<Locale, HomeCopy> = {
     footerStatusBody: 'Pick a channel, send the context, and I will respond with the best route to move the project forward.',
     footerCopyright: '© 2026 MoreiraGabryel. All rights reserved.',
     footerPhrases: [
-      'Shall we build this?',
-      'Available for contract.',
-      'Premium execution.',
-      'Let’s talk?',
+      {desktop: ['Let’s build', 'something memorable.'], mobile: ['Let’s build', 'something memorable.']},
+      {desktop: ['Your project', 'starts here.'], mobile: ['Your project', 'starts here.']},
+      {desktop: ['Interfaces with', 'real impact.'], mobile: ['Interfaces with', 'real impact.']},
+      {desktop: ['Clear idea.', 'Precise execution.'], mobile: ['Clear idea.', 'Precise execution.']},
+      {desktop: ['Available for', 'new challenges.'], mobile: ['Available for', 'new challenges.']},
+      {desktop: ['Let’s bring it', 'to life.'], mobile: ['Let’s bring it', 'to life.']},
     ],
     language: 'Language',
     placeholderEyebrow: 'Next feature',
