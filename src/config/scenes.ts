@@ -77,17 +77,16 @@ export const HERO_SCENE_REDUCED_MOTION: SceneGeometry = {
  */
 
 /**
- * 2026-09-13: 8.6 → 12. Todo o ganho vai para a etapa dos cards, que tinha 0,26
- * viewport de presença interativa — ~2,6 entalhes de roda. As tecnologias ficam
- * com os mesmos 6,72 de antes, então a calibragem acima segue valendo.
+ * A etapa de cards foi removida: a cena volta à duração calibrada apenas para o
+ * campo de tecnologias antes da transição direta para o Fake Footer.
  */
 export const TECHNOLOGY_SCENE: SceneGeometry = {
-  lengthInViewports: 12,
+  lengthInViewports: 6.72,
   leadInViewports: 0,
 };
 
 export const TECHNOLOGY_SCENE_REDUCED_MOTION: SceneGeometry = {
-  lengthInViewports: 8.9,
+  lengthInViewports: 5.6,
   leadInViewports: 0,
 };
 
