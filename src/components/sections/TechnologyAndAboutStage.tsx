@@ -8,7 +8,7 @@ import {TECHNOLOGIES, TECHNOLOGIES_SECTION_COPY, type Technology} from '../../co
 import {TECHNOLOGY_SCENE, TECHNOLOGY_SCENE_REDUCED_MOTION} from '../../config/scenes';
 import {useIsMobile} from '../../hooks/useIsMobile';
 import {getStableViewportHeight} from '../../utils/stableViewport';
-import {AboutCardsStage} from './AboutCardsStage';
+import {TECHNOLOGY_EXIT_PROGRESS} from '../../utils/technologyStageProgress';
 
 gsap.registerPlugin(ScrollTrigger, SplitText);
 
@@ -226,21 +226,7 @@ function createFloatingSpecs(items: Technology[], isMobile: boolean) {
   });
 }
 
-// Fases da cena, em fração do progresso do ScrollTrigger. O timeline soma 1.0,
-// então cada posição aqui é lida direto como fração da rolagem da cena.
-export const STAGE_ONE_EXIT_PROGRESS = 0.56;
-const ABOUT_STAGE_ENTER_PROGRESS = 0.67;
-const STAGE_ONE_EXIT_DURATION = ABOUT_STAGE_ENTER_PROGRESS - STAGE_ONE_EXIT_PROGRESS;
-const ABOUT_STAGE_ENTER_DURATION = 0.05;
-const ABOUT_STAGE_INTERACTIVE_PROGRESS = ABOUT_STAGE_ENTER_PROGRESS + ABOUT_STAGE_ENTER_DURATION;
-export const CARDS_EXIT_PROGRESS = 0.92;
-const CARDS_EXIT_DURATION = 1 - CARDS_EXIT_PROGRESS;
-
-// O fundo sai logo depois dos cards: primeiro o assunto deixa o palco, depois o
-// palco apaga. Sem isto a imagem da cena ficava acesa até o pin soltar, e o
-// rodapé entrava por cima dela.
-const SCENE_EXIT_PROGRESS = 0.94;
-const SCENE_EXIT_DURATION = 1 - SCENE_EXIT_PROGRESS;
+const TECHNOLOGY_EXIT_DURATION = 1 - TECHNOLOGY_EXIT_PROGRESS;
 
 function InlineTechnologyIcon({
   src,
@@ -304,7 +290,6 @@ export function TechnologyAndAboutStage({
   const isMobile = useIsMobile();
 
   const [reducedMotion, setReducedMotion] = useState(false);
-  const [aboutStageInteractive, setAboutStageInteractive] = useState(false);
   const [hoveredTechnologyId, setHoveredTechnologyId] = useState<string | null>(null);
   const [activeTechnologyId, setActiveTechnologyId] = useState<string | null>(null);
   const stageSectionRef = useRef<HTMLElement | null>(null);
@@ -316,7 +301,7 @@ export function TechnologyAndAboutStage({
   const subtitleRef = useRef<HTMLParagraphElement | null>(null);
   const instructionRef = useRef<HTMLParagraphElement | null>(null);
   const stageOneLayerRef = useRef<HTMLDivElement | null>(null);
-  const stageTwoLayerRef = useRef<HTMLDivElement | null>(null);
+
   const stageFieldRef = useRef<HTMLDivElement | null>(null);
   const anchorRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const buttonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
@@ -324,6 +309,7 @@ export function TechnologyAndAboutStage({
   const introStartRef = useRef<number | null>(null);
   const outroStartRef = useRef<number | null>(null);
   const previousStageActiveRef = useRef(false);
+
   const hoveredTechnologyIdRef = useRef<string | null>(null);
   const activeTechnologyIdRef = useRef<string | null>(null);
   const rawStageProgressRef = useRef(rawStageProgress);
@@ -341,21 +327,14 @@ export function TechnologyAndAboutStage({
     [activeTechnologyId, visibleTechnologies],
   );
 
-  // Gate do rAF de deriva dos ícones: termina junto com o stage one, para não
-  // rodar durante os 3 viewports em que só os cards estão em cena.
-  const stageActive = rawStageProgress > 0.02 && rawStageProgress < ABOUT_STAGE_ENTER_PROGRESS;
+  // O campo de ícones permanece vivo até a saída direta para o Fake Footer.
+  const stageActive = rawStageProgress > 0.02 && rawStageProgress < TECHNOLOGY_EXIT_PROGRESS;
   const stageExitProgress = clamp(
-    (rawStageProgress - STAGE_ONE_EXIT_PROGRESS) / STAGE_ONE_EXIT_DURATION,
+    (rawStageProgress - TECHNOLOGY_EXIT_PROGRESS) / TECHNOLOGY_EXIT_DURATION,
     0,
     1,
   );
   const stageLeaving = stageExitProgress > 0.001;
-  const cardsHoldProgress = clamp(
-    (rawStageProgress - ABOUT_STAGE_INTERACTIVE_PROGRESS) /
-      (CARDS_EXIT_PROGRESS - ABOUT_STAGE_INTERACTIVE_PROGRESS),
-    0,
-    1,
-  );
 
   useEffect(() => {
     const media = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -375,7 +354,6 @@ export function TechnologyAndAboutStage({
     const subtitle = subtitleRef.current;
     const instruction = instructionRef.current;
     const stageOneLayer = stageOneLayerRef.current;
-    const stageTwoLayer = stageTwoLayerRef.current;
 
     if (
       !section ||
@@ -386,11 +364,9 @@ export function TechnologyAndAboutStage({
       !titleGlow ||
       !subtitle ||
       !instruction ||
-      !stageOneLayer ||
-      !stageTwoLayer
+      !stageOneLayer
     ) return;
 
-    let isAboutInteractive = false;
     let splitTitle: ReturnType<typeof SplitText.create> | null = null;
 
     const ctx = gsap.context(() => {
@@ -437,13 +413,6 @@ export function TechnologyAndAboutStage({
         willChange: 'transform, opacity',
       });
 
-      gsap.set(stageTwoLayer, {
-        autoAlpha: 0,
-        y: reducedMotion ? 16 : 88,
-        scale: 1,
-        filter: 'blur(0px)',
-        willChange: 'transform, opacity, filter',
-      });
 
       gsap.timeline({
         defaults: {ease: 'none'},
@@ -464,19 +433,7 @@ export function TechnologyAndAboutStage({
           // Recarregar no meio da cena não dispara `onUpdate`: sem isto o `App`
           // ficaria em progresso 0 com a cena já rolada.
           onRefresh: (self) => onProgressRef.current(self.progress),
-          onUpdate: (self) => {
-            onProgressRef.current(self.progress);
-            const nextInteractive =
-              self.progress >= ABOUT_STAGE_INTERACTIVE_PROGRESS && self.progress < CARDS_EXIT_PROGRESS;
-            if (nextInteractive !== isAboutInteractive) {
-              isAboutInteractive = nextInteractive;
-              setAboutStageInteractive(nextInteractive);
-            }
-          },
-          onLeaveBack: () => {
-            isAboutInteractive = false;
-            setAboutStageInteractive(false);
-          },
+          onUpdate: (self) => onProgressRef.current(self.progress),
         },
       })
         .to(
@@ -537,47 +494,23 @@ export function TechnologyAndAboutStage({
           {
             autoAlpha: 0,
             y: reducedMotion ? -12 : -60,
-            duration: STAGE_ONE_EXIT_DURATION,
+            duration: TECHNOLOGY_EXIT_DURATION,
           },
-          STAGE_ONE_EXIT_PROGRESS,
+          TECHNOLOGY_EXIT_PROGRESS,
         )
-        .to(
-          stageTwoLayer,
-          {
-            autoAlpha: 1,
-            y: 0,
-            duration: ABOUT_STAGE_ENTER_DURATION,
-          },
-          ABOUT_STAGE_ENTER_PROGRESS,
-        )
-        // Recuo em profundidade antes do rodapé falso. A camada está fora de um
-        // contexto com `perspective`, então a escala faz o trabalho do eixo Z:
-        // 0.67 é a projeção de z −900 sob os 1800px do coverflow.
-        .to(
-          stageTwoLayer,
-          {
-            autoAlpha: 0,
-            scale: reducedMotion ? 0.92 : 0.67,
-            filter: reducedMotion ? 'blur(0px)' : 'blur(14px)',
-            duration: CARDS_EXIT_DURATION,
-          },
-          CARDS_EXIT_PROGRESS,
-        )
-        // Avanço leve enquanto apaga: a câmera entra na cena em vez de a cena
-        // sumir parada, e o portal do rodapé recebe esse mesmo sentido.
+        // O campo de tecnologias apaga diretamente para o portal do rodapé.
         .to(
           [sceneBackground, stageBackdrop],
           {
             autoAlpha: 0,
             scale: reducedMotion ? 1 : 1.09,
-            duration: SCENE_EXIT_DURATION,
+            duration: TECHNOLOGY_EXIT_DURATION,
           },
-          SCENE_EXIT_PROGRESS,
+          TECHNOLOGY_EXIT_PROGRESS,
         );
     }, stageSectionRef);
 
     return () => {
-      setAboutStageInteractive(false);
       ctx.revert();
       splitTitle?.revert();
     };
@@ -751,8 +684,7 @@ export function TechnologyAndAboutStage({
       className={`transition-stage technologies-stage${stageActive ? ' is-active' : ''}${stageLeaving ? ' is-leaving' : ''}${reducedMotion ? ' reduce-motion' : ''}${hoveredTechnologyId || activeTechnologyId ? ' has-active-technology' : ''}${activeTechnology ? ' has-open-technology-card' : ''}`}
       style={{
         ...stageStyle,
-        '--stage2-exit-progress': stageExitProgress,
-        '--cards-hold': cardsHoldProgress,
+        '--technology-exit-progress': stageExitProgress,
       } as CSSProperties}
       onPointerLeave={handleStagePointerLeave}
     >
@@ -859,11 +791,6 @@ export function TechnologyAndAboutStage({
           </div>
         </div>
 
-        <div ref={stageTwoLayerRef} className={`about-stage-two-layer${aboutStageInteractive ? ' is-interactive' : ''}`}>
-          <div className="about-stage-two-viewport">
-            <AboutCardsStage reducedMotion={reducedMotion} isActive={aboutStageInteractive} />
-          </div>
-        </div>
       </div>
 
       {activeTechnology ? (

@@ -3,11 +3,7 @@ import type {CSSProperties} from 'react';
 import {gsap} from 'gsap';
 import {LoadingScreen} from './components/sections/LoadingScreen';
 import {HeroIntro} from './components/sections/HeroIntro';
-import {
-  CARDS_EXIT_PROGRESS,
-  STAGE_ONE_EXIT_PROGRESS,
-  TechnologyAndAboutStage,
-} from './components/sections/TechnologyAndAboutStage';
+import {TechnologyAndAboutStage} from './components/sections/TechnologyAndAboutStage';
 import {FakeFooterStage} from './components/sections/FakeFooterStage';
 import {LegalPage} from './components/legal/LegalPage';
 import {HOME_COPY} from './config/homeContent';
@@ -16,6 +12,7 @@ import type {SceneGeometry} from './config/scenes';
 import {useTranslation} from './i18n/useTranslation';
 import {useSmoothScroll} from './hooks/useSmoothScroll';
 import {getStableViewportHeight} from './utils/stableViewport';
+import {getTechnologyStageProgress} from './utils/technologyStageProgress';
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
@@ -228,13 +225,7 @@ export default function App() {
     };
   }, []);
 
-  const stageReadProgress = clamp(rawStageProgress / STAGE_ONE_EXIT_PROGRESS, 0, 1);
-  const stageReleaseProgress = clamp(
-    (rawStageProgress - CARDS_EXIT_PROGRESS) / (1 - CARDS_EXIT_PROGRESS),
-    0,
-    1,
-  );
-  const stageProgress = rawStageProgress < STAGE_ONE_EXIT_PROGRESS ? stageReadProgress : 1;
+  const {stageProgress, releaseProgress: stageReleaseProgress} = getTechnologyStageProgress(rawStageProgress);
 
   const stageApproach = clamp(rawStageApproach / 0.86, 0, 1);
   const stageApproachEase = 1 - Math.pow(1 - stageApproach, 3);
@@ -308,7 +299,7 @@ export default function App() {
           heroProgress={heroProgress}
         />
 
-        <div ref={journeySectionRef} className="technology-and-about-flow">
+        <div ref={journeySectionRef} className="technology-flow">
           <TechnologyAndAboutStage
             locale={locale}
             rawStageProgress={rawStageProgress}
