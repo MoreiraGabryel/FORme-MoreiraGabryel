@@ -27,9 +27,7 @@ function smoothstep(value: number) {
 // aqui. Agora saem do mesmo progresso que o resto da cena — os valores foram
 // convertidos da escala do timeline para esta, então o disparo continua no mesmo
 // ponto do scroll; só o atraso desapareceu.
-const FAKE_FOOTER_UNLOCK_START = 0.485;
-const FAKE_FOOTER_UNLOCK_END = 0.58;
-const FAKE_FOOTER_BLACKOUT_START = 0.758;
+const FAKE_FOOTER_BLACKOUT_START = 0.92;
 
 // As duas peças do portal, em fração de `fakeFooterProgress`.
 //
@@ -249,13 +247,6 @@ export default function App() {
     clamp((fakeFooterProgress - 0.05) / 0.24, 0, 1) * clamp((1 - fakeFooterProgress) / 0.88, 0, 1);
   const fakeFooterReverse = upwardScrollBias * fakeFooterReverseWindow;
   const fakeFooterReverseEase = smoothstep(fakeFooterReverse);
-  const fakeFooterUnlock = smoothstep(
-    clamp(
-      (fakeFooterProgress - FAKE_FOOTER_UNLOCK_START) / (FAKE_FOOTER_UNLOCK_END - FAKE_FOOTER_UNLOCK_START),
-      0,
-      1,
-    ),
-  );
   const fakeFooterExitBlackout = smoothstep(
     clamp((fakeFooterProgress - FAKE_FOOTER_BLACKOUT_START) / (1 - FAKE_FOOTER_BLACKOUT_START), 0, 1),
   );
@@ -329,7 +320,6 @@ export default function App() {
               '--fake-footer-tunnel': `${fakeFooterTunnelEase}`,
               '--fake-footer-settle': `${fakeFooterSettle}`,
               '--fake-footer-reverse': `${fakeFooterReverseEase}`,
-              '--fake-footer-unlock': `${fakeFooterUnlock}`,
               '--fake-footer-exit-blackout': `${fakeFooterExitBlackout}`,
               '--footer-clip': `${fakeFooterEase}`,
               '--fake-footer-entrance': `${fakeFooterEntrance}`,

@@ -8,7 +8,10 @@ import {FAKE_FOOTER_SCENE} from '../../config/scenes';
 import {useAmbientVideo} from '../../hooks/useAmbientVideo';
 import {useScrubbedVideo} from '../../hooks/useScrubbedVideo';
 import type {Locale} from '../../i18n/useTranslation';
+import {getFakeFooterHandoffOverlap} from '../../utils/fakeFooterHandoff';
 import {getStableViewportHeight} from '../../utils/stableViewport';
+import {getFooterStatementMotion} from '../../utils/footerStatementMotion';
+import {getFooterStatementLines} from '../../utils/footerStatementLines';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -121,23 +124,56 @@ export function FakeFooterStage({
 }: Props) {
   const sectionRef = useRef<HTMLElement | null>(null);
   const stickyRef = useRef<HTMLDivElement | null>(null);
+  const statementRef = useRef<HTMLHeadingElement | null>(null);
   const entryVideoRef = useRef<HTMLVideoElement | null>(null);
   const ambientVideoRef = useRef<HTMLVideoElement | null>(null);
   const [isNearViewport, setIsNearViewport] = useState(false);
+  const [reducedMotion, setReducedMotion] = useState(false);
+  const [isCompactViewport, setIsCompactViewport] = useState(false);
+
+  useEffect(() => {
+    const media = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const update = () => setReducedMotion(media.matches);
+    update();
+    media.addEventListener('change', update);
+    return () => media.removeEventListener('change', update);
+  }, []);
+
+  useEffect(() => {
+    const media = window.matchMedia('(max-width: 640px)');
+    const update = () => setIsCompactViewport(media.matches);
+    update();
+    media.addEventListener('change', update);
+    return () => media.removeEventListener('change', update);
+  }, []);
+
+  useLayoutEffect(() => {
+    const statement = statementRef.current;
+    if (!statement) return;
+
+    const characters = Array.from(statement.querySelectorAll<HTMLElement>('.fake-footer-statement-char'));
+    const motion = getFooterStatementMotion(reducedMotion);
+    const ctx = gsap.context(() => {
+      gsap.set(characters, motion.from);
+      if (motion.to) gsap.to(characters, motion.to);
+    }, statement);
+
+    return () => ctx.revert();
+  }, [footerPhraseIndex, isCompactViewport, locale, reducedMotion]);
 
   useLayoutEffect(() => {
     const section = sectionRef.current;
     const sticky = stickyRef.current;
     if (!section || !sticky) return;
 
-    // O ScrollTrigger cuida apenas do pin. `--fake-footer-unlock` e
-    // `--fake-footer-exit-blackout` são calculados no `App`, a partir do mesmo
+    // O ScrollTrigger cuida apenas do pin. `--fake-footer-exit-blackout` é
+    // calculado no `App`, a partir do mesmo
     // progresso que move o vídeo, o brilho e a escala. Enquanto viviam num
     // timeline com `scrub`, corriam 0,65s atrás do resto da cena.
     const ctx = gsap.context(() => {
       ScrollTrigger.create({
         trigger: section,
-        start: 'top top',
+        start: () => `top top+=${Math.round(getFakeFooterHandoffOverlap(getStableViewportHeight()))}`,
         end: () => `+=${Math.round(getStableViewportHeight() * FAKE_FOOTER_SCENE.lengthInViewports)}`,
         pin: sticky,
         anticipatePin: 1,
@@ -185,6 +221,7 @@ export function FakeFooterStage({
     {label: copy.privacyLabel, href: withLocale('/privacy-policy', locale)},
     {label: copy.termsLabel, href: withLocale('/terms-of-service', locale)},
   ];
+  const statementLines = getFooterStatementLines(copy.footerPhrases[footerPhraseIndex], isCompactViewport);
 
   return (
     <section ref={sectionRef} className="fake-footer-stage" style={stageStyle}>
@@ -221,16 +258,18 @@ export function FakeFooterStage({
           <div className="fake-footer-layout">
             <div className="fake-footer-left-column">
               <div className="fake-footer-cta-block fake-footer-cta-block-centered">
-                <p className="editorial-kicker">{copy.stageThree}</p>
                 <div className="fake-footer-statement-wrap" aria-live="polite">
-                  <h2 key={`${locale}-${footerPhraseIndex}`} className="fake-footer-statement-line">
-                    {copy.footerPhrases[footerPhraseIndex].split('').map((char, index) => (
-                      <span
-                        key={`${locale}-${footerPhraseIndex}-${index}`}
-                        className="fake-footer-statement-char"
-                        style={{'--char-index': `${index}`} as CSSProperties}
-                      >
-                        {char === ' ' ? '\u00A0' : char}
+                  <h2 ref={statementRef} key={`${locale}-${footerPhraseIndex}`} className="fake-footer-statement-line">
+                    {statementLines.map((line, lineIndex) => (
+                      <span key={`${locale}-${footerPhraseIndex}-${lineIndex}`} className="fake-footer-statement-editorial-line">
+                        {line.split('').map((char, characterIndex) => (
+                          <span
+                            key={`${locale}-${footerPhraseIndex}-${lineIndex}-${characterIndex}`}
+                            className="fake-footer-statement-char"
+                          >
+                            {char === ' ' ? '\u00A0' : char}
+                          </span>
+                        ))}
                       </span>
                     ))}
                   </h2>
@@ -250,12 +289,14 @@ export function FakeFooterStage({
                   <a
                     key={item.label}
                     className="fake-footer-social-link"
+                    data-social={item.icon}
                     href={item.href}
                     target="_blank"
                     rel="noreferrer"
                     aria-label={item.label}
                     title={item.label}
                   >
+                    <span className="fake-footer-social-fill" aria-hidden="true" />
                     <FooterIcon name={item.icon} />
                   </a>
                 ))}
@@ -278,9 +319,6 @@ export function FakeFooterStage({
             </div>
           </div>
 
-          <div className="unlock-scroll-indicator" aria-hidden="true">
-            <span className="unlock-arrow">↓</span>
-          </div>
         </div>
 
         <div className="fake-footer-exit-blackout" aria-hidden="true" />
