@@ -5,11 +5,11 @@ import {shouldLockHeroStatementExit} from '../src/utils/heroScrollExitMotion.ts'
 test('trava a troca de frase no início da saída, no desktop e no mobile', () => {
   for (const isMobile of [false, true]) {
     assert.equal(
-      shouldLockHeroStatementExit({heroProgress: 0.679, isMobile, prefersReducedMotion: false}),
+      shouldLockHeroStatementExit({heroProgress: 0.649, isMobile, prefersReducedMotion: false}),
       false,
     );
     assert.equal(
-      shouldLockHeroStatementExit({heroProgress: 0.68, isMobile, prefersReducedMotion: false}),
+      shouldLockHeroStatementExit({heroProgress: 0.65, isMobile, prefersReducedMotion: false}),
       true,
     );
   }

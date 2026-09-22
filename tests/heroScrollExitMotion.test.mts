@@ -21,13 +21,15 @@ test('retira o letreiro de baixo para cima sem custo de blur no scroll', () => {
   const reduced = getHeroScrollExitMotion({isMobile: false, prefersReducedMotion: true});
 
   assert.deepEqual(desktop.statement, {
-    start: 0.68,
-    end: 0.82,
+    start: 0.65,
+    end: 0.79,
     y: -42,
     duration: 0.08,
     staggerAmount: 0.06,
     from: 'end',
   });
+  assert.equal(Math.round((desktop.blackout.start - desktop.statement.end) * 100), 3);
+  assert.equal(Math.round((mobile.blackout.start - mobile.statement.end) * 100), 3);
   assert.equal(mobile.statement.y, -28);
   assert.deepEqual(reduced.statement, {
     start: 0.68,
