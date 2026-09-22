@@ -1,6 +1,7 @@
 import {useLayoutEffect, useRef} from 'react';
 import type {CSSProperties, MutableRefObject} from 'react';
 import {gsap} from 'gsap';
+import {getLoadingHeroZoomMotion} from '../../utils/loadingHeroZoomMotion';
 
 type Props = {onDone: () => void};
 
@@ -47,21 +48,6 @@ const STAGE_GLOW_STYLE = {
   background:
     'radial-gradient(circle, rgba(242,194,48,0.18) 0%, rgba(242,194,48,0.085) 18%, rgba(34,48,74,0.2) 44%, transparent 74%)',
   willChange: 'transform, opacity',
-} satisfies CSSProperties;
-
-const FLASH_OVERLAY_STYLE = {
-  opacity: 0,
-  background:
-    'linear-gradient(90deg, rgba(5,6,8,0) 0%, rgba(242,194,48,0.06) 24%, rgba(255,211,77,0.22) 50%, rgba(34,48,74,0.08) 76%, rgba(5,6,8,0) 100%)',
-  mixBlendMode: 'screen',
-  willChange: 'opacity',
-} satisfies CSSProperties;
-
-const BRIDGE_OVERLAY_STYLE = {
-  opacity: 0,
-  background:
-    'radial-gradient(circle at 50% 42%, rgba(34,48,74,0.28) 0%, rgba(18,26,42,0.24) 30%, rgba(10,12,16,0.42) 60%, rgba(5,6,8,0.62) 100%), linear-gradient(180deg, rgba(18,26,42,0.4), rgba(18,26,42,0.2) 34%, rgba(5,6,8,0.08) 68%, rgba(5,6,8,0))',
-  willChange: 'opacity',
 } satisfies CSSProperties;
 
 const WORDMARK_GUIDE_STYLE = {
@@ -132,7 +118,6 @@ function loadingStatusForProgress(progress: number) {
 export function LoadingScreen({onDone}: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const backdropRef = useRef<HTMLDivElement>(null);
-  const bridgeRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const wordRef = useRef<HTMLDivElement>(null);
@@ -146,13 +131,11 @@ export function LoadingScreen({onDone}: Props) {
   const beamRef = useRef<HTMLDivElement>(null);
   const scanBeamRef = useRef<HTMLDivElement>(null);
   const stageGlowRef = useRef<HTMLDivElement>(null);
-  const flashRef = useRef<HTMLDivElement>(null);
   const doneTimeoutRef = useRef<number | null>(null);
 
   useLayoutEffect(() => {
     const container = containerRef.current;
     const backdrop = backdropRef.current;
-    const bridge = bridgeRef.current;
     const content = contentRef.current;
     const panel = panelRef.current;
     const word = wordRef.current;
@@ -164,14 +147,12 @@ export function LoadingScreen({onDone}: Props) {
     const beam = beamRef.current;
     const scanBeam = scanBeamRef.current;
     const stageGlow = stageGlowRef.current;
-    const flash = flashRef.current;
     const chars = charRefs.current.slice(0, BRAND_CHARS.length);
     const flares = flareRefs.current.slice(0, BRAND_CHARS.length);
 
     if (
       !container ||
       !backdrop ||
-      !bridge ||
       !content ||
       !panel ||
       !word ||
@@ -183,7 +164,6 @@ export function LoadingScreen({onDone}: Props) {
       !beam ||
       !scanBeam ||
       !stageGlow ||
-      !flash ||
       chars.length !== BRAND_CHARS.length ||
       flares.length !== BRAND_CHARS.length
     ) {
@@ -194,6 +174,7 @@ export function LoadingScreen({onDone}: Props) {
     const isMobile = window.matchMedia('(max-width: 640px), (pointer: coarse)').matches;
     const rawReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const prefersReducedMotion = (rawReducedMotion || debug.forceReducedMotion) && !debug.forceMotion;
+    const zoomMotion = getLoadingHeroZoomMotion({isMobile, prefersReducedMotion});
     const progressState = {value: 0};
 
     const writingStart = prefersReducedMotion ? 0.08 : 0.18;
@@ -208,7 +189,8 @@ export function LoadingScreen({onDone}: Props) {
     const progressFinalDuration = prefersReducedMotion ? 0.2 : 0.32;
     const revealDuration = prefersReducedMotion ? 0.18 : 0.34;
     const cleanupDuration = prefersReducedMotion ? 0.16 : 0.24;
-    const fallbackDoneAt = debug.freezeAt ?? holdStart + progressFinalDuration + revealDuration + cleanupDuration + 0.82;
+    const fallbackDoneAt =
+      debug.freezeAt ?? holdStart + progressFinalDuration + zoomMotion.loadingExitDuration + cleanupDuration + 0.82;
     let isDone = false;
 
     const html = document.documentElement;
@@ -250,6 +232,7 @@ export function LoadingScreen({onDone}: Props) {
       visibility: 'visible',
       scale: 1,
       filter: 'none',
+      transformOrigin: '50% 50%',
     });
     doneTimeoutRef.current = window.setTimeout(finish, Math.ceil(fallbackDoneAt * 1000));
 
@@ -257,8 +240,6 @@ export function LoadingScreen({onDone}: Props) {
       const wordWidth = word.getBoundingClientRect().width;
       const writeHeadTravel = Math.max(wordWidth + (isMobile ? 12 : 20), 24);
       const stageGlowPeak = prefersReducedMotion ? 0.3 : 0.48;
-      const flashPeak = prefersReducedMotion ? 0.06 : 0.12;
-      const bridgePeak = prefersReducedMotion ? 0.12 : 0.24;
       const scanPeak = prefersReducedMotion ? 0.28 : 0.64;
       const scanDuration = prefersReducedMotion ? 0.18 : 0.34;
       const dispatchHeroHandoff = () => {
@@ -332,9 +313,7 @@ export function LoadingScreen({onDone}: Props) {
         transformOrigin: '50% 50%',
       });
       gsap.set(backdrop, {opacity: 1});
-      gsap.set(bridge, {opacity: 0});
       gsap.set(content, {opacity: 1, y: 0, scale: 1, filter: 'blur(0px)'});
-      gsap.set(flash, {opacity: 0});
 
       const pulseTl = gsap.timeline({repeat: -1, yoyo: true, paused: true, defaults: {ease: 'sine.inOut'}})
         .to(chars, {
@@ -516,7 +495,7 @@ export function LoadingScreen({onDone}: Props) {
           ease: 'power2.out',
         }, 'hold+=0.06')
         .addLabel('reveal', holdStart + revealDuration * 0.68)
-        .call(dispatchHeroHandoff, [], 'reveal-=0.03')
+        .call(dispatchHeroHandoff, [], 'reveal')
         .to(scanBeam, {
           opacity: scanPeak,
           yPercent: -12,
@@ -525,61 +504,27 @@ export function LoadingScreen({onDone}: Props) {
         }, 'reveal-=0.02')
         .to(content, {
           opacity: 0,
-          y: prefersReducedMotion ? -2 : -8,
-          scale: prefersReducedMotion ? 1.004 : 1.018,
-          filter: `blur(${prefersReducedMotion ? 2 : 7}px)`,
-          duration: prefersReducedMotion ? 0.16 : 0.34,
+          duration: zoomMotion.loadingExitDuration * 0.64,
           ease: 'power2.out',
         }, 'reveal')
-        .to(stageGlow, {
-          opacity: prefersReducedMotion ? 0.18 : 0.26,
-          scale: prefersReducedMotion ? 1.06 : 1.14,
-          duration: prefersReducedMotion ? 0.16 : 0.32,
-          ease: 'power1.out',
+        .to(container, {
+          autoAlpha: 0,
+          scale: zoomMotion.loadingExitScale,
+          filter: `blur(${zoomMotion.loadingExitBlur}px)`,
+          duration: zoomMotion.loadingExitDuration,
+          ease: prefersReducedMotion ? 'power1.out' : 'power3.in',
         }, 'reveal')
-        .addLabel('flash', 'reveal+=0.03')
-        .to(flash, {
-          opacity: flashPeak,
-          duration: prefersReducedMotion ? 0.06 : 0.08,
-          ease: 'sine.out',
-        }, 'flash')
-        .to(flash, {
-          opacity: 0,
-          duration: prefersReducedMotion ? 0.08 : 0.12,
-          ease: 'sine.inOut',
-        }, 'flash+=0.08')
-        .addLabel('aperture', 'reveal+=0.09')
         .to(scanBeam, {
           opacity: 0,
           yPercent: 124,
           duration: prefersReducedMotion ? 0.16 : 0.28,
           ease: 'power3.out',
-        }, 'aperture')
-        .to(bridge, {
-          opacity: bridgePeak,
-          duration: prefersReducedMotion ? 0.08 : 0.14,
-          ease: 'power2.out',
-        }, 'aperture')
-        .to(backdrop, {
-          opacity: 0,
-          duration: prefersReducedMotion ? 0.16 : 0.3,
-          ease: 'power2.out',
-        }, 'aperture')
-        .to(bridge, {
-          opacity: 0,
-          duration: prefersReducedMotion ? 0.12 : 0.2,
-          ease: 'power1.inOut',
-        }, 'aperture+=0.11')
-        .addLabel('cleanup', 'aperture+=0.26')
+        }, 'reveal+=0.1')
+        .addLabel('cleanup', `reveal+=${zoomMotion.loadingExitDuration}`)
         .to(stageGlow, {
           opacity: 0,
           duration: prefersReducedMotion ? 0.08 : 0.12,
           ease: 'power1.out',
-        }, 'cleanup')
-        .to(container, {
-          autoAlpha: 0,
-          duration: prefersReducedMotion ? 0.06 : 0.1,
-          ease: 'none',
         }, 'cleanup')
         .set(container, {pointerEvents: 'none'}, 'cleanup');
 
@@ -629,16 +574,12 @@ export function LoadingScreen({onDone}: Props) {
         />
       </div>
 
-      <div ref={flashRef} className="pointer-events-none absolute inset-0" aria-hidden="true" style={FLASH_OVERLAY_STYLE} />
-
       <div
         ref={scanBeamRef}
         className="pointer-events-none absolute inset-x-0 top-1/2 h-[16vh] min-h-[5rem] -translate-y-1/2"
         aria-hidden="true"
         style={SCAN_BEAM_STYLE}
       />
-
-      <div ref={bridgeRef} className="pointer-events-none absolute inset-0" aria-hidden="true" style={BRIDGE_OVERLAY_STYLE} />
 
       <div ref={contentRef} className="relative w-full max-w-[min(60rem,94vw)] text-center">
         <div ref={panelRef} className="relative mx-auto w-full text-center opacity-0">

@@ -5,6 +5,7 @@ import {LoadingScreen} from './components/sections/LoadingScreen';
 import {HeroIntro} from './components/sections/HeroIntro';
 import {TechnologyAndAboutStage} from './components/sections/TechnologyAndAboutStage';
 import {FakeFooterStage} from './components/sections/FakeFooterStage';
+import {CodeBurstLayer} from './components/effects/CodeBurstLayer';
 import {LegalPage} from './components/legal/LegalPage';
 import {HOME_COPY} from './config/homeContent';
 import {FAKE_FOOTER_SCENE, HERO_SCENE, HERO_SCENE_REDUCED_MOTION} from './config/scenes';
@@ -12,6 +13,7 @@ import type {SceneGeometry} from './config/scenes';
 import {useTranslation} from './i18n/useTranslation';
 import {useSmoothScroll} from './hooks/useSmoothScroll';
 import {getStableViewportHeight} from './utils/stableViewport';
+import {shouldRotateHeroPhrase} from './utils/heroStatementMotion';
 import {getTechnologyStageProgress} from './utils/technologyStageProgress';
 
 function clamp(value: number, min: number, max: number) {
@@ -81,6 +83,7 @@ export default function App() {
     rawFakeFooterProgress: 0,
     scrollDirectionBias: 0,
     isLargeViewport: false,
+    prefersReducedMotion: false,
   });
   const {
     heroProgress,
@@ -90,9 +93,11 @@ export default function App() {
     rawFakeFooterProgress,
     scrollDirectionBias,
     isLargeViewport,
+    prefersReducedMotion,
   } = scrollState;
   const journeySectionRef = useRef<HTMLDivElement | null>(null);
   const fakeFooterSectionRef = useRef<HTMLDivElement | null>(null);
+  const codeBurstHostRef = useRef<HTMLElement | null>(null);
 
   // O progresso da cena de tecnologia vem do ScrollTrigger dela, não de uma
   // segunda medição aqui: era daí que saía o descompasso entre as duas fases.
@@ -110,6 +115,7 @@ export default function App() {
   useEffect(() => {
     const phraseCount = copy.phrases.length;
     if (phraseCount <= 1) return;
+    if (!shouldRotateHeroPhrase(heroProgress)) return;
 
     const intervalId = window.setInterval(() => {
       startTransition(() => {
@@ -118,22 +124,8 @@ export default function App() {
     }, 4200);
 
     return () => window.clearInterval(intervalId);
-  }, [copy.phrases]);
+  }, [copy.phrases, heroProgress]);
 
-  useEffect(() => {
-    const phraseCount = copy.footerPhrases.length;
-    const intervalId = window.setInterval(() => {
-      startTransition(() => {
-        setFooterPhraseIndex((current) => {
-          if (phraseCount <= 1) return current;
-          let next = current;
-          while (next === current) next = Math.floor(Math.random() * phraseCount);
-          return next;
-        });
-      });
-    }, 3200);
-    return () => window.clearInterval(intervalId);
-  }, [copy.footerPhrases]);
 
   useEffect(() => {
     const preloadImages = [
@@ -193,6 +185,7 @@ export default function App() {
         rawFakeFooterProgress: resolveProgress(fakeFooterSection, FAKE_FOOTER_SCENE),
         scrollDirectionBias: directionBias,
         isLargeViewport: window.innerWidth >= 1500 || viewportHeight >= 920,
+        prefersReducedMotion: reducedMotionQuery.matches,
       }));
     };
 
@@ -250,6 +243,25 @@ export default function App() {
   const fakeFooterExitBlackout = smoothstep(
     clamp((fakeFooterProgress - FAKE_FOOTER_BLACKOUT_START) / (1 - FAKE_FOOTER_BLACKOUT_START), 0, 1),
   );
+  const canRotateFooterPhrase =
+    !prefersReducedMotion && fakeFooterProgress >= 0.12 && fakeFooterProgress < FAKE_FOOTER_BLACKOUT_START;
+
+  useEffect(() => {
+    const phraseCount = copy.footerPhrases.length;
+    if (phraseCount <= 1 || !canRotateFooterPhrase) return;
+
+    const intervalId = window.setInterval(() => {
+      startTransition(() => {
+        setFooterPhraseIndex((current) => {
+          let next = current;
+          while (next === current) next = Math.floor(Math.random() * phraseCount);
+          return next;
+        });
+      });
+    }, 3200);
+
+    return () => window.clearInterval(intervalId);
+  }, [canRotateFooterPhrase, copy.footerPhrases]);
 
   const portalEntryProgress = clamp(fakeFooterProgress / PORTAL_ENTRY_SPAN, 0, 1);
   const portalHandoff = smoothstep(
@@ -281,7 +293,8 @@ export default function App() {
         <a className="brand-mark" href="#home">MoreiraGabryel</a>
         <span className="brand-caption">{copy.heroTag}</span>
       </div>
-      <main id="home" className="site-shell">
+      <main ref={codeBurstHostRef} id="home" className="site-shell">
+        <CodeBurstLayer hostRef={codeBurstHostRef} />
         <HeroIntro
           copy={copy}
           locale={locale}
@@ -314,6 +327,8 @@ export default function App() {
             entryOpacity={portalExposure * (1 - portalHandoff)}
             ambientOpacity={portalExposure * portalHandoff}
             ambientPlaying={portalHandoff >= 1}
+            footerProgress={fakeFooterProgress}
+            statementRotationActive={canRotateFooterPhrase}
             stageStyle={{
               '--fake-footer-progress': `${fakeFooterProgress}`,
               '--fake-footer-ease': `${fakeFooterEase}`,

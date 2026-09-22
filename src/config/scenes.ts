@@ -49,7 +49,7 @@ export type SceneGeometry = {
  * modo o GSAP acabava com o progresso das CSS custom properties ainda subindo.
  */
 export const HERO_SCENE: SceneGeometry = {
-  lengthInViewports: 2.3,
+  lengthInViewports: 3.5,
   leadInViewports: 0,
 };
 
