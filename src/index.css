@@ -201,9 +201,17 @@ button {
 }
 
 .hero-overlay,
-.transition-overlay {
+.transition-overlay,
+.hero-blackout {
   position: absolute;
   inset: 0;
+}
+
+.hero-blackout {
+  z-index: 1;
+  pointer-events: none;
+  background: #000;
+  will-change: opacity;
 }
 
 .hero-overlay {
