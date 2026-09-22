@@ -6,6 +6,7 @@ import type {Locale} from '../../i18n/useTranslation';
 import type {HomeCopy} from '../../config/homeContent';
 import {HERO_SCENE, HERO_SCENE_REDUCED_MOTION} from '../../config/scenes';
 import {getLoadingHeroZoomMotion} from '../../utils/loadingHeroZoomMotion';
+import {getHeroScrollExitMotion} from '../../utils/heroScrollExitMotion';
 import {getHeroStatementMotion, splitHeroStatementLine} from '../../utils/heroStatementMotion';
 import {getStableViewportHeight} from '../../utils/stableViewport';
 import {LanguageSwitch} from '../common/LanguageSwitch';
@@ -122,6 +123,7 @@ export function HeroIntro({
   const rootRef = useRef<HTMLElement>(null);
   const mediaRef = useRef<HTMLDivElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
+  const blackoutRef = useRef<HTMLDivElement>(null);
   const frameRef = useRef<HTMLDivElement>(null);
   const topBarRef = useRef<HTMLElement>(null);
   const langSwitchRef = useRef<HTMLDivElement>(null);
@@ -171,6 +173,7 @@ export function HeroIntro({
     const root = rootRef.current;
     const media = mediaRef.current;
     const overlay = overlayRef.current;
+    const blackout = blackoutRef.current;
     const frame = frameRef.current;
     const topBar = topBarRef.current;
     const langSwitch = langSwitchRef.current;
@@ -185,6 +188,7 @@ export function HeroIntro({
       !root ||
       !media ||
       !overlay ||
+      !blackout ||
       !frame ||
       !topBar ||
       !langSwitch ||
@@ -202,10 +206,12 @@ export function HeroIntro({
       const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       const isMobileViewport = window.matchMedia('(max-width: 640px)').matches;
       const statementMotion = getHeroStatementMotion(prefersReducedMotion);
+      const scrollExitMotion = getHeroScrollExitMotion({isMobile: isMobileViewport, prefersReducedMotion});
       const setIdle = () => {
 
         gsap.set(media, {opacity: 1, scale: 1, filter: 'blur(0px) saturate(1) brightness(1)'});
         gsap.set(overlay, {opacity: 1, filter: 'blur(0px) brightness(1)'});
+        gsap.set(blackout, {autoAlpha: 0});
         gsap.set(frame, {autoAlpha: 1, scale: 1, filter: 'blur(0px)'});
         gsap.set(topBar, {autoAlpha: 1, y: 0, filter: 'blur(0px)'});
         gsap.set(langSwitch, {autoAlpha: 1, x: 0, y: 0, filter: 'blur(0px)'});
@@ -243,65 +249,49 @@ export function HeroIntro({
       heroScrollTimeline
         .fromTo(
           media,
-          {opacity: 1, scale: 1, yPercent: 0, filter: 'blur(0px) saturate(1) brightness(1)'},
+          {opacity: 1, scale: 1, yPercent: 0},
           {
-            scale: prefersReducedMotion ? 1.006 : 1.045,
-            yPercent: prefersReducedMotion ? -0.4 : -3.8,
-            filter: prefersReducedMotion
-              ? 'blur(0px) saturate(0.99) brightness(0.99)'
-              : 'blur(1.2px) saturate(0.92) brightness(0.86)',
-            duration: prefersReducedMotion ? 0.72 : 0.76,
+            scale: scrollExitMotion.background.scale,
+            yPercent: scrollExitMotion.background.yPercent,
+            duration: scrollExitMotion.background.end,
+            force3D: true,
           },
           0,
         )
         .to(cue, {
           autoAlpha: 0,
           y: prefersReducedMotion ? 0 : 20,
-          filter: `blur(${prefersReducedMotion ? 0 : 4}px)`,
-          duration: prefersReducedMotion ? 0.08 : 0.16,
-        }, prefersReducedMotion ? 0.7 : 0.72)
+          duration: prefersReducedMotion ? 0.06 : 0.08,
+          force3D: true,
+        }, prefersReducedMotion ? 0.56 : 0.58)
         .to(footer, {
           autoAlpha: 0,
           y: prefersReducedMotion ? 0 : 18,
-          filter: `blur(${prefersReducedMotion ? 0 : 4.5}px)`,
-          duration: prefersReducedMotion ? 0.08 : 0.18,
-        }, prefersReducedMotion ? 0.72 : 0.74)
+          duration: prefersReducedMotion ? 0.06 : 0.09,
+          force3D: true,
+        }, prefersReducedMotion ? 0.58 : 0.61)
         .to(chars, {
           autoAlpha: 0,
-          y: statementMotion.exit.y,
-          filter: `blur(${statementMotion.exit.blur}px)`,
-          duration: statementMotion.exit.duration,
-          ease: 'power2.in',
+          y: scrollExitMotion.statement.y,
+          duration: scrollExitMotion.statement.duration,
+          ease: 'power3.in',
           force3D: true,
-          stagger: {amount: prefersReducedMotion ? 0 : 0.18, from: statementMotion.exit.from},
-        }, prefersReducedMotion ? 0.74 : 0.76)
+          stagger: {amount: scrollExitMotion.statement.staggerAmount, from: scrollExitMotion.statement.from},
+        }, scrollExitMotion.statement.start)
         .to(topBar, {
           autoAlpha: 0,
           y: prefersReducedMotion ? 0 : -14,
-          filter: `blur(${prefersReducedMotion ? 0 : 5}px)`,
-          duration: prefersReducedMotion ? 0.08 : 0.16,
-        }, prefersReducedMotion ? 0.78 : 0.83)
-        .to(
-          media,
-          {
-            autoAlpha: 0,
-            scale: prefersReducedMotion ? 1 : isMobileViewport ? 1.16 : 1.28,
-            yPercent: 0,
-            filter: prefersReducedMotion
-              ? 'blur(0px) saturate(1) brightness(0.82)'
-              : 'blur(1.6px) saturate(0.88) brightness(0.48)',
-            duration: prefersReducedMotion ? 0.08 : 0.12,
-          },
-          prefersReducedMotion ? 0.88 : 0.88,
-        )
-        .to(
-          overlay,
-          {
-            autoAlpha: 0,
-            duration: prefersReducedMotion ? 0.06 : 0.1,
-          },
-          prefersReducedMotion ? 0.9 : 0.9,
-        );
+          duration: prefersReducedMotion ? 0.06 : 0.08,
+          force3D: true,
+        }, prefersReducedMotion ? 0.62 : 0.64)
+        .to(blackout, {
+          autoAlpha: 1,
+          duration: scrollExitMotion.blackout.end - scrollExitMotion.blackout.start,
+        }, scrollExitMotion.blackout.start)
+        .to(media, {
+          autoAlpha: 0,
+          duration: scrollExitMotion.blackout.end - scrollExitMotion.blackout.start,
+        }, scrollExitMotion.blackout.start);
 
       let handoffTl: gsap.core.Timeline | null = null;
       let handoffResetCall: gsap.core.Tween | null = null;
@@ -542,6 +532,7 @@ export function HeroIntro({
       <div ref={mediaRef} className="hero-media">
         <div ref={overlayRef} className="hero-overlay" />
       </div>
+      <div ref={blackoutRef} className="hero-blackout" aria-hidden="true" />
 
       <div ref={frameRef} className="hero-frame">
         <header ref={topBarRef} className="top-bar">

@@ -15,7 +15,7 @@ test('troca as faixas douradas por caracteres GSAP e pausa a rotação fora da H
   assert.match(hero, /splitHeroStatementLine/);
   assert.match(hero, /hero-statement-character/);
   assert.match(hero, /stagger: \{each: statementMotion\.entry\.stagger, from: statementMotion\.entry\.from\}/);
-  assert.match(hero, /stagger: \{amount: prefersReducedMotion \? 0 : 0\.18, from: statementMotion\.exit\.from\}/);
+  assert.match(hero, /stagger: \{amount: scrollExitMotion\.statement\.staggerAmount, from: scrollExitMotion\.statement\.from\}/);
   assert.doesNotMatch(hero, /HERO_SLICE_SEGMENTS|titleSliceRefs|hero-exit-sweep|hero-title-glow|hero-title-mask/);
 
   assert.match(css, /\.hero-statement-word \{/);
