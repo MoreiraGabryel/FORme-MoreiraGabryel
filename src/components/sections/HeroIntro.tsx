@@ -6,7 +6,7 @@ import type {Locale} from '../../i18n/useTranslation';
 import type {HomeCopy} from '../../config/homeContent';
 import {HERO_SCENE, HERO_SCENE_REDUCED_MOTION} from '../../config/scenes';
 import {getLoadingHeroZoomMotion} from '../../utils/loadingHeroZoomMotion';
-import {getHeroScrollExitMotion} from '../../utils/heroScrollExitMotion';
+import {getHeroScrollExitMotion, shouldLockHeroStatementExit} from '../../utils/heroScrollExitMotion';
 import {getHeroStatementMotion, splitHeroStatementLine} from '../../utils/heroStatementMotion';
 import {getStableViewportHeight} from '../../utils/stableViewport';
 import {LanguageSwitch} from '../common/LanguageSwitch';
@@ -119,6 +119,14 @@ export function HeroIntro({
   const requestedPhrase = copy.phrases[phraseIndex];
   const [displayedPhrase, setDisplayedPhrase] = useState(requestedPhrase);
   const displayedPhraseMobileLines = getHeroPhraseMobileLines(displayedPhrase);
+  const prefersReducedMotion =
+    typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const isMobileViewport = typeof window !== 'undefined' && window.matchMedia('(max-width: 640px)').matches;
+  const isHeroScrollExitActive = shouldLockHeroStatementExit({
+    heroProgress,
+    isMobile: isMobileViewport,
+    prefersReducedMotion,
+  });
 
   const rootRef = useRef<HTMLElement>(null);
   const mediaRef = useRef<HTMLDivElement>(null);
@@ -132,6 +140,8 @@ export function HeroIntro({
   const titleRealRef = useRef<HTMLSpanElement>(null);
   const characterRefs = useRef<HTMLSpanElement[]>([]);
   const shouldAnimatePhraseEntryRef = useRef(false);
+  const phraseTransitionRef = useRef<gsap.core.Timeline | null>(null);
+  const isHeroScrollExitActiveRef = useRef(isHeroScrollExitActive);
   const footerRef = useRef<HTMLElement>(null);
   const cueRef = useRef<HTMLParagraphElement>(null);
 
@@ -168,6 +178,23 @@ export function HeroIntro({
       </span>
     );
   });
+
+  useLayoutEffect(() => {
+    isHeroScrollExitActiveRef.current = isHeroScrollExitActive;
+  }, [isHeroScrollExitActive]);
+
+  useLayoutEffect(() => {
+    if (!isHeroScrollExitActive) return;
+
+    phraseTransitionRef.current?.kill();
+    phraseTransitionRef.current = null;
+    shouldAnimatePhraseEntryRef.current = false;
+
+    const chars = characterRefs.current.slice(0, statementCharacterCount);
+    if (chars.length === statementCharacterCount) {
+      gsap.set(chars, {autoAlpha: 1, y: 0, filter: 'blur(0px)'});
+    }
+  }, [isHeroScrollExitActive, statementCharacterCount]);
 
   useLayoutEffect(() => {
     const root = rootRef.current;
@@ -465,6 +492,7 @@ export function HeroIntro({
   }, [displayedPhrase, statementCharacterCount]);
 
   useLayoutEffect(() => {
+    if (isHeroScrollExitActive) return;
     if (requestedPhrase === displayedPhrase) return;
 
     const chars = characterRefs.current.slice(0, statementCharacterCount);
@@ -474,10 +502,13 @@ export function HeroIntro({
     const statementMotion = getHeroStatementMotion(prefersReducedMotion);
     const transition = gsap.timeline({
       onComplete: () => {
+        phraseTransitionRef.current = null;
+        if (isHeroScrollExitActiveRef.current) return;
         shouldAnimatePhraseEntryRef.current = true;
         setDisplayedPhrase(requestedPhrase);
       },
     });
+    phraseTransitionRef.current = transition;
 
     transition
       .to(chars, {
@@ -493,10 +524,15 @@ export function HeroIntro({
 
     return () => {
       transition.kill();
+      if (phraseTransitionRef.current === transition) phraseTransitionRef.current = null;
     };
-  }, [displayedPhrase, requestedPhrase, statementCharacterCount]);
+  }, [displayedPhrase, isHeroScrollExitActive, requestedPhrase, statementCharacterCount]);
 
   useLayoutEffect(() => {
+    if (isHeroScrollExitActive) {
+      shouldAnimatePhraseEntryRef.current = false;
+      return;
+    }
     if (!shouldAnimatePhraseEntryRef.current) return;
 
     const chars = characterRefs.current.slice(0, statementCharacterCount);
@@ -525,7 +561,7 @@ export function HeroIntro({
     return () => {
       transition.kill();
     };
-  }, [displayedPhrase, statementCharacterCount]);
+  }, [displayedPhrase, isHeroScrollExitActive, statementCharacterCount]);
 
   return (
     <section ref={rootRef} className="hero-stage" data-code-burst-surface style={{'--hero-progress': `${heroProgress}`} as CSSProperties}>

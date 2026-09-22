@@ -50,3 +50,15 @@ export function getHeroScrollExitMotion({
     blackout: {start: 0.82, end: 1},
   };
 }
+
+export function shouldLockHeroStatementExit({
+  heroProgress,
+  isMobile,
+  prefersReducedMotion,
+}: {
+  heroProgress: number;
+  isMobile: boolean;
+  prefersReducedMotion: boolean;
+}) {
+  return heroProgress >= getHeroScrollExitMotion({isMobile, prefersReducedMotion}).statement.start;
+}
