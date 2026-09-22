@@ -104,11 +104,19 @@ button {
   background: #000;
 }
 
-.technology-flow,
-.fake-footer-flow {
+.technology-flow {
   position: relative;
   isolation: isolate;
   background: #000;
+}
+
+.fake-footer-flow {
+  --fake-footer-handoff-overlap: clamp(4.5rem, 13vh, 8rem);
+  position: relative;
+  z-index: 2;
+  isolation: isolate;
+  margin-top: calc(var(--fake-footer-handoff-overlap) * -1);
+  background: transparent;
 }
 
 .final-blackout-stage {
@@ -1215,22 +1223,24 @@ button {
 }
 
 .fake-footer-stage {
-  --fake-footer-unlock: 0;
   --fake-footer-exit-blackout: 0;
   position: relative;
   min-height: var(--stable-vh);
   margin-top: 0;
   padding-top: 0svh;
   isolation: isolate;
-  background: #000;
+  background: transparent;
 }
 
 .fake-footer-sticky {
+  --fake-footer-entry-feather: max(1px, calc((1 - var(--fake-footer-entrance, 1)) * 18vh));
   position: relative;
-  top: 0;
+  top: calc(var(--fake-footer-handoff-overlap) * -1);
   min-height: var(--stable-vh);
   overflow: clip;
   background: linear-gradient(180deg, var(--bg-base-alt) 0%, var(--bg-base) 72%, var(--bg-base) 100%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 var(--fake-footer-entry-feather), #000 100%);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 var(--fake-footer-entry-feather), #000 100%);
   /* Sem transform aqui: o `pin` grava o transform inline no elemento fixado e
      congela o valor do engate, o que só deixava um deslocamento de 5vh. A
      entrada é o desvanecer abaixo, que o pin não toca. */
@@ -1520,26 +1530,23 @@ button {
 }
 
 .fake-footer-layout {
-  position: relative;
+  position: absolute;
+  inset: 0;
   z-index: 2;
   display: grid;
-  grid-template-columns: 1fr;
   place-items: center;
-  width: min(100%, 110rem);
-  margin: 0 auto;
-  min-height: clamp(21rem, 66svh, 40rem);
-  padding: clamp(5rem, 9vh, 7rem) 0 clamp(1rem, 2.4vh, 2rem);
+  width: 100%;
+  min-height: 0;
+  pointer-events: none;
 }
 
 .fake-footer-left-column {
   position: relative;
   display: grid;
-  width: min(calc(100% - 3rem), 72rem);
-  min-height: 100%;
-  margin-inline: auto;
-  gap: 2.2rem;
-  justify-items: center;
-  align-content: center;
+  place-items: center;
+  width: min(calc(100% - 3rem), 58rem);
+  min-height: 0;
+  pointer-events: auto;
 }
 
 .fake-footer-left-column .fake-footer-cta-block {
@@ -1549,7 +1556,7 @@ button {
   padding-top: 0;
   padding-left: 0;
   text-align: center;
-  transform: translate3d(0, calc((1 - var(--fake-footer-ease, 0)) * 2.6rem + var(--fake-footer-reverse, 0) * 1.45rem), 0);
+  transform: translate3d(0, calc(-1svh + var(--fake-footer-reverse, 0) * 1.45rem), 0);
   opacity: calc(0.18 + var(--fake-footer-ease, 0) * 0.82 - var(--fake-footer-reverse, 0) * 0.08);
   filter: blur(calc(var(--fake-footer-reverse, 0) * 2.2px));
 }
@@ -1563,10 +1570,6 @@ button {
     0 0 20px rgba(255, 255, 255, 0.08);
 }
 
-.fake-footer-left-column .editorial-kicker {
-  color: rgba(255, 211, 77, 0.86);
-}
-
 .fake-footer-cta-block-centered {
   width: min(100%, 58rem);
 }
@@ -1575,27 +1578,33 @@ button {
   min-height: clamp(8rem, 16vw, 11rem);
   display: grid;
   place-items: center;
+  width: 100%;
 }
 
 .fake-footer-cta-block .fake-footer-statement-line {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  width: fit-content;
+  max-width: 100%;
   margin: 0;
-  max-width: 20ch;
   font-family: var(--font-display);
   font-size: clamp(3.2rem, 5.8vw, 5.4rem);
   line-height: 0.96;
   letter-spacing: -0.055em;
   text-wrap: balance;
   text-align: center;
+}
+
+.fake-footer-statement-editorial-line {
+  display: block;
   white-space: nowrap;
 }
 
 .fake-footer-statement-char {
   display: inline-block;
-  opacity: 0;
-  transform: translate3d(0, 0.5rem, 0) scale(0.992);
-  filter: blur(4px);
-  animation: footerCharReveal 0.56s cubic-bezier(0.2, 0.9, 0.2, 1) forwards;
-  animation-delay: calc(var(--char-index) * 24ms);
+  backface-visibility: hidden;
+  will-change: transform, opacity;
 }
 
 .fake-footer-right-meta {
@@ -1623,6 +1632,9 @@ button {
 }
 
 .fake-footer-social-link {
+  --social-fill: #C7EDFF;
+  --social-hover-icon: #102840;
+  --social-hover-border: rgba(199, 237, 255, 0.76);
   position: relative;
   display: inline-flex;
   align-items: center;
@@ -1634,7 +1646,7 @@ button {
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 1.18rem;
   background: linear-gradient(180deg, rgba(34, 48, 74, 0.34), rgba(18, 26, 42, 0.24));
-  color: rgba(255, 255, 255, 0.97);
+  color: #C7EDFF;
   box-shadow:
     0 12px 28px rgba(0, 0, 0, 0.24),
     inset 0 1px 0 rgba(255, 255, 255, 0.1);
@@ -1647,6 +1659,43 @@ button {
     background 0.28s ease,
     color 0.28s ease,
     box-shadow 0.28s ease;
+}
+
+.fake-footer-social-link[data-social='instagram'] {
+  --social-fill: linear-gradient(45deg, #405DE6, #5B51DB, #B33AB4, #C135B4, #E1306C, #FD1F1F);
+  --social-hover-icon: #fff;
+  --social-hover-border: rgba(225, 48, 108, 0.78);
+}
+
+.fake-footer-social-link[data-social='linkedin'] {
+  --social-fill: #0A66C2;
+  --social-hover-icon: #fff;
+  --social-hover-border: rgba(10, 102, 194, 0.84);
+}
+
+.fake-footer-social-link[data-social='whatsapp'] {
+  --social-fill: #25D366;
+  --social-hover-icon: #fff;
+  --social-hover-border: rgba(37, 211, 102, 0.84);
+}
+
+.fake-footer-social-link[data-social='email'],
+.fake-footer-social-link[data-social='github'] {
+  --social-fill: #C7EDFF;
+  --social-hover-icon: #102840;
+  --social-hover-border: rgba(199, 237, 255, 0.76);
+}
+
+.fake-footer-social-fill {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: var(--social-fill);
+  transform: scaleY(0);
+  transform-origin: bottom;
+  transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .fake-footer-social-link::before,
@@ -1683,11 +1732,16 @@ button {
 }
 
 .fake-footer-social-link:hover {
-  border-color: rgba(242, 194, 48, 0.28);
-  background: linear-gradient(180deg, rgba(242, 194, 48, 0.18), rgba(242, 194, 48, 0.08));
+  color: var(--social-hover-icon);
+  border-color: var(--social-hover-border);
   box-shadow:
     0 18px 34px rgba(0, 0, 0, 0.3),
     0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+
+.fake-footer-social-link:hover .fake-footer-social-fill,
+.fake-footer-social-link:focus-visible .fake-footer-social-fill {
+  transform: scaleY(1);
 }
 
 .fake-footer-social-link:hover::before,
@@ -1698,10 +1752,11 @@ button {
 
 .fake-footer-social-link:focus-visible {
   outline: none;
-  border-color: rgba(242, 194, 48, 0.32);
+  color: var(--social-hover-icon);
+  border-color: var(--social-hover-border);
   box-shadow:
     0 18px 34px rgba(0, 0, 0, 0.3),
-    0 0 0 3px rgba(242, 194, 48, 0.14);
+    0 0 0 3px rgba(199, 237, 255, 0.2);
 }
 
 .fake-footer-social-link:active {
@@ -1710,7 +1765,7 @@ button {
 
 .fake-footer-social-link svg {
   position: relative;
-  z-index: 1;
+  z-index: 2;
   width: 1.02rem;
   height: 1.02rem;
   flex: 0 0 auto;
@@ -1750,7 +1805,8 @@ button {
 
 .fake-footer-utility-row {
   position: relative;
-  z-index: 5;
+  grid-row: 2;
+  z-index: 7;
   display: grid;
   grid-template-columns: minmax(14rem, 1fr) auto minmax(14rem, 1fr);
   column-gap: clamp(1rem, 2vw, 2rem);
@@ -1835,41 +1891,6 @@ button {
   min-width: max-content;
 }
 
-.unlock-scroll-indicator {
-  position: absolute;
-  left: 50%;
-  bottom: clamp(6.8rem, 12.5vh, 9rem);
-  z-index: 4;
-  display: grid;
-  place-items: center;
-  pointer-events: none;
-  color: var(--accent-primary);
-  text-shadow:
-    0 0 18px rgba(242, 194, 48, 0.22),
-    0 10px 28px rgba(0, 0, 0, 0.55);
-  opacity: calc(var(--fake-footer-unlock, 0) * (1 - var(--fake-footer-exit-blackout, 0)));
-  transform: translate3d(-50%, calc((1 - var(--fake-footer-unlock, 0)) * 1rem), 0);
-  filter: blur(calc((1 - var(--fake-footer-unlock, 0)) * 4px));
-  transition:
-    opacity 0.2s linear,
-    transform 0.28s cubic-bezier(0.22, 1, 0.36, 1),
-    filter 0.2s linear;
-  will-change: opacity, transform, filter;
-}
-
-.unlock-arrow {
-  display: inline-grid;
-  place-items: center;
-  width: 2.4rem;
-  height: 2.4rem;
-  color: var(--accent-primary);
-  font-size: clamp(2.15rem, 2.3vw, 2.75rem);
-  line-height: 1;
-  text-shadow:
-    0 0 22px rgba(242, 194, 48, 0.34),
-    0 14px 30px rgba(0, 0, 0, 0.64);
-  animation: unlockArrowFloat 1.18s ease-in-out infinite;
-}
 
 @keyframes heroPhraseReveal {
   from {
@@ -1907,18 +1928,6 @@ button {
   }
 }
 
-@keyframes unlockArrowFloat {
-  0%,
-  100% {
-    opacity: 0.68;
-    transform: translate3d(0, 0, 0);
-  }
-
-  50% {
-    opacity: 1;
-    transform: translate3d(0, 0.42rem, 0);
-  }
-}
 
 @keyframes scrollChevronFlow {
   0% {
@@ -1947,22 +1956,6 @@ button {
   50% {
     opacity: 1;
     transform: translate(-50%, -50%) scale(1.08);
-  }
-}
-
-@keyframes footerCharReveal {
-  from {
-    opacity: 0;
-    transform: translate3d(0, 0.5rem, 0) scale(0.992);
-    filter: blur(4px);
-  }
-  60% {
-    opacity: 1;
-  }
-  to {
-    opacity: 1;
-    transform: translate3d(0, 0, 0) scale(1);
-    filter: blur(0);
   }
 }
 
@@ -2005,18 +1998,34 @@ button {
   }
 
   .fake-footer-layout {
-    grid-template-columns: 1fr;
-    min-height: min(56svh, 32rem);
-    padding: clamp(4.8rem, 12vh, 6.6rem) 0 clamp(1rem, 2vh, 1.4rem);
+    inset: 0;
+    min-height: 0;
+    padding: 0;
   }
 
   .fake-footer-utility-row {
     display: grid;
     grid-template-columns: 1fr;
+    grid-template-areas:
+      'social'
+      'legal'
+      'copyright';
     min-height: auto;
     gap: 1.1rem;
     justify-items: center;
     padding: 1rem;
+  }
+
+  .fake-footer-utility-center-icons {
+    grid-area: social;
+  }
+
+  .fake-footer-bottom-row-legal-only {
+    grid-area: legal;
+  }
+
+  .fake-footer-copyright-row-inline {
+    grid-area: copyright;
   }
 
   .fake-footer-utility-center,
@@ -2054,14 +2063,11 @@ button {
     gap: 0.6rem;
   }
 
-  .unlock-scroll-indicator {
-    bottom: clamp(9.4rem, 20vh, 12.5rem);
-  }
 
   .fake-footer-copyright-row,
   .fake-footer-copyright-row-inline {
     justify-content: center;
-    padding-top: 2rem;
+    padding-top: 0.25rem;
     text-align: center;
   }
 
@@ -2193,8 +2199,7 @@ button {
 
   .fake-footer-cta-block .fake-footer-statement-line {
     font-size: clamp(2.8rem, 12vw, 4.1rem);
-    max-width: 12ch;
-    white-space: normal;
+    max-width: 100%;
   }
 
   .fake-footer-utility-row {
@@ -2232,9 +2237,6 @@ button {
     font-size: 0.76rem;
   }
 
-  .unlock-scroll-indicator {
-    bottom: clamp(10.8rem, 26vh, 14.5rem);
-  }
 }
 
 /* Notebooks e monitores de PC mais baixos: com o título no tamanho cheio, o
@@ -3006,8 +3008,7 @@ button {
 
   .scroll-cue-arrows span,
   .scroll-cue-arrows::before,
-  .technologies-backdrop-particles,
-  .unlock-arrow {
+  .technologies-backdrop-particles {
     animation: none;
   }
 
