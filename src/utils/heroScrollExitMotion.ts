@@ -40,8 +40,8 @@ export function getHeroScrollExitMotion({
       yPercent: isMobile ? -4 : -7,
     },
     statement: {
-      start: 0.68,
-      end: 0.82,
+      start: 0.65,
+      end: 0.79,
       y: isMobile ? -28 : -42,
       duration: 0.08,
       staggerAmount: 0.06,
