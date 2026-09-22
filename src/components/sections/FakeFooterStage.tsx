@@ -8,6 +8,7 @@ import {FAKE_FOOTER_SCENE} from '../../config/scenes';
 import {useAmbientVideo} from '../../hooks/useAmbientVideo';
 import {useScrubbedVideo} from '../../hooks/useScrubbedVideo';
 import type {Locale} from '../../i18n/useTranslation';
+import {getFakeFooterHandoffOverlap} from '../../utils/fakeFooterHandoff';
 import {getStableViewportHeight} from '../../utils/stableViewport';
 import {getFooterStatementMotion} from '../../utils/footerStatementMotion';
 import {getFooterStatementLines} from '../../utils/footerStatementLines';
@@ -165,14 +166,14 @@ export function FakeFooterStage({
     const sticky = stickyRef.current;
     if (!section || !sticky) return;
 
-    // O ScrollTrigger cuida apenas do pin. `--fake-footer-unlock` e
-    // `--fake-footer-exit-blackout` são calculados no `App`, a partir do mesmo
+    // O ScrollTrigger cuida apenas do pin. `--fake-footer-exit-blackout` é
+    // calculado no `App`, a partir do mesmo
     // progresso que move o vídeo, o brilho e a escala. Enquanto viviam num
     // timeline com `scrub`, corriam 0,65s atrás do resto da cena.
     const ctx = gsap.context(() => {
       ScrollTrigger.create({
         trigger: section,
-        start: 'top top',
+        start: () => `top top+=${Math.round(getFakeFooterHandoffOverlap(getStableViewportHeight()))}`,
         end: () => `+=${Math.round(getStableViewportHeight() * FAKE_FOOTER_SCENE.lengthInViewports)}`,
         pin: sticky,
         anticipatePin: 1,
@@ -288,12 +289,14 @@ export function FakeFooterStage({
                   <a
                     key={item.label}
                     className="fake-footer-social-link"
+                    data-social={item.icon}
                     href={item.href}
                     target="_blank"
                     rel="noreferrer"
                     aria-label={item.label}
                     title={item.label}
                   >
+                    <span className="fake-footer-social-fill" aria-hidden="true" />
                     <FooterIcon name={item.icon} />
                   </a>
                 ))}
@@ -316,9 +319,6 @@ export function FakeFooterStage({
             </div>
           </div>
 
-          <div className="unlock-scroll-indicator" aria-hidden="true">
-            <span className="unlock-arrow">↓</span>
-          </div>
         </div>
 
         <div className="fake-footer-exit-blackout" aria-hidden="true" />
