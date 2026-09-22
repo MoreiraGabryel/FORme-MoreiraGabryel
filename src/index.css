@@ -137,9 +137,7 @@ button {
 
 .hero-stage {
   min-height: var(--stable-vh);
-  --hero-handoff: 0;
-  --hero-exit-sweep: -18%;
-  --hero-title-glow: 0;
+
   background: #000;
 }
 
@@ -577,39 +575,6 @@ button {
   position: relative;
   display: inline-grid;
   place-items: center;
-  isolation: isolate;
-}
-
-.hero-statement-handshake::before,
-.hero-statement-handshake::after {
-  content: '';
-  position: absolute;
-  pointer-events: none;
-  opacity: var(--hero-handoff, 0);
-}
-
-.hero-statement-handshake::before {
-  z-index: 4;
-  left: -10%;
-  right: -10%;
-  top: -18%;
-  height: 34%;
-  background:
-    linear-gradient(180deg, transparent 0%, rgba(255, 211, 77, 0.06) 32%, rgba(255, 211, 77, 0.34) 50%, rgba(242, 194, 48, 0.06) 68%, transparent 100%);
-  filter: blur(0.4px);
-  mix-blend-mode: screen;
-  transform: translateY(var(--hero-exit-sweep, -18%)) skewY(-2deg);
-  will-change: transform, opacity;
-}
-
-.hero-statement-handshake::after {
-  z-index: 0;
-  inset: -16% -18%;
-  background:
-    radial-gradient(ellipse at 50% 52%, rgba(242, 194, 48, calc(var(--hero-title-glow, 0) * 0.18)), transparent 62%);
-  filter: blur(12px);
-  transform: scale(calc(0.96 + var(--hero-title-glow, 0) * 0.08));
-  will-change: transform, opacity;
 }
 
 .hero-statement-line {
@@ -621,34 +586,17 @@ button {
   letter-spacing: -0.065em;
   text-wrap: balance;
   text-shadow:
-    0 1px 0 rgba(255, 211, 77, 0.08),
+    0 1px 0 rgba(199, 237, 255, 0.08),
     0 18px 46px rgba(0, 0, 0, 0.42);
 }
 
 .hero-statement-real {
-  --hero-title-mask: 140%;
   position: relative;
   z-index: 1;
-  filter: drop-shadow(0 0 calc(var(--hero-title-glow, 0) * 18px) rgba(242, 194, 48, 0.22));
-  -webkit-mask-image: linear-gradient(
-    180deg,
-    #000 0%,
-    #000 calc(var(--hero-title-mask) - 24%),
-    transparent var(--hero-title-mask)
-  );
-  mask-image: linear-gradient(
-    180deg,
-    #000 0%,
-    #000 calc(var(--hero-title-mask) - 24%),
-    transparent var(--hero-title-mask)
-  );
-  -webkit-mask-repeat: no-repeat;
-  mask-repeat: no-repeat;
 }
 
 .hero-statement-phrase {
   display: inline-block;
-  animation: heroPhraseReveal 0.82s cubic-bezier(0.2, 0.9, 0.2, 1) both;
 }
 
 .hero-statement-phrase-line {
@@ -666,66 +614,21 @@ button {
   white-space: normal;
 }
 
-.hero-stage.is-hero-entering .hero-statement-phrase-line {
-  animation: heroLinePremiumReveal 0.68s cubic-bezier(0.16, 1, 0.3, 1) both;
-  transform-origin: 50% 70%;
-}
-
-.hero-stage.is-hero-entering .hero-statement-phrase-line:nth-child(2) {
-  animation-delay: 0.035s;
-}
-
-.hero-stage.is-hero-entering .hero-statement-phrase-line:nth-child(3) {
-  animation-delay: 0.07s;
-}
-
-.hero-stage.is-hero-entering .hero-statement-phrase-line:nth-child(4) {
-  animation-delay: 0.105s;
-}
-
-.hero-stage.is-hero-entering .hero-statement-phrase-line:nth-child(5) {
-  animation-delay: 0.14s;
-}
-
-.hero-stage.is-handoff-active .hero-statement-phrase {
-  animation: none;
-}
-
-.hero-statement-slices {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 2;
-}
-
-.hero-statement-slice {
-  position: absolute;
-  inset: 0;
+.hero-statement-word,
+.hero-statement-character {
   display: inline-block;
-  color: rgba(245, 247, 250, 0.96);
-  text-shadow:
-    0 0 14px rgba(242, 194, 48, 0.1),
-    0 18px 42px rgba(0, 0, 0, 0.28);
+}
+
+.hero-statement-word {
+  white-space: nowrap;
+}
+
+.hero-statement-word:not(:last-child) {
+  margin-right: 0.24em;
+}
+
+.hero-statement-character {
   will-change: transform, opacity, filter;
-}
-
-.hero-statement-slice-1,
-.hero-statement-slice-7 {
-  opacity: 0.52;
-}
-
-.hero-statement-slice-2,
-.hero-statement-slice-6 {
-  opacity: 0.64;
-}
-
-.hero-statement-slice-3,
-.hero-statement-slice-5 {
-  opacity: 0.76;
-}
-
-.hero-statement-slice-4 {
-  opacity: 0.9;
 }
 
 .hero-intro-copy,
@@ -1889,43 +1792,6 @@ button {
   align-self: end;
   justify-content: flex-start;
   min-width: max-content;
-}
-
-
-@keyframes heroPhraseReveal {
-  from {
-    opacity: 0;
-    transform: translate3d(0, 24px, 0) scale(0.985);
-    filter: blur(12px);
-  }
-  55% {
-    opacity: 1;
-  }
-  to {
-    opacity: 1;
-    transform: translate3d(0, 0, 0) scale(1);
-    filter: blur(0);
-  }
-}
-
-
-@keyframes heroLinePremiumReveal {
-  0% {
-    opacity: 0;
-    transform: translate3d(0, 26px, 0) scale(0.955);
-    filter: blur(18px) brightness(1.24);
-  }
-
-  38% {
-    opacity: 1;
-    filter: blur(5px) brightness(1.12);
-  }
-
-  100% {
-    opacity: 1;
-    transform: translate3d(0, 0, 0) scale(1);
-    filter: blur(0) brightness(1);
-  }
 }
 
 

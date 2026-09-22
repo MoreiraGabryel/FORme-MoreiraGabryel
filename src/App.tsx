@@ -12,6 +12,7 @@ import type {SceneGeometry} from './config/scenes';
 import {useTranslation} from './i18n/useTranslation';
 import {useSmoothScroll} from './hooks/useSmoothScroll';
 import {getStableViewportHeight} from './utils/stableViewport';
+import {shouldRotateHeroPhrase} from './utils/heroStatementMotion';
 import {getTechnologyStageProgress} from './utils/technologyStageProgress';
 
 function clamp(value: number, min: number, max: number) {
@@ -110,6 +111,7 @@ export default function App() {
   useEffect(() => {
     const phraseCount = copy.phrases.length;
     if (phraseCount <= 1) return;
+    if (!shouldRotateHeroPhrase(heroProgress)) return;
 
     const intervalId = window.setInterval(() => {
       startTransition(() => {
@@ -118,7 +120,7 @@ export default function App() {
     }, 4200);
 
     return () => window.clearInterval(intervalId);
-  }, [copy.phrases]);
+  }, [copy.phrases, heroProgress]);
 
   useEffect(() => {
     const phraseCount = copy.footerPhrases.length;

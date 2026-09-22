@@ -1,25 +1,16 @@
-import {useLayoutEffect, useRef} from 'react';
+import {useLayoutEffect, useRef, useState} from 'react';
 import type {CSSProperties, Dispatch, SetStateAction} from 'react';
 import {gsap} from 'gsap';
 import {ScrollTrigger} from 'gsap/ScrollTrigger';
 import type {Locale} from '../../i18n/useTranslation';
 import type {HomeCopy} from '../../config/homeContent';
 import {HERO_SCENE, HERO_SCENE_REDUCED_MOTION} from '../../config/scenes';
+import {getLoadingHeroZoomMotion} from '../../utils/loadingHeroZoomMotion';
+import {getHeroStatementMotion, splitHeroStatementLine} from '../../utils/heroStatementMotion';
 import {getStableViewportHeight} from '../../utils/stableViewport';
 import {LanguageSwitch} from '../common/LanguageSwitch';
 
 gsap.registerPlugin(ScrollTrigger);
-
-const HERO_SLICE_SEGMENTS = [
-  [0, 13],
-  [13, 27],
-  [27, 41],
-  [41, 59],
-  [59, 73],
-  [73, 87],
-  [87, 100],
-] as const;
-
 
 const HERO_PHRASE_MOBILE_LINES: Record<string, string[]> = {
   'Construo interfaces que sustentam produto, narrativa e performance.': [
@@ -124,13 +115,9 @@ export function HeroIntro({
   phraseIndex: number;
   heroProgress: number;
 }) {
-  const phrase = copy.phrases[phraseIndex];
-  const phraseMobileLines = getHeroPhraseMobileLines(phrase);
-  const phraseLineNodes = phraseMobileLines.map((line) => (
-    <span key={line} className="hero-statement-phrase-line">
-      {line}
-    </span>
-  ));
+  const requestedPhrase = copy.phrases[phraseIndex];
+  const [displayedPhrase, setDisplayedPhrase] = useState(requestedPhrase);
+  const displayedPhraseMobileLines = getHeroPhraseMobileLines(displayedPhrase);
 
   const rootRef = useRef<HTMLElement>(null);
   const mediaRef = useRef<HTMLDivElement>(null);
@@ -141,9 +128,44 @@ export function HeroIntro({
   const introCopyRef = useRef<HTMLDivElement>(null);
   const titleWrapRef = useRef<HTMLDivElement>(null);
   const titleRealRef = useRef<HTMLSpanElement>(null);
-  const titleSliceRefs = useRef<HTMLSpanElement[]>([]);
+  const characterRefs = useRef<HTMLSpanElement[]>([]);
+  const shouldAnimatePhraseEntryRef = useRef(false);
   const footerRef = useRef<HTMLElement>(null);
   const cueRef = useRef<HTMLParagraphElement>(null);
+
+  const phraseLineWords = displayedPhraseMobileLines.map(splitHeroStatementLine);
+  const getCharacterIndex = (lineIndex: number, wordIndex: number, characterIndex: number) =>
+    phraseLineWords.slice(0, lineIndex).flat(2).length +
+    phraseLineWords[lineIndex].slice(0, wordIndex).flat().length +
+    characterIndex;
+  const statementCharacterCount = phraseLineWords.flat(2).length;
+  const phraseLineNodes = phraseLineWords.map((words, lineIndex) => {
+
+    return (
+      <span key={`${words.flat().join('')}-${lineIndex}`} className="hero-statement-phrase-line">
+        {words.map((characters, wordIndex) => (
+          <span key={`${characters.join('')}-${wordIndex}`} className="hero-statement-word">
+            {characters.map((character, characterIndex) => {
+              const currentCharacterIndex = getCharacterIndex(lineIndex, wordIndex, characterIndex);
+
+              return (
+                <span
+                  key={`${character}-${currentCharacterIndex}`}
+                  ref={(node) => {
+                    if (node) characterRefs.current[currentCharacterIndex] = node;
+                  }}
+                  className="hero-statement-character"
+                  aria-hidden="true"
+                >
+                  {character}
+                </span>
+              );
+            })}
+          </span>
+        ))}
+      </span>
+    );
+  });
 
   useLayoutEffect(() => {
     const root = rootRef.current;
@@ -157,7 +179,7 @@ export function HeroIntro({
     const titleReal = titleRealRef.current;
     const footer = footerRef.current;
     const cue = cueRef.current;
-    const slices = titleSliceRefs.current.slice(0, HERO_SLICE_SEGMENTS.length);
+    const chars = characterRefs.current.slice(0, statementCharacterCount);
 
     if (
       !root ||
@@ -171,20 +193,17 @@ export function HeroIntro({
       !titleReal ||
       !footer ||
       !cue ||
-      slices.length !== HERO_SLICE_SEGMENTS.length
+      chars.length !== statementCharacterCount
     ) {
       return;
     }
 
     const ctx = gsap.context(() => {
+      const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const isMobileViewport = window.matchMedia('(max-width: 640px)').matches;
+      const statementMotion = getHeroStatementMotion(prefersReducedMotion);
       const setIdle = () => {
-        root.classList.remove('is-handoff-active');
-        root.classList.remove('is-hero-entering');
-        gsap.set(root, {
-          '--hero-handoff': 0,
-          '--hero-exit-sweep': '-18%',
-          '--hero-title-glow': 0,
-        });
+
         gsap.set(media, {opacity: 1, scale: 1, filter: 'blur(0px) saturate(1) brightness(1)'});
         gsap.set(overlay, {opacity: 1, filter: 'blur(0px) brightness(1)'});
         gsap.set(frame, {autoAlpha: 1, scale: 1, filter: 'blur(0px)'});
@@ -197,17 +216,13 @@ export function HeroIntro({
           yPercent: 0,
           scale: 1,
           filter: 'blur(0px)',
-          '--hero-title-mask': '140%',
         });
-        gsap.set(slices, {autoAlpha: 0, x: 0, y: 0, filter: 'blur(0px)'});
+        gsap.set(chars, {autoAlpha: 1, x: 0, y: 0, filter: 'blur(0px)'});
         gsap.set(footer, {autoAlpha: 1, y: 0, filter: 'blur(0px)'});
         gsap.set(cue, {autoAlpha: 1, y: 0, filter: 'blur(0px)'});
       };
 
       setIdle();
-
-      const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      const isMobileViewport = window.matchMedia('(max-width: 640px)').matches;
       const heroScrollTimeline = gsap.timeline({
         defaults: {ease: 'none'},
         scrollTrigger: {
@@ -239,12 +254,6 @@ export function HeroIntro({
           },
           0,
         )
-        .to(root, {
-          '--hero-handoff': prefersReducedMotion ? 0.28 : 0.72,
-          '--hero-exit-sweep': prefersReducedMotion ? '42%' : '118%',
-          '--hero-title-glow': prefersReducedMotion ? 0.25 : 1,
-          duration: prefersReducedMotion ? 0.12 : 0.2,
-        }, prefersReducedMotion ? 0.68 : 0.68)
         .to(cue, {
           autoAlpha: 0,
           y: prefersReducedMotion ? 0 : 20,
@@ -257,44 +266,15 @@ export function HeroIntro({
           filter: `blur(${prefersReducedMotion ? 0 : 4.5}px)`,
           duration: prefersReducedMotion ? 0.08 : 0.18,
         }, prefersReducedMotion ? 0.72 : 0.74)
-        .to(slices, {
-          autoAlpha: prefersReducedMotion ? 0 : (index: number) => [0.1, 0.16, 0.24, 0.34, 0.24, 0.16, 0.1][index],
-          x: (index: number) => prefersReducedMotion ? 0 : [-12, -8, -4, 0, 4, 8, 12][index],
-          y: (index: number) => prefersReducedMotion ? 0 : (index - 3) * 1.4,
-          filter: `blur(${prefersReducedMotion ? 0 : 1.1}px) brightness(${prefersReducedMotion ? 1 : 1.12})`,
-          duration: prefersReducedMotion ? 0.04 : 0.13,
-          stagger: prefersReducedMotion ? 0 : 0.01,
+        .to(chars, {
+          autoAlpha: 0,
+          y: statementMotion.exit.y,
+          filter: `blur(${statementMotion.exit.blur}px)`,
+          duration: statementMotion.exit.duration,
+          ease: 'power2.in',
+          force3D: true,
+          stagger: {amount: prefersReducedMotion ? 0 : 0.18, from: statementMotion.exit.from},
         }, prefersReducedMotion ? 0.74 : 0.76)
-        .to(titleReal, {
-          autoAlpha: prefersReducedMotion ? 0.72 : 0.58,
-          yPercent: prefersReducedMotion ? 0 : -3,
-          scale: prefersReducedMotion ? 1 : 0.996,
-          filter: `blur(${prefersReducedMotion ? 0 : 1.6}px) brightness(${prefersReducedMotion ? 1 : 1.16})`,
-          '--hero-title-mask': prefersReducedMotion ? '92%' : '58%',
-          duration: prefersReducedMotion ? 0.08 : 0.16,
-        }, prefersReducedMotion ? 0.75 : 0.78)
-        .to(titleReal, {
-          autoAlpha: 0,
-          yPercent: prefersReducedMotion ? 0 : -9,
-          scale: prefersReducedMotion ? 1 : 0.986,
-          filter: `blur(${prefersReducedMotion ? 0 : 5}px) brightness(${prefersReducedMotion ? 1 : 0.9})`,
-          '--hero-title-mask': prefersReducedMotion ? '140%' : '0%',
-          duration: prefersReducedMotion ? 0.08 : 0.2,
-        }, prefersReducedMotion ? 0.8 : 0.84)
-        .to(slices, {
-          autoAlpha: 0,
-          x: (index: number) => prefersReducedMotion ? 0 : [-20, -14, -8, -3, 8, 14, 20][index],
-          y: (index: number) => prefersReducedMotion ? 0 : (index - 3) * 2.2,
-          filter: `blur(${prefersReducedMotion ? 0 : 5}px) brightness(${prefersReducedMotion ? 1 : 0.82})`,
-          duration: prefersReducedMotion ? 0.05 : 0.17,
-          stagger: prefersReducedMotion ? 0 : 0.008,
-        }, prefersReducedMotion ? 0.78 : 0.82)
-        .to(root, {
-          '--hero-handoff': 0,
-          '--hero-exit-sweep': prefersReducedMotion ? '42%' : '132%',
-          '--hero-title-glow': 0,
-          duration: prefersReducedMotion ? 0.06 : 0.12,
-        }, prefersReducedMotion ? 0.84 : 0.9)
         .to(topBar, {
           autoAlpha: 0,
           y: prefersReducedMotion ? 0 : -14,
@@ -338,20 +318,15 @@ export function HeroIntro({
         handoffTl?.kill();
         handoffResetCall?.kill();
 
-        const sliceOffsets = [-8, -5, -3, 0, 3, 5, 8];
-        const sliceBlur = reducedMotion ? [0.9, 0.9, 0.8, 0.7, 0.8, 0.9, 0.9] : [2.8, 2.4, 2.1, 1.8, 2.1, 2.4, 2.8];
+        const zoomMotion = getLoadingHeroZoomMotion({isMobile: isMobileViewport, prefersReducedMotion: reducedMotion});
+        const handoffStatementMotion = getHeroStatementMotion(reducedMotion);
 
-        root.classList.add('is-handoff-active', 'is-hero-entering');
-        gsap.set(root, {
-          '--hero-handoff': 1,
-          // Barra de luz posicionada acima do título; o sweep abaixo a faz
-          // descer atravessando as letras, uma vez, na entrada.
-          '--hero-exit-sweep': reducedMotion ? '-18%' : '-55%',
-        });
+
         gsap.set(media, {
           opacity: reducedMotion ? 0.92 : 0.84,
-          scale: reducedMotion ? 1.006 : 1.014,
-          filter: `blur(${reducedMotion ? 2 : 6}px) saturate(${reducedMotion ? 0.96 : 0.92}) brightness(${reducedMotion ? 0.98 : 0.92})`,
+          scale: zoomMotion.heroStartScale,
+          filter: `blur(${zoomMotion.heroStartBlur}px)`,
+          transformOrigin: '50% 50%',
         });
         gsap.set(overlay, {
           opacity: reducedMotion ? 0.96 : 0.96,
@@ -384,11 +359,10 @@ export function HeroIntro({
           scale: reducedMotion ? 1 : 0.986,
           filter: `blur(${reducedMotion ? 0.9 : 3.4}px)`,
         });
-        gsap.set(slices, {
+        gsap.set(chars, {
           autoAlpha: 0,
-          y: 0,
-          x: (index: number) => sliceOffsets[index],
-          filter: (index: number) => `blur(${sliceBlur[index]}px)`,
+          y: handoffStatementMotion.entry.y,
+          filter: `blur(${handoffStatementMotion.entry.blur}px)`,
         });
         gsap.set(footer, {
           opacity: reducedMotion ? 0.32 : 0.08,
@@ -406,17 +380,12 @@ export function HeroIntro({
           onComplete: finishHandoff,
           onInterrupt: finishHandoff,
         })
-          .to(root, {
-            '--hero-handoff': 0.42,
-            duration: reducedMotion ? 0.16 : 0.24,
-            ease: 'sine.out',
-          }, 0)
           .to(media, {
             opacity: 1,
             scale: 1,
             filter: 'blur(0px) saturate(1) brightness(1)',
-            duration: reducedMotion ? 0.22 : 0.36,
-            ease: 'power3.out',
+            duration: zoomMotion.heroSettleDuration,
+            ease: 'power2.inOut',
           }, 0)
           .to(overlay, {
             opacity: 0.86,
@@ -431,21 +400,14 @@ export function HeroIntro({
             duration: reducedMotion ? 0.22 : 0.34,
             ease: 'power3.out',
           }, 0.03)
-          .to(root, {
-            // Sweep de luz descendo pelo título, uma vez. A opacidade da barra
-            // acompanha `--hero-handoff` (que cai a seguir), então ela varre e
-            // some — um wipe, não uma barra parada.
-            '--hero-exit-sweep': reducedMotion ? '-18%' : '165%',
-            duration: reducedMotion ? 0.2 : 0.52,
-            ease: 'power2.inOut',
-          }, reducedMotion ? 0 : 0.04)
-          .to(slices, {
-            autoAlpha: (index: number) => (reducedMotion ? 0.12 : index === 3 ? 0.32 : index === 2 || index === 4 ? 0.24 : 0.17),
-            x: 0,
+          .to(chars, {
+            autoAlpha: 1,
+            y: 0,
             filter: 'blur(0px)',
-            duration: reducedMotion ? 0.14 : 0.24,
+            duration: handoffStatementMotion.entry.duration,
             ease: 'power3.out',
-            stagger: 0.016,
+            force3D: true,
+            stagger: {each: statementMotion.entry.stagger, from: statementMotion.entry.from},
           }, 0.12)
           .to(titleReal, {
             opacity: 1,
@@ -455,12 +417,6 @@ export function HeroIntro({
             duration: reducedMotion ? 0.16 : 0.34,
             ease: 'power4.out',
           }, 0.16)
-          .to(slices, {
-            autoAlpha: 0,
-            duration: reducedMotion ? 0.1 : 0.16,
-            ease: 'sine.out',
-            stagger: 0.008,
-          }, reducedMotion ? 0.22 : 0.28)
           .to(topBar, {
             opacity: 1,
             y: 0,
@@ -488,14 +444,11 @@ export function HeroIntro({
             filter: 'blur(0px)',
             duration: reducedMotion ? 0.18 : 0.26,
             ease: 'power2.out',
-          }, reducedMotion ? 0.3 : 0.46)
-          .to(root, {
-            '--hero-handoff': 0,
-            duration: reducedMotion ? 0.14 : 0.22,
-            ease: 'sine.out',
-          }, reducedMotion ? 0.44 : 0.64);
+          }, reducedMotion ? 0.3 : 0.46);
 
-        handoffResetCall = gsap.delayedCall(reducedMotion ? 0.74 : 0.96, finishHandoff);
+        const handoffDuration =
+          0.12 + handoffStatementMotion.entry.duration + Math.max(chars.length - 1, 0) * handoffStatementMotion.entry.stagger;
+        handoffResetCall = gsap.delayedCall(Math.max(reducedMotion ? 0.74 : 0.96, handoffDuration + 0.12), finishHandoff);
       };
 
       const handleHandoff = (event: Event) => {
@@ -519,7 +472,70 @@ export function HeroIntro({
     }, root);
 
     return () => ctx.revert();
-  }, []);
+  }, [displayedPhrase, statementCharacterCount]);
+
+  useLayoutEffect(() => {
+    if (requestedPhrase === displayedPhrase) return;
+
+    const chars = characterRefs.current.slice(0, statementCharacterCount);
+    if (chars.length !== statementCharacterCount) return;
+
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const statementMotion = getHeroStatementMotion(prefersReducedMotion);
+    const transition = gsap.timeline({
+      onComplete: () => {
+        shouldAnimatePhraseEntryRef.current = true;
+        setDisplayedPhrase(requestedPhrase);
+      },
+    });
+
+    transition
+      .to(chars, {
+        autoAlpha: 0,
+        y: statementMotion.exit.y,
+        filter: `blur(${statementMotion.exit.blur}px)`,
+        duration: statementMotion.exit.duration,
+        ease: 'power2.in',
+        force3D: true,
+        stagger: {each: statementMotion.exit.stagger, from: statementMotion.exit.from},
+      })
+      .add(() => undefined, `+=${statementMotion.phraseGap}`);
+
+    return () => {
+      transition.kill();
+    };
+  }, [displayedPhrase, requestedPhrase, statementCharacterCount]);
+
+  useLayoutEffect(() => {
+    if (!shouldAnimatePhraseEntryRef.current) return;
+
+    const chars = characterRefs.current.slice(0, statementCharacterCount);
+    if (chars.length !== statementCharacterCount) return;
+
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const statementMotion = getHeroStatementMotion(prefersReducedMotion);
+    shouldAnimatePhraseEntryRef.current = false;
+
+    gsap.set(chars, {
+      autoAlpha: 0,
+      y: statementMotion.entry.y,
+      filter: `blur(${statementMotion.entry.blur}px)`,
+    });
+
+    const transition = gsap.to(chars, {
+      autoAlpha: 1,
+      y: 0,
+      filter: 'blur(0px)',
+      duration: statementMotion.entry.duration,
+      ease: 'power3.out',
+      force3D: true,
+      stagger: {each: statementMotion.entry.stagger, from: statementMotion.entry.from},
+    });
+
+    return () => {
+      transition.kill();
+    };
+  }, [displayedPhrase, statementCharacterCount]);
 
   return (
     <section ref={rootRef} className="hero-stage" style={{'--hero-progress': `${heroProgress}`} as CSSProperties}>
@@ -538,24 +554,10 @@ export function HeroIntro({
           <div ref={introCopyRef} className="hero-intro-copy">
             <div className="hero-statement-wrap" aria-live="polite">
               <div ref={titleWrapRef} className="hero-statement-handshake">
-                <span ref={titleRealRef} className="hero-statement-line hero-statement-real">
-                  <span key={`${locale}-${phraseIndex}`} className="hero-statement-phrase">
+                <span ref={titleRealRef} className="hero-statement-line hero-statement-real" aria-label={displayedPhrase}>
+                  <span key={`${locale}-${displayedPhrase}`} className="hero-statement-phrase" aria-hidden="true">
                     {phraseLineNodes}
                   </span>
-                </span>
-                <span className="hero-statement-slices" aria-hidden="true">
-                  {HERO_SLICE_SEGMENTS.map(([start, end], index) => (
-                    <span
-                      key={`${start}-${end}`}
-                      ref={(node) => {
-                        if (node) titleSliceRefs.current[index] = node;
-                      }}
-                      className={`hero-statement-line hero-statement-slice hero-statement-slice-${index + 1}`}
-                      style={{clipPath: `inset(0 ${100 - end}% 0 ${start}%)`}}
-                    >
-                      {phraseLineNodes}
-                    </span>
-                  ))}
                 </span>
               </div>
             </div>
