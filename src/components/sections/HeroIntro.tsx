@@ -528,7 +528,7 @@ export function HeroIntro({
   }, [displayedPhrase, statementCharacterCount]);
 
   return (
-    <section ref={rootRef} className="hero-stage" style={{'--hero-progress': `${heroProgress}`} as CSSProperties}>
+    <section ref={rootRef} className="hero-stage" data-code-burst-surface style={{'--hero-progress': `${heroProgress}`} as CSSProperties}>
       <div ref={mediaRef} className="hero-media">
         <div ref={overlayRef} className="hero-overlay" />
       </div>

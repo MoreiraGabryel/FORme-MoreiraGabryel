@@ -682,6 +682,7 @@ export function TechnologyAndAboutStage({
     <section
       ref={stageSectionRef}
       className={`transition-stage technologies-stage${stageActive ? ' is-active' : ''}${stageLeaving ? ' is-leaving' : ''}${reducedMotion ? ' reduce-motion' : ''}${hoveredTechnologyId || activeTechnologyId ? ' has-active-technology' : ''}${activeTechnology ? ' has-open-technology-card' : ''}`}
+      data-code-burst-surface
       style={{
         ...stageStyle,
         '--technology-exit-progress': stageExitProgress,
