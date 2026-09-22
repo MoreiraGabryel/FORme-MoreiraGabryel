@@ -12,6 +12,11 @@ import {getFakeFooterHandoffOverlap} from '../../utils/fakeFooterHandoff';
 import {getStableViewportHeight} from '../../utils/stableViewport';
 import {getFooterStatementMotion} from '../../utils/footerStatementMotion';
 import {getFooterStatementLines} from '../../utils/footerStatementLines';
+import {
+  footerStatementIncomingFrom,
+  getFooterStatementParallax,
+  getFooterStatementRollMotion,
+} from '../../utils/footerStatementRollMotion';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -46,6 +51,8 @@ type Props = {
    * duas camadas em pontos diferentes do movimento — imagem dupla.
    */
   ambientPlaying: boolean;
+  footerProgress: number;
+  statementRotationActive: boolean;
 };
 
 type FooterIconName = 'github' | 'instagram' | 'linkedin' | 'whatsapp' | 'email';
@@ -121,15 +128,20 @@ export function FakeFooterStage({
   entryOpacity,
   ambientOpacity,
   ambientPlaying,
+  footerProgress,
+  statementRotationActive,
 }: Props) {
   const sectionRef = useRef<HTMLElement | null>(null);
   const stickyRef = useRef<HTMLDivElement | null>(null);
-  const statementRef = useRef<HTMLHeadingElement | null>(null);
+  const incomingStatementRef = useRef<HTMLHeadingElement | null>(null);
+  const outgoingStatementRef = useRef<HTMLHeadingElement | null>(null);
   const entryVideoRef = useRef<HTMLVideoElement | null>(null);
   const ambientVideoRef = useRef<HTMLVideoElement | null>(null);
   const [isNearViewport, setIsNearViewport] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
   const [isCompactViewport, setIsCompactViewport] = useState(false);
+  const [displayedPhraseIndex, setDisplayedPhraseIndex] = useState(footerPhraseIndex);
+  const [outgoingPhraseIndex, setOutgoingPhraseIndex] = useState<number | null>(null);
 
   useEffect(() => {
     const media = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -148,7 +160,7 @@ export function FakeFooterStage({
   }, []);
 
   useLayoutEffect(() => {
-    const statement = statementRef.current;
+    const statement = incomingStatementRef.current;
     if (!statement) return;
 
     const characters = Array.from(statement.querySelectorAll<HTMLElement>('.fake-footer-statement-char'));
@@ -159,7 +171,46 @@ export function FakeFooterStage({
     }, statement);
 
     return () => ctx.revert();
-  }, [footerPhraseIndex, isCompactViewport, locale, reducedMotion]);
+  }, [isCompactViewport, locale, reducedMotion]);
+
+  useLayoutEffect(() => {
+    if (footerPhraseIndex === displayedPhraseIndex) return;
+
+    if (reducedMotion || !statementRotationActive) {
+      setOutgoingPhraseIndex(null);
+      setDisplayedPhraseIndex(footerPhraseIndex);
+      return;
+    }
+
+    setOutgoingPhraseIndex(displayedPhraseIndex);
+    setDisplayedPhraseIndex(footerPhraseIndex);
+  }, [displayedPhraseIndex, footerPhraseIndex, reducedMotion, statementRotationActive]);
+
+  useLayoutEffect(() => {
+    const outgoing = outgoingStatementRef.current;
+    const incoming = incomingStatementRef.current;
+    const motion = getFooterStatementRollMotion(reducedMotion);
+    const outgoingMotion = motion.out;
+    const incomingMotion = motion.in;
+    if (outgoingPhraseIndex === null || !outgoing || !incoming || !outgoingMotion || !incomingMotion || !statementRotationActive) {
+      return;
+    }
+
+    const ctx = gsap.context(() => {
+      gsap.set(incoming, footerStatementIncomingFrom);
+      gsap
+        .timeline({onComplete: () => setOutgoingPhraseIndex(null)})
+        .to(outgoing, outgoingMotion, 0)
+        .to(incoming, incomingMotion, 0.04);
+    });
+
+    return () => ctx.revert();
+  }, [outgoingPhraseIndex, reducedMotion, statementRotationActive]);
+
+  useLayoutEffect(() => {
+    if (statementRotationActive || outgoingPhraseIndex === null) return;
+    setOutgoingPhraseIndex(null);
+  }, [outgoingPhraseIndex, statementRotationActive]);
 
   useLayoutEffect(() => {
     const section = sectionRef.current;
@@ -221,10 +272,29 @@ export function FakeFooterStage({
     {label: copy.privacyLabel, href: withLocale('/privacy-policy', locale)},
     {label: copy.termsLabel, href: withLocale('/terms-of-service', locale)},
   ];
-  const statementLines = getFooterStatementLines(copy.footerPhrases[footerPhraseIndex], isCompactViewport);
+  const statementLines = getFooterStatementLines(copy.footerPhrases[displayedPhraseIndex], isCompactViewport);
+  const outgoingStatementLines =
+    outgoingPhraseIndex === null ? null : getFooterStatementLines(copy.footerPhrases[outgoingPhraseIndex], isCompactViewport);
+  const statementParallax = getFooterStatementParallax(footerProgress, reducedMotion);
+  const statementParallaxStyle: CSSProperties = {
+    transform: `translate3d(0, ${statementParallax.yVh}vh, 0) scale(${statementParallax.scale})`,
+  };
+  const renderStatementLines = (lines: readonly string[], phraseIndex: number) =>
+    lines.map((line, lineIndex) => (
+      <span key={`${locale}-${phraseIndex}-${lineIndex}`} className="fake-footer-statement-editorial-line">
+        {line.split('').map((char, characterIndex) => (
+          <span
+            key={`${locale}-${phraseIndex}-${lineIndex}-${characterIndex}`}
+            className="fake-footer-statement-char"
+          >
+            {char === ' ' ? '\u00A0' : char}
+          </span>
+        ))}
+      </span>
+    ));
 
   return (
-    <section ref={sectionRef} className="fake-footer-stage" style={stageStyle}>
+    <section ref={sectionRef} className="fake-footer-stage" data-code-burst-surface style={stageStyle}>
       <div ref={stickyRef} className="fake-footer-sticky">
         <div className="fake-footer-media" aria-hidden="true">
           <div className="fake-footer-media-well" style={shellStyle}>
@@ -259,20 +329,27 @@ export function FakeFooterStage({
             <div className="fake-footer-left-column">
               <div className="fake-footer-cta-block fake-footer-cta-block-centered">
                 <div className="fake-footer-statement-wrap" aria-live="polite">
-                  <h2 ref={statementRef} key={`${locale}-${footerPhraseIndex}`} className="fake-footer-statement-line">
-                    {statementLines.map((line, lineIndex) => (
-                      <span key={`${locale}-${footerPhraseIndex}-${lineIndex}`} className="fake-footer-statement-editorial-line">
-                        {line.split('').map((char, characterIndex) => (
-                          <span
-                            key={`${locale}-${footerPhraseIndex}-${lineIndex}-${characterIndex}`}
-                            className="fake-footer-statement-char"
-                          >
-                            {char === ' ' ? '\u00A0' : char}
-                          </span>
-                        ))}
-                      </span>
-                    ))}
-                  </h2>
+                  <div className="fake-footer-statement-parallax" style={statementParallaxStyle}>
+                    <div className="fake-footer-statement-drum">
+                      {outgoingStatementLines && outgoingPhraseIndex !== null && (
+                        <h2
+                          ref={outgoingStatementRef}
+                          key={`${locale}-${outgoingPhraseIndex}-outgoing`}
+                          className="fake-footer-statement-line fake-footer-statement-line--outgoing"
+                          aria-hidden="true"
+                        >
+                          {renderStatementLines(outgoingStatementLines, outgoingPhraseIndex)}
+                        </h2>
+                      )}
+                      <h2
+                        ref={incomingStatementRef}
+                        key={`${locale}-${displayedPhraseIndex}-incoming`}
+                        className="fake-footer-statement-line fake-footer-statement-line--incoming"
+                      >
+                        {renderStatementLines(statementLines, displayedPhraseIndex)}
+                      </h2>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
