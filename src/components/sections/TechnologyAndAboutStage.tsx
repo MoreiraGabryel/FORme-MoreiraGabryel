@@ -8,6 +8,7 @@ import {TECHNOLOGIES, TECHNOLOGIES_SECTION_COPY, type Technology} from '../../co
 import {TECHNOLOGY_SCENE, TECHNOLOGY_SCENE_REDUCED_MOTION} from '../../config/scenes';
 import {useIsMobile} from '../../hooks/useIsMobile';
 import {getStableViewportHeight} from '../../utils/stableViewport';
+import {getTechnologyFrameSequence} from '../../utils/technologyFrameSequence';
 import {TECHNOLOGY_EXIT_PROGRESS} from '../../utils/technologyStageProgress';
 
 gsap.registerPlugin(ScrollTrigger, SplitText);
@@ -28,7 +29,6 @@ type FloatingTechnologySpec = {
 
 const DESKTOP_TECH_COUNT = 16;
 const MOBILE_TECH_COUNT = 12;
-const SCENE_TWO_IMAGE = '/media/scene-1.webp';
 const MOBILE_FLOAT_POINTS = [
   {left: 0.16, top: 0.18},
   {left: 0.84, top: 0.18},
@@ -295,6 +295,7 @@ export function TechnologyAndAboutStage({
   const stageSectionRef = useRef<HTMLElement | null>(null);
   const pinnedShellRef = useRef<HTMLDivElement | null>(null);
   const sceneBackgroundRef = useRef<HTMLDivElement | null>(null);
+  const frameLayerRefs = useRef<HTMLImageElement[]>([]);
   const stageBackdropRef = useRef<HTMLDivElement | null>(null);
   const titleTextRef = useRef<HTMLSpanElement | null>(null);
   const titleGlowRef = useRef<HTMLDivElement | null>(null);
@@ -317,6 +318,7 @@ export function TechnologyAndAboutStage({
   const OUTRO_DURATION = 680;
 
   const sectionCopy = TECHNOLOGIES_SECTION_COPY[locale];
+  const frameSequence = useMemo(() => getTechnologyFrameSequence(reducedMotion), [reducedMotion]);
   const visibleTechnologies = useMemo(
     () => TECHNOLOGIES.slice(0, isMobile ? MOBILE_TECH_COUNT : DESKTOP_TECH_COUNT),
     [isMobile],
@@ -348,6 +350,7 @@ export function TechnologyAndAboutStage({
     const section = stageSectionRef.current;
     const pinnedShell = pinnedShellRef.current;
     const sceneBackground = sceneBackgroundRef.current;
+    const frameLayers = frameLayerRefs.current.slice(0, frameSequence.frames.length);
     const stageBackdrop = stageBackdropRef.current;
     const titleText = titleTextRef.current;
     const titleGlow = titleGlowRef.current;
@@ -359,6 +362,7 @@ export function TechnologyAndAboutStage({
       !section ||
       !pinnedShell ||
       !sceneBackground ||
+      frameLayers.length !== frameSequence.frames.length ||
       !stageBackdrop ||
       !titleText ||
       !titleGlow ||
@@ -378,13 +382,16 @@ export function TechnologyAndAboutStage({
       });
 
       gsap.set(sceneBackground, {
-        autoAlpha: 0,
-        scale: reducedMotion ? 1 : isMobile ? 1.2 : 1.45,
+        autoAlpha: 1,
+        scale: 1,
         yPercent: 0,
-        filter: reducedMotion ? 'none' : 'blur(2px) brightness(0.72)',
+        filter: 'none',
         transformOrigin: 'center center',
-        willChange: 'transform, opacity',
+        willChange: 'opacity',
       });
+
+      gsap.set(frameLayers, {autoAlpha: 0, willChange: 'opacity'});
+      gsap.set(frameLayers[0], {autoAlpha: 1});
 
       gsap.set(stageBackdrop, {
         autoAlpha: 0,
@@ -414,7 +421,7 @@ export function TechnologyAndAboutStage({
       });
 
 
-      gsap.timeline({
+      const timeline = gsap.timeline({
         defaults: {ease: 'none'},
         scrollTrigger: {
           trigger: section,
@@ -435,18 +442,22 @@ export function TechnologyAndAboutStage({
           onRefresh: (self) => onProgressRef.current(self.progress),
           onUpdate: (self) => onProgressRef.current(self.progress),
         },
-      })
-        .to(
-          sceneBackground,
-          {
-            autoAlpha: 1,
-            scale: 1,
-            yPercent: 0,
-            filter: 'blur(0px) brightness(1)',
-            duration: reducedMotion ? 0.06 : 0.08,
-          },
-          0,
-        )
+      });
+
+      if (!reducedMotion && frameSequence.entry) {
+        timeline.fromTo(frameLayers[0], {autoAlpha: 0}, {autoAlpha: 1, duration: frameSequence.entry.end}, frameSequence.entry.start);
+
+        frameSequence.frames.slice(1).forEach((frame, index) => {
+          const previousFrame = frameSequence.frames[index];
+          const transitionDuration = previousFrame.exit - frame.enter;
+
+          timeline
+            .to(frameLayers[index], {autoAlpha: 0, duration: transitionDuration}, frame.enter)
+            .to(frameLayers[index + 1], {autoAlpha: 1, duration: transitionDuration}, frame.enter);
+        });
+      }
+
+      timeline
         .to(
           stageBackdrop,
           {autoAlpha: 1, scale: 1, duration: reducedMotion ? 0.1 : 0.2},
@@ -481,15 +492,6 @@ export function TechnologyAndAboutStage({
           reducedMotion ? 0.14 : 0.34,
         )
         .to(
-          sceneBackground,
-          {
-            scale: reducedMotion ? 1.006 : 1.028,
-            yPercent: reducedMotion ? -0.4 : -1.8,
-            duration: 0.6,
-          },
-          0.2,
-        )
-        .to(
           stageOneLayer,
           {
             autoAlpha: 0,
@@ -500,10 +502,9 @@ export function TechnologyAndAboutStage({
         )
         // O campo de tecnologias apaga diretamente para o portal do rodapé.
         .to(
-          [sceneBackground, stageBackdrop],
+          stageBackdrop,
           {
             autoAlpha: 0,
-            scale: reducedMotion ? 1 : 1.09,
             duration: TECHNOLOGY_EXIT_DURATION,
           },
           TECHNOLOGY_EXIT_PROGRESS,
@@ -514,7 +515,7 @@ export function TechnologyAndAboutStage({
       ctx.revert();
       splitTitle?.revert();
     };
-  }, [isMobile, locale, reducedMotion]);
+  }, [frameSequence, isMobile, locale, reducedMotion]);
 
   useEffect(() => {
     if (!activeTechnologyId) return;
@@ -691,7 +692,18 @@ export function TechnologyAndAboutStage({
     >
       <div ref={pinnedShellRef} className="technologies-pin-shell">
         <div ref={sceneBackgroundRef} className="transition-scene-background" aria-hidden="true">
-          <img className="technology-scene-image" src={SCENE_TWO_IMAGE} alt="" />
+          {frameSequence.frames.map((frame, index) => (
+            <img
+              key={frame.src}
+              ref={(node) => {
+                if (node) frameLayerRefs.current[index] = node;
+              }}
+              className="technology-frame-layer"
+              src={frame.src}
+              alt=""
+              decoding="async"
+            />
+          ))}
         </div>
 
         <div ref={stageBackdropRef} className="transition-backdrop technologies-backdrop" aria-hidden="true">
