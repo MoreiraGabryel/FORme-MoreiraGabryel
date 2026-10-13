@@ -1,0 +1,38 @@
+[
+  {
+    "id": "html5",
+    "source": "https://raw.githubusercontent.com/devicons/devicon/master/icons/html5/html5-original.svg"
+  },
+  {
+    "id": "css3",
+    "source": "https://raw.githubusercontent.com/devicons/devicon/master/icons/css3/css3-original.svg"
+  },
+  {
+    "id": "gsap",
+    "source": "https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/gsap.svg"
+  },
+  {
+    "id": "lenis",
+    "source": "https://lenis.dev/"
+  },
+  {
+    "id": "framer-motion",
+    "source": "https://raw.githubusercontent.com/devicons/devicon/master/icons/framermotion/framermotion-original.svg"
+  },
+  {
+    "id": "express",
+    "source": "https://raw.githubusercontent.com/devicons/devicon/master/icons/express/express-original.svg"
+  },
+  {
+    "id": "sqlite",
+    "source": "https://raw.githubusercontent.com/devicons/devicon/master/icons/sqlite/sqlite-original.svg"
+  },
+  {
+    "id": "mercadopago",
+    "source": "https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/mercadopago.svg"
+  },
+  {
+    "id": "mcp",
+    "source": "https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/modelcontextprotocol.svg"
+  }
+]

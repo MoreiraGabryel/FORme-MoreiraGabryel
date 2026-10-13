@@ -8,8 +8,7 @@ import {FakeFooterStage} from './components/sections/FakeFooterStage';
 import {CodeBurstLayer} from './components/effects/CodeBurstLayer';
 import {LegalPage} from './components/legal/LegalPage';
 import {HOME_COPY} from './config/homeContent';
-import {FAKE_FOOTER_SCENE, HERO_SCENE, HERO_SCENE_REDUCED_MOTION} from './config/scenes';
-import type {SceneGeometry} from './config/scenes';
+import {HERO_SCENE, HERO_SCENE_REDUCED_MOTION} from './config/scenes';
 import {useTranslation} from './i18n/useTranslation';
 import {useSmoothScroll} from './hooks/useSmoothScroll';
 import {getStableViewportHeight} from './utils/stableViewport';
@@ -79,7 +78,6 @@ export default function App() {
     heroProgress: 0,
     rawStageProgress: 0,
     rawStageApproach: 0,
-    rawFakeFooterApproach: 0,
     rawFakeFooterProgress: 0,
     scrollDirectionBias: 0,
     isLargeViewport: false,
@@ -89,7 +87,6 @@ export default function App() {
     heroProgress,
     rawStageProgress,
     rawStageApproach,
-    rawFakeFooterApproach,
     rawFakeFooterProgress,
     scrollDirectionBias,
     isLargeViewport,
@@ -104,6 +101,12 @@ export default function App() {
   const handleStageProgress = useCallback((progress: number) => {
     setScrollState((current) =>
       current.rawStageProgress === progress ? current : {...current, rawStageProgress: progress},
+    );
+  }, []);
+
+  const handleFakeFooterProgress = useCallback((progress: number) => {
+    setScrollState((current) =>
+      current.rawFakeFooterProgress === progress ? current : {...current, rawFakeFooterProgress: progress},
     );
   }, []);
 
@@ -148,17 +151,7 @@ export default function App() {
     let directionBias = 0;
     const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
 
-    // O progresso é ancorado em `rect.top` e no comprimento declarado em
-    // `config/scenes` — nunca em `offsetHeight`. O `pin` do ScrollTrigger insere
-    // um spacer que altera a altura da seção, então medir altura aqui seria ler
-    // um layout que o outro sistema muta: a cena passaria a ter duas durações.
-    const resolveProgress = (section: HTMLElement, scene: SceneGeometry) => {
-      const viewportHeight = getStableViewportHeight();
-      const introOffset = viewportHeight * scene.leadInViewports;
-      const available = Math.max(viewportHeight * scene.lengthInViewports - introOffset, 1);
-      const travelled = -section.getBoundingClientRect().top - introOffset;
-      return clamp(travelled / available, 0, 1);
-    };
+    // Both scene progress values come from their pins, not a second geometry clock.
 
   
     const resolveApproach = (section: HTMLElement) => {
@@ -181,8 +174,6 @@ export default function App() {
         ...current,
         heroProgress: clamp(rawHero, 0, 1),
         rawStageApproach: resolveApproach(transitionSection),
-        rawFakeFooterApproach: resolveApproach(fakeFooterSection),
-        rawFakeFooterProgress: resolveProgress(fakeFooterSection, FAKE_FOOTER_SCENE),
         scrollDirectionBias: directionBias,
         isLargeViewport: window.innerWidth >= 1500 || viewportHeight >= 920,
         prefersReducedMotion: reducedMotionQuery.matches,
@@ -223,13 +214,11 @@ export default function App() {
   const stageEase = 1 - Math.pow(1 - stageProgress, 3);
   const stageSettleEase = smoothstep(stageReleaseProgress);
 
-  // Só depois do recuo dos cards terminar. Em 0.92 o portal já ficava armado
-  // com os cards ainda em cena, e era isso que embolava a transição.
-  // A janela entre o fim do pin da tecnologia e o `top top` do rodapé: 1
-  // viewport exato, que é onde a entrada acontece.
-  const fakeFooterEntrance = smoothstep(rawFakeFooterApproach);
+  // The stack finishes its frame sequence into black before the footer enters.
+  // Reveal only after the footer's own pin starts, never on the moving approach.
   const fakeFooterGate = rawStageProgress >= 0.995 ? 1 : 0;
   const fakeFooterProgress = fakeFooterGate === 0 ? 0 : clamp((rawFakeFooterProgress - 0.01) / 0.99, 0, 1);
+  const fakeFooterEntrance = smoothstep(clamp(fakeFooterProgress / 0.08, 0, 1));
   const fakeFooterEase = 1 - Math.pow(1 - fakeFooterProgress, 3);
   const fakeFooterTunnel = clamp((fakeFooterProgress - 0.01) / 0.62, 0, 1);
   const fakeFooterTunnelEase = smoothstep(fakeFooterTunnel);
@@ -272,9 +261,7 @@ export default function App() {
     ),
   );
   
-  // O 0.22 era constante: no primeiro quadro da cena a imagem já entrava a 22%,
-  // e antes dela havia 1 viewport de rolagem sem nada. Agora esse mesmo valor
-  // nasce ao longo da aproximação, e a ativação da cena continua de onde parou.
+  // Exposure rises with the pinned entrance; the portal stays hidden pre-pin.
   const portalExposure =
     fakeFooterEntrance * 0.22 +
     fakeFooterVideoActivation * 0.48 +
@@ -320,6 +307,7 @@ export default function App() {
 
         <div ref={fakeFooterSectionRef} className="fake-footer-flow">
           <FakeFooterStage
+            onProgress={handleFakeFooterProgress}
             copy={copy}
             locale={locale}
             footerPhraseIndex={footerPhraseIndex}
