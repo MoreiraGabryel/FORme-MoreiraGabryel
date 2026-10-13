@@ -2198,6 +2198,7 @@ button {
 
 .technologies-stage {
   --technology-edge-margin: 48px;
+  --technology-image-dim: 0.18;
   min-height: calc(var(--stable-vh) * 3);
 }
 
@@ -2232,6 +2233,15 @@ button {
   object-position: center;
   transform-origin: center center;
   will-change: opacity;
+}
+
+.technologies-stage .transition-scene-background::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: rgba(0, 0, 0, var(--technology-image-dim));
+  pointer-events: none;
 }
 
 .technologies-pin-shell > .technologies-backdrop {
@@ -2643,8 +2653,11 @@ button {
 
 .technology-float-button {
   position: relative;
+  translate: -50% -50%;
   display: grid;
   place-items: center;
+  width: clamp(44px, var(--technology-icon-size), 6.6vmin);
+  height: clamp(44px, var(--technology-icon-size), 6.6vmin);
   padding: 0;
   border: 0;
   border-radius: 0;
@@ -2655,7 +2668,7 @@ button {
   pointer-events: auto;
   transform: translate3d(0, 0, 0) scale(0.62);
   transition: outline-color 0.22s ease;
-  will-change: transform, filter;
+  will-change: transform;
 }
 
 .technology-float-button::before {
@@ -2678,46 +2691,116 @@ button {
   outline-offset: 0.35rem;
 }
 
-.technology-hover-card {
+.technology-hover-card,
+.technology-modal-backdrop {
+  --technology-ice: #bfe2ff;
+  --technology-card-surface: #0b0f15;
+  --technology-card-border: rgba(191, 226, 255, 0.22);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+}
+
+.technology-card-blade {
   position: absolute;
-  left: 50%;
-  bottom: calc(100% + 0.85rem);
-  width: min(15rem, 34vw);
-  padding: 0.75rem 0.85rem;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 14px;
-  background: rgba(10, 12, 16, 0.82);
-  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.26);
-  backdrop-filter: blur(18px);
-  color: var(--foreground);
-  opacity: 0;
+  inset: 0;
+  z-index: 0;
+  border: 1px solid var(--technology-card-border);
+  border-radius: inherit;
+  background: var(--technology-card-surface);
+  transform-origin: 44% 50%;
+  backface-visibility: hidden;
   pointer-events: none;
-  transform: translate(-50%, 0.5rem) scale(0.94);
-  transition: opacity 0.22s ease, transform 0.22s ease;
+  will-change: transform, opacity;
+}
+
+.technology-card-blade.is-leading {
+  clip-path: polygon(0 0, 37% 0, 51% 100%, 0 100%);
+}
+
+.technology-card-blade.is-trailing {
+  clip-path: polygon(37% 0, 100% 0, 100% 100%, 51% 100%);
+}
+
+.technology-card-seam {
+  position: absolute;
+  left: 44%;
+  top: 0;
+  z-index: 1;
+  width: 1px;
+  height: 100%;
+  background: var(--technology-ice);
+  transform: skewX(12deg);
+  transform-origin: center;
+  pointer-events: none;
+}
+
+.technology-card-category {
+  display: block;
+  color: var(--technology-ice);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.61rem;
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.technology-hover-card {
+  position: fixed;
+  z-index: 150;
+  width: min(17rem, calc(100vw - 28px));
+  max-height: calc(100dvh - 28px);
+  overflow: hidden;
+  padding: 1rem 1.1rem 0.85rem;
+  border-radius: 12px;
+  box-shadow: 0 12px 38px rgba(0, 0, 0, 0.42);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
   text-align: left;
+  isolation: isolate;
+  perspective: 800px;
+}
+
+.technology-hover-heading,
+.technology-hover-card p,
+.technology-hover-action {
+  position: relative;
+  z-index: 2;
 }
 
 .technology-hover-card strong {
   display: block;
-  margin-bottom: 0.32rem;
-  font-family: 'Space Grotesk', var(--font-display);
-  font-size: 0.88rem;
+  margin-top: 0.35rem;
+  font-family: var(--font-display);
+  font-size: 1.08rem;
   font-weight: 500;
-  letter-spacing: -0.02em;
+  line-height: 1.15;
+  letter-spacing: -0.025em;
 }
 
-.technology-hover-card span {
-  display: block;
-  color: rgba(215, 220, 229, 0.76);
-  font-family: var(--font-body);
+.technology-hover-card p {
+  margin: 0.65rem 0 0.8rem;
+  color: var(--text-secondary);
   font-size: 0.78rem;
-  font-weight: 300;
+  font-weight: 400;
   line-height: 1.55;
 }
 
-.technology-hover-card.is-visible {
-  opacity: 1;
-  transform: translate(-50%, 0) scale(1);
+.technology-hover-action {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid rgba(191, 226, 255, 0.13);
+  color: var(--technology-ice);
+  font-size: 0.65rem;
+}
+
+.technology-hover-action svg {
+  width: 16px;
+  height: 16px;
 }
 
 .technology-inline-icon,
@@ -2770,87 +2853,165 @@ button {
 .technology-modal-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 120;
+  z-index: 160;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 1.25rem;
-  background: rgba(0, 0, 0, 0.64);
-  backdrop-filter: blur(14px);
+  width: 100%;
+  max-width: none;
+  height: 100dvh;
+  max-height: none;
+  margin: 0;
+  padding: 16px;
+  border: 0;
+  background: transparent;
+  overflow: hidden;
+  overscroll-behavior: contain;
+}
+
+.technology-modal-backdrop:not([open]) {
+  display: none;
+}
+
+.technology-modal-backdrop::backdrop {
+  background: transparent;
+}
+
+.technology-modal-shade {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.76);
 }
 
 .technology-modal-card {
   position: relative;
-  width: min(92vw, 28rem);
-  border: 1px solid var(--border-soft);
-  border-radius: 24px;
-  padding: 1.35rem 1.35rem 1.25rem;
-  background:
-    linear-gradient(180deg, rgba(18, 26, 42, 0.9), rgba(10, 12, 16, 0.92)),
-    radial-gradient(circle at top, rgba(242, 194, 48, 0.08), transparent 58%);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.06),
-    0 28px 80px rgba(0, 0, 0, 0.46);
-  transform: translateY(0) scale(1);
-  animation: technologyModalIn 220ms cubic-bezier(0.22, 1, 0.36, 1);
+  display: flex;
+  flex-direction: column;
+  width: min(100%, 30rem);
+  max-height: calc(100dvh - 32px);
+  padding: 2rem;
+  border-radius: 16px;
+  background: transparent;
+  box-shadow: 0 24px 90px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+  isolation: isolate;
+  perspective: 1000px;
+}
+
+.technology-card-corner {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  z-index: 2;
+  width: 14px;
+  height: 14px;
+  border-right: 1px solid rgba(191, 226, 255, 0.6);
+  border-bottom: 1px solid rgba(191, 226, 255, 0.6);
+  pointer-events: none;
+}
+
+.technology-modal-heading {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 1rem;
+  padding-right: 2rem;
 }
 
 .technology-modal-icon-wrap {
-  width: 4.35rem;
-  height: 4.35rem;
-  margin-bottom: 1rem;
-  border-radius: 18px;
-  background: radial-gradient(circle at center, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.02) 68%, transparent 76%);
+  flex: 0 0 3.2rem;
+  width: 3.2rem;
+  height: 3.2rem;
 }
 
 .technology-modal-close {
   position: absolute;
-  top: 0.9rem;
-  right: 0.9rem;
-  width: 2.35rem;
-  height: 2.35rem;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 999px;
-  background: rgba(18, 26, 42, 0.54);
-  color: rgba(245, 247, 250, 0.86);
-  font-size: 1.15rem;
-  line-height: 1;
+  top: 0.65rem;
+  right: 0.65rem;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-secondary);
   cursor: pointer;
-  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+.technology-modal-close svg {
+  width: 18px;
+  height: 18px;
 }
 
 .technology-modal-close:hover,
 .technology-modal-close:focus-visible {
-  background: var(--progress-base);
-  border-color: rgba(242, 194, 48, 0.26);
-  transform: scale(1.04);
+  color: var(--technology-ice);
+  border-color: var(--technology-card-border);
+}
+
+.technology-modal-close:focus-visible {
+  outline: 2px solid var(--technology-ice);
+  outline-offset: 2px;
 }
 
 .technology-modal-card h3 {
-  margin: 1rem 0 0;
-  font-family: 'Space Grotesk', var(--font-display);
-  font-size: 1.6rem;
-  font-weight: 600;
-  letter-spacing: -0.04em;
+  margin: 0.4rem 0 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.4rem, 1.2rem + 0.6vw, 1.8rem);
+  font-weight: 500;
+  line-height: 1.15;
+  letter-spacing: -0.035em;
+  text-wrap: balance;
+}
+
+.technology-modal-application {
+  position: relative;
+  z-index: 2;
+  flex: 1 1 auto;
+  min-height: 0;
+  margin-top: 1.6rem;
+  padding-top: 1.2rem;
+  border-top: 1px solid rgba(191, 226, 255, 0.16);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(191, 226, 255, 0.3) transparent;
 }
 
 .technology-modal-card p {
-  margin: 0.85rem 0 0;
-  color: var(--muted);
-  font-family: var(--font-body);
-  font-size: 0.98rem;
-  font-weight: 300;
+  margin: 0.65rem 0 0;
+  color: var(--text-secondary);
+  font-size: 0.94rem;
+  font-weight: 400;
   line-height: 1.75;
+  text-wrap: pretty;
 }
 
-@keyframes technologyModalIn {
-  0% {
-    opacity: 0;
-    transform: translateY(12px) scale(0.96);
+@media (max-height: 480px) {
+  .technology-modal-card {
+    padding: 1rem 1.25rem;
   }
-  100% {
-    opacity: 1;
-    transform: translateY(0) scale(1);
+
+  .technology-modal-heading {
+    gap: 0.7rem;
+  }
+
+  .technology-modal-icon-wrap {
+    flex-basis: 2.5rem;
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+
+  .technology-modal-application {
+    margin-top: 0.8rem;
+    padding-top: 0.7rem;
   }
 }
 
@@ -2863,7 +3024,61 @@ button {
   }
 }
 
-@media (max-width: 900px) {
+.technology-mobile-pagination {
+  display: none;
+}
+
+@media (max-width: 767.98px) {
+  .technologies-stage {
+    --technology-image-dim: 0.22;
+  }
+
+  .technology-hover-card {
+    display: none;
+  }
+
+  .technology-mobile-pagination {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    pointer-events: auto;
+  }
+
+  .technology-mobile-pagination button {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border: 1px solid rgba(191, 226, 255, 0.24);
+    border-radius: 50%;
+    background: var(--bg-base-alt);
+    color: #bfe2ff;
+    pointer-events: auto;
+    cursor: pointer;
+  }
+
+  .technology-mobile-pagination button:disabled {
+    opacity: 0.3;
+    cursor: default;
+  }
+
+  .technology-mobile-pagination button:focus-visible {
+    outline: 2px solid #bfe2ff;
+    outline-offset: 3px;
+  }
+
+  .technology-mobile-pagination svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .technology-mobile-pagination span {
+    min-width: 5.5rem;
+    color: var(--text-secondary);
+    font-family: var(--font-body);
+    font-size: 0.7rem;
+    font-variant-numeric: tabular-nums;
+  }
 }
 
 @media (max-width: 720px) {
@@ -2923,8 +3138,8 @@ button {
   }
 
   .technology-modal-card {
-    width: 90%;
-    padding: 1.15rem;
+    width: min(100%, 26rem);
+    padding: 1.5rem;
   }
 
 
