@@ -2,6 +2,7 @@ import {useLayoutEffect, useRef, useState} from 'react';
 import type {CSSProperties, Dispatch, SetStateAction} from 'react';
 import {gsap} from 'gsap';
 import {ScrollTrigger} from 'gsap/ScrollTrigger';
+import {requestSceneRefresh} from '../../utils/sceneRefresh';
 import type {Locale} from '../../i18n/useTranslation';
 import type {HomeCopy} from '../../config/homeContent';
 import {HERO_SCENE, HERO_SCENE_REDUCED_MOTION} from '../../config/scenes';
@@ -268,6 +269,7 @@ export function HeroIntro({
             )}`,
           scrub: prefersReducedMotion ? 0.12 : 0.6,
           pin: root,
+          refreshPriority: 3,
           anticipatePin: 1,
           invalidateOnRefresh: true,
         },
@@ -488,7 +490,11 @@ export function HeroIntro({
       };
     }, root);
 
-    return () => ctx.revert();
+    requestSceneRefresh();
+    return () => {
+      ctx.revert();
+      requestSceneRefresh();
+    };
   }, [displayedPhrase, statementCharacterCount]);
 
   useLayoutEffect(() => {

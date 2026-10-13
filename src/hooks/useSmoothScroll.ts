@@ -39,18 +39,45 @@ export function useSmoothScroll(enabled: boolean) {
       wheelMultiplier: 1,
     });
 
+    // Only technology dialogs own this bridge; the Lenis instance stays local.
+    // stop() resets its target/velocity and cancels already pending inertia.
+    const technologyModals = new Set<HTMLDialogElement>();
+    let resumeAfterTechnologyModal = false;
+    const setTechnologyModal = (dialog: HTMLDialogElement, open: boolean) => {
+      if (open) {
+        if (technologyModals.has(dialog)) return;
+        if (technologyModals.size === 0) {
+          resumeAfterTechnologyModal = !lenis.isStopped;
+          lenis.stop();
+        }
+        technologyModals.add(dialog);
+      } else if (technologyModals.delete(dialog) && technologyModals.size === 0) {
+        if (resumeAfterTechnologyModal) lenis.start();
+        resumeAfterTechnologyModal = false;
+      }
+    };
+    const onTechnologyModalState = (event: Event) => {
+      const {dialog, open} = (event as CustomEvent<{dialog: HTMLDialogElement; open: boolean}>).detail;
+      setTechnologyModal(dialog, open);
+    };
+    document.addEventListener('technology-modal-state', onTechnologyModalState);
+    document.querySelectorAll<HTMLDialogElement>('dialog.technology-modal-backdrop[open]')
+      .forEach((dialog) => setTechnologyModal(dialog, true));
+
     // Um relógio: o ticker do GSAP avança o Lenis, e cada passo do Lenis
     // atualiza o ScrollTrigger. `lagSmoothing(0)` evita que o GSAP "engula"
     // quadros após uma paradinha, o que quebraria a suavidade.
     lenis.on('scroll', ScrollTrigger.update);
-    const onTick = (time: number) => lenis.raf(time * 1000);
+    const onTick = (time: number) => {
+      if (technologyModals.size === 0) lenis.raf(time * 1000);
+    };
     gsap.ticker.add(onTick);
     gsap.ticker.lagSmoothing(0);
 
     // Âncoras (#home no logo) deslizam pelo Lenis em vez de saltar. Só hashes;
     // links de página (/privacy-policy) seguem navegação normal.
     const onAnchorClick = (event: MouseEvent) => {
-      if (event.defaultPrevented || event.button !== 0) return;
+      if (technologyModals.size > 0 || event.defaultPrevented || event.button !== 0) return;
       const anchor = (event.target as HTMLElement)?.closest?.('a[href^="#"]') as HTMLAnchorElement | null;
       const hash = anchor?.getAttribute('href');
       if (!hash || hash === '#') return;
@@ -62,6 +89,7 @@ export function useSmoothScroll(enabled: boolean) {
     document.addEventListener('click', onAnchorClick);
 
     return () => {
+      document.removeEventListener('technology-modal-state', onTechnologyModalState);
       document.removeEventListener('click', onAnchorClick);
       lenis.off('scroll', ScrollTrigger.update);
       gsap.ticker.remove(onTick);

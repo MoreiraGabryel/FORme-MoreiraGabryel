@@ -2,6 +2,7 @@ import {useEffect, useLayoutEffect, useRef, useState} from 'react';
 import type {CSSProperties} from 'react';
 import {gsap} from 'gsap';
 import {ScrollTrigger} from 'gsap/ScrollTrigger';
+import {requestSceneRefresh} from '../../utils/sceneRefresh';
 import type {HomeCopy} from '../../config/homeContent';
 import {CONTACT_LINKS} from '../../config/contact';
 import {FAKE_FOOTER_SCENE} from '../../config/scenes';
@@ -53,6 +54,7 @@ type Props = {
   ambientPlaying: boolean;
   footerProgress: number;
   statementRotationActive: boolean;
+  onProgress: (progress: number) => void;
 };
 
 type FooterIconName = 'github' | 'instagram' | 'linkedin' | 'whatsapp' | 'email';
@@ -130,7 +132,9 @@ export function FakeFooterStage({
   ambientPlaying,
   footerProgress,
   statementRotationActive,
+  onProgress,
 }: Props) {
+  const onProgressRef = useRef(onProgress);
   const sectionRef = useRef<HTMLElement | null>(null);
   const stickyRef = useRef<HTMLDivElement | null>(null);
   const incomingStatementRef = useRef<HTMLHeadingElement | null>(null);
@@ -213,26 +217,35 @@ export function FakeFooterStage({
   }, [outgoingPhraseIndex, statementRotationActive]);
 
   useLayoutEffect(() => {
+    onProgressRef.current = onProgress;
+  }, [onProgress]);
+
+  useLayoutEffect(() => {
     const section = sectionRef.current;
     const sticky = stickyRef.current;
     if (!section || !sticky) return;
 
-    // O ScrollTrigger cuida apenas do pin. `--fake-footer-exit-blackout` é
-    // calculado no `App`, a partir do mesmo
-    // progresso que move o vídeo, o brilho e a escala. Enquanto viviam num
-    // timeline com `scrub`, corriam 0,65s atrás do resto da cena.
+    // Publish this pin's progress to App: video, entrance and blackout all
+    // follow the same boundaries, including the handoff overlap offset.
     const ctx = gsap.context(() => {
       ScrollTrigger.create({
         trigger: section,
         start: () => `top top+=${Math.round(getFakeFooterHandoffOverlap(getStableViewportHeight()))}`,
         end: () => `+=${Math.round(getStableViewportHeight() * FAKE_FOOTER_SCENE.lengthInViewports)}`,
         pin: sticky,
+        refreshPriority: 1,
         anticipatePin: 1,
         invalidateOnRefresh: true,
+        onRefresh: (self) => onProgressRef.current(self.progress),
+        onUpdate: (self) => onProgressRef.current(self.progress),
       });
     }, section);
 
-    return () => ctx.revert();
+    requestSceneRefresh();
+    return () => {
+      ctx.revert();
+      requestSceneRefresh();
+    };
   }, []);
 
   // Nada de decodificar vídeo enquanto a cena está longe. Uma vez que ela
