@@ -74,6 +74,14 @@ export default function App() {
   const copy = HOME_COPY[locale];
   const [phraseIndex, setPhraseIndex] = useState(0);
   const [footerPhraseIndex, setFooterPhraseIndex] = useState(0);
+  const [documentVisible, setDocumentVisible] = useState(() => typeof document === 'undefined' || !document.hidden);
+
+  useEffect(() => {
+    const updateVisibility = () => setDocumentVisible(!document.hidden);
+    updateVisibility();
+    document.addEventListener('visibilitychange', updateVisibility);
+    return () => document.removeEventListener('visibilitychange', updateVisibility);
+  }, []);
   const [scrollState, setScrollState] = useState({
     heroProgress: 0,
     rawStageProgress: 0,
@@ -233,7 +241,7 @@ export default function App() {
     clamp((fakeFooterProgress - FAKE_FOOTER_BLACKOUT_START) / (1 - FAKE_FOOTER_BLACKOUT_START), 0, 1),
   );
   const canRotateFooterPhrase =
-    !prefersReducedMotion && fakeFooterProgress >= 0.12 && fakeFooterProgress < FAKE_FOOTER_BLACKOUT_START;
+    documentVisible && !prefersReducedMotion && fakeFooterProgress >= 0.12 && fakeFooterProgress < FAKE_FOOTER_BLACKOUT_START;
 
   useEffect(() => {
     const phraseCount = copy.footerPhrases.length;
@@ -288,6 +296,7 @@ export default function App() {
           setLocale={setLocale}
           phraseIndex={phraseIndex}
           heroProgress={heroProgress}
+          pointerReady={loaded}
         />
 
         <div ref={journeySectionRef} className="technology-flow">
@@ -317,6 +326,7 @@ export default function App() {
             ambientPlaying={portalHandoff >= 1}
             footerProgress={fakeFooterProgress}
             statementRotationActive={canRotateFooterPhrase}
+            effectsActive={documentVisible}
             stageStyle={{
               '--fake-footer-progress': `${fakeFooterProgress}`,
               '--fake-footer-ease': `${fakeFooterEase}`,
