@@ -42,6 +42,9 @@ function createHarness(overrides = {}, globals = {}) {
   const cache = new Map();
   const mocks = {react, 'react/jsx-runtime': {jsx: element, jsxs: element}, 'react-dom': {createPortal: (tree) => tree}, ...overrides};
   function load(filename) {
+    // Vite handles side-effect styles; the VM executes browser JavaScript only.
+    // Actual CSS is still checked by the production build and focused rules.
+    if (path.extname(filename) === '.css') return {};
     if (cache.has(filename)) return cache.get(filename).exports;
     const module = {exports: {}};
     cache.set(filename, module);

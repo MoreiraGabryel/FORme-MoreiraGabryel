@@ -1,10 +1,12 @@
 import {startTransition, useCallback, useEffect, useRef, useState} from 'react';
 import type {CSSProperties} from 'react';
 import {gsap} from 'gsap';
+import {flushSync} from 'react-dom';
 import {LoadingScreen} from './components/sections/LoadingScreen';
 import {HeroIntro} from './components/sections/HeroIntro';
 import {TechnologyAndAboutStage} from './components/sections/TechnologyAndAboutStage';
 import {FakeFooterStage} from './components/sections/FakeFooterStage';
+import {FinalFooterStage} from './components/sections/FinalFooterStage';
 import {CodeBurstLayer} from './components/effects/CodeBurstLayer';
 import {LegalPage} from './components/legal/LegalPage';
 import {HOME_COPY} from './config/homeContent';
@@ -14,6 +16,8 @@ import {useSmoothScroll} from './hooks/useSmoothScroll';
 import {getStableViewportHeight} from './utils/stableViewport';
 import {shouldRotateHeroPhrase} from './utils/heroStatementMotion';
 import {getTechnologyStageProgress} from './utils/technologyStageProgress';
+import {flushSceneRefresh, requestSceneRefresh} from './utils/sceneRefresh';
+import {restoreFooterScene} from './utils/footerSceneRestoration';
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
@@ -56,11 +60,6 @@ const PORTAL_ENTRY_SPAN = 0.63;
 const PORTAL_HANDOFF_START = 0.63;
 const PORTAL_HANDOFF_END = 0.665;
 
-function FinalBlackoutStage() {
-  // TODO: animação autoral
-  return <section className="final-blackout-stage" data-section="final-blackout" aria-hidden="true" />;
-}
-
 export default function App() {
   const [loaded, setLoaded] = useState(false);
   const {locale, setLocale} = useTranslation();
@@ -74,6 +73,36 @@ export default function App() {
   const copy = HOME_COPY[locale];
   const [phraseIndex, setPhraseIndex] = useState(0);
   const [footerPhraseIndex, setFooterPhraseIndex] = useState(0);
+  const [documentVisible, setDocumentVisible] = useState(() => typeof document === 'undefined' || !document.hidden);
+  const footerLockedRef = useRef(false);
+  const [footerLocked, setFooterLocked] = useState(false);
+  const reconcileScrollRef = useRef<(() => void) | null>(null);
+  const restoreScene = useCallback((signal: AbortSignal) => restoreFooterScene(signal, () => {
+    if (!reconcileScrollRef.current) throw new Error('Scene geometry is not mounted');
+    flushSync(() => {
+      flushSceneRefresh();
+      signal.throwIfAborted();
+      document.dispatchEvent(new CustomEvent('footer-scene-scroll-state', {detail: {active: true, resetToTop: true}}));
+      reconcileScrollRef.current!();
+    });
+  }), []);
+
+  useEffect(() => {
+    const sync = () => {
+      footerLockedRef.current = document.documentElement?.dataset.footerSceneActive === 'true';
+      setFooterLocked(footerLockedRef.current);
+    };
+    sync();
+    document.addEventListener('footer-scene-scroll-state', sync);
+    return () => document.removeEventListener('footer-scene-scroll-state', sync);
+  }, []);
+
+  useEffect(() => {
+    const updateVisibility = () => setDocumentVisible(!document.hidden);
+    updateVisibility();
+    document.addEventListener('visibilitychange', updateVisibility);
+    return () => document.removeEventListener('visibilitychange', updateVisibility);
+  }, []);
   const [scrollState, setScrollState] = useState({
     heroProgress: 0,
     rawStageProgress: 0,
@@ -99,12 +128,14 @@ export default function App() {
   // O progresso da cena de tecnologia vem do ScrollTrigger dela, não de uma
   // segunda medição aqui: era daí que saía o descompasso entre as duas fases.
   const handleStageProgress = useCallback((progress: number) => {
+    if (footerLockedRef.current && document.documentElement.dataset.footerSceneRestoring !== 'true') return;
     setScrollState((current) =>
       current.rawStageProgress === progress ? current : {...current, rawStageProgress: progress},
     );
   }, []);
 
   const handleFakeFooterProgress = useCallback((progress: number) => {
+    if (footerLockedRef.current && document.documentElement.dataset.footerSceneRestoring !== 'true') return;
     setScrollState((current) =>
       current.rawFakeFooterProgress === progress ? current : {...current, rawFakeFooterProgress: progress},
     );
@@ -117,17 +148,19 @@ export default function App() {
 
   useEffect(() => {
     const phraseCount = copy.phrases.length;
+    if (footerLocked) return;
     if (phraseCount <= 1) return;
     if (!shouldRotateHeroPhrase(heroProgress)) return;
 
     const intervalId = window.setInterval(() => {
+      if (footerLockedRef.current) return;
       startTransition(() => {
         setPhraseIndex((current) => (current + 1) % phraseCount);
       });
     }, 4200);
 
     return () => window.clearInterval(intervalId);
-  }, [copy.phrases, heroProgress]);
+  }, [copy.phrases, heroProgress, footerLocked]);
 
 
   useEffect(() => {
@@ -159,7 +192,8 @@ export default function App() {
       return clamp(1 - section.getBoundingClientRect().top / viewportHeight, 0, 1);
     };
 
-    const updateProgress = () => {
+    const updateProgress = (restoring = false) => {
+      if (footerLockedRef.current && !restoring) return;
       const viewportHeight = getStableViewportHeight();
       const currentScrollY = window.scrollY;
       const delta = currentScrollY - lastScrollY;
@@ -184,6 +218,20 @@ export default function App() {
     // `onUpdate` do ScrollTrigger caem no mesmo tick e o React agrupa os dois
     // num único render por frame. O flag evita trabalho em frame parado.
     let pending = false;
+    const reconcile = () => {
+      lastScrollY = window.scrollY;
+      directionBias = 0;
+      pending = false;
+      updateProgress(true);
+    };
+    reconcileScrollRef.current = reconcile;
+    const sceneStateChanged = () => {
+      if (document.documentElement.dataset.footerSceneActive !== 'true') {
+        reconcile();
+        requestSceneRefresh();
+      }
+    };
+    document.addEventListener('footer-scene-scroll-state', sceneStateChanged);
     const requestUpdate = () => {
       pending = true;
     };
@@ -200,6 +248,8 @@ export default function App() {
     reducedMotionQuery.addEventListener('change', requestUpdate);
 
     return () => {
+      reconcileScrollRef.current = null;
+      document.removeEventListener('footer-scene-scroll-state', sceneStateChanged);
       gsap.ticker.remove(tick);
       window.removeEventListener('scroll', requestUpdate);
       window.removeEventListener('resize', requestUpdate);
@@ -233,13 +283,14 @@ export default function App() {
     clamp((fakeFooterProgress - FAKE_FOOTER_BLACKOUT_START) / (1 - FAKE_FOOTER_BLACKOUT_START), 0, 1),
   );
   const canRotateFooterPhrase =
-    !prefersReducedMotion && fakeFooterProgress >= 0.12 && fakeFooterProgress < FAKE_FOOTER_BLACKOUT_START;
+    !footerLocked && documentVisible && !prefersReducedMotion && fakeFooterProgress >= 0.12 && fakeFooterProgress < FAKE_FOOTER_BLACKOUT_START;
 
   useEffect(() => {
     const phraseCount = copy.footerPhrases.length;
     if (phraseCount <= 1 || !canRotateFooterPhrase) return;
 
     const intervalId = window.setInterval(() => {
+      if (footerLockedRef.current) return;
       startTransition(() => {
         setFooterPhraseIndex((current) => {
           let next = current;
@@ -340,7 +391,7 @@ export default function App() {
           />
         </div>
 
-        <FinalBlackoutStage />
+        <FinalFooterStage enabled={loaded} locale={locale} onRestore={restoreScene} />
       </main>
     </>
   );
