@@ -1,0 +1,52 @@
+.final-blackout-stage {
+  min-height: max(var(--stable-vh), 100dvh);
+}
+
+.footer-scene-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 20000;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
+  place-items: center;
+  isolation: isolate;
+  overflow: clip;
+  background: #000;
+  opacity: 1;
+  user-select: none;
+  touch-action: pinch-zoom;
+  overscroll-behavior: none;
+}
+
+/* Keep the native first-paint guard even when the layout selector sets display. */
+.footer-scene-overlay[hidden] {
+  display: none !important;
+}
+
+.footer-scene-character {
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  max-height: 100dvh;
+  object-fit: contain;
+  object-position: center bottom;
+  pointer-events: none;
+  opacity: 0;
+}
+
+.footer-scene-overlay[data-state="playing"] .footer-scene-character {
+  opacity: 1;
+}
+
+.footer-scene-overlay[data-state="revealing"] {
+  opacity: 0;
+  transition: opacity 240ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .footer-scene-overlay[data-state="revealing"] {
+    transition: none;
+  }
+}

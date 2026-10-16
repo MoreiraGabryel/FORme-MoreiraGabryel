@@ -39,37 +39,64 @@ export function useSmoothScroll(enabled: boolean) {
       wheelMultiplier: 1,
     });
 
-    // Only technology dialogs own this bridge; the Lenis instance stays local.
-    // stop() resets its target/velocity and cancels already pending inertia.
+    // Dialogs and the final scene share ownership: one cannot restart Lenis
+    // while the other still owns a lock. stop() cancels pending inertia.
     const technologyModals = new Set<HTMLDialogElement>();
-    let resumeAfterTechnologyModal = false;
-    const setTechnologyModal = (dialog: HTMLDialogElement, open: boolean) => {
-      if (open) {
-        if (technologyModals.has(dialog)) return;
-        if (technologyModals.size === 0) {
-          resumeAfterTechnologyModal = !lenis.isStopped;
-          lenis.stop();
-        }
-        technologyModals.add(dialog);
-      } else if (technologyModals.delete(dialog) && technologyModals.size === 0) {
-        if (resumeAfterTechnologyModal) lenis.start();
-        resumeAfterTechnologyModal = false;
+    let footerSceneActive = false;
+    let footerSceneRestoring = false;
+    let resumeAfterScrollLock = false;
+    const isScrollLocked = () => footerSceneActive || technologyModals.size > 0;
+    const syncScrollLock = (wasLocked: boolean) => {
+      const locked = isScrollLocked();
+      if (!wasLocked && locked) {
+        resumeAfterScrollLock = !lenis.isStopped;
+        lenis.stop();
+      } else if (wasLocked && !locked) {
+        if (resumeAfterScrollLock) lenis.start();
+        resumeAfterScrollLock = false;
       }
+    };
+    const setTechnologyModal = (dialog: HTMLDialogElement, open: boolean) => {
+      const wasLocked = isScrollLocked();
+      if (open) technologyModals.add(dialog);
+      else technologyModals.delete(dialog);
+      syncScrollLock(wasLocked);
     };
     const onTechnologyModalState = (event: Event) => {
       const {dialog, open} = (event as CustomEvent<{dialog: HTMLDialogElement; open: boolean}>).detail;
       setTechnologyModal(dialog, open);
     };
+    const onFooterSceneState = (event: Event) => {
+      const {active, resetToTop, scrollY} = (event as CustomEvent<{active: boolean; resetToTop?: boolean; scrollY?: number}>).detail;
+      const wasLocked = isScrollLocked();
+      const wasFooterActive = footerSceneActive;
+      footerSceneActive = active;
+      footerSceneRestoring = active && (footerSceneRestoring || Boolean(resetToTop) || scrollY !== undefined);
+      if (active && (resetToTop || scrollY !== undefined)) {
+        lenis.resize();
+        lenis.scrollTo(resetToTop ? 0 : scrollY!, {immediate: true, force: true});
+      } else if (!active && wasFooterActive) lenis.resize();
+      syncScrollLock(wasLocked);
+    };
     document.addEventListener('technology-modal-state', onTechnologyModalState);
+    document.addEventListener('footer-scene-scroll-state', onFooterSceneState);
     document.querySelectorAll<HTMLDialogElement>('dialog.technology-modal-backdrop[open]')
       .forEach((dialog) => setTechnologyModal(dialog, true));
+    if (document.documentElement.dataset?.footerSceneActive === 'true') {
+      const wasLocked = isScrollLocked();
+      footerSceneActive = true;
+      syncScrollLock(wasLocked);
+    }
 
     // Um relógio: o ticker do GSAP avança o Lenis, e cada passo do Lenis
     // atualiza o ScrollTrigger. `lagSmoothing(0)` evita que o GSAP "engula"
     // quadros após uma paradinha, o que quebraria a suavidade.
-    lenis.on('scroll', ScrollTrigger.update);
+    const updateScrollTrigger = () => {
+      if (!footerSceneActive || footerSceneRestoring) ScrollTrigger.update();
+    };
+    lenis.on('scroll', updateScrollTrigger);
     const onTick = (time: number) => {
-      if (technologyModals.size === 0) lenis.raf(time * 1000);
+      if (!isScrollLocked()) lenis.raf(time * 1000);
     };
     gsap.ticker.add(onTick);
     gsap.ticker.lagSmoothing(0);
@@ -77,7 +104,7 @@ export function useSmoothScroll(enabled: boolean) {
     // Âncoras (#home no logo) deslizam pelo Lenis em vez de saltar. Só hashes;
     // links de página (/privacy-policy) seguem navegação normal.
     const onAnchorClick = (event: MouseEvent) => {
-      if (technologyModals.size > 0 || event.defaultPrevented || event.button !== 0) return;
+      if (isScrollLocked() || event.defaultPrevented || event.button !== 0) return;
       const anchor = (event.target as HTMLElement)?.closest?.('a[href^="#"]') as HTMLAnchorElement | null;
       const hash = anchor?.getAttribute('href');
       if (!hash || hash === '#') return;
@@ -90,8 +117,9 @@ export function useSmoothScroll(enabled: boolean) {
 
     return () => {
       document.removeEventListener('technology-modal-state', onTechnologyModalState);
+      document.removeEventListener('footer-scene-scroll-state', onFooterSceneState);
       document.removeEventListener('click', onAnchorClick);
-      lenis.off('scroll', ScrollTrigger.update);
+      lenis.off('scroll', updateScrollTrigger);
       gsap.ticker.remove(onTick);
       gsap.ticker.lagSmoothing(500, 33);
       lenis.destroy();
