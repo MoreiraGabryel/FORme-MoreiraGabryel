@@ -10,6 +10,8 @@ import {getLoadingHeroZoomMotion} from '../../utils/loadingHeroZoomMotion';
 import {getHeroScrollExitMotion, shouldLockHeroStatementExit} from '../../utils/heroScrollExitMotion';
 import {getHeroStatementMotion, splitHeroStatementLine} from '../../utils/heroStatementMotion';
 import {getStableViewportHeight} from '../../utils/stableViewport';
+import {getPointerDepthStrength} from '../../utils/pointerDepthMotion';
+import {usePointerDepth} from '../../hooks/usePointerDepth';
 import {LanguageSwitch} from '../common/LanguageSwitch';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -110,12 +112,14 @@ export function HeroIntro({
   setLocale,
   phraseIndex,
   heroProgress,
+  pointerReady = false,
 }: {
   copy: HomeCopy;
   locale: Locale;
   setLocale: Dispatch<SetStateAction<Locale>>;
   phraseIndex: number;
   heroProgress: number;
+  pointerReady?: boolean;
 }) {
   const requestedPhrase = copy.phrases[phraseIndex];
   const [displayedPhrase, setDisplayedPhrase] = useState(requestedPhrase);
@@ -131,6 +135,7 @@ export function HeroIntro({
 
   const rootRef = useRef<HTMLElement>(null);
   const mediaRef = useRef<HTMLDivElement>(null);
+  const depthPlaneRef = useRef<HTMLDivElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
   const blackoutRef = useRef<HTMLDivElement>(null);
   const frameRef = useRef<HTMLDivElement>(null);
@@ -145,6 +150,7 @@ export function HeroIntro({
   const isHeroScrollExitActiveRef = useRef(isHeroScrollExitActive);
   const footerRef = useRef<HTMLElement>(null);
   const cueRef = useRef<HTMLParagraphElement>(null);
+  usePointerDepth(rootRef, depthPlaneRef, getPointerDepthStrength('hero', heroProgress, pointerReady));
 
   const phraseLineWords = displayedPhraseMobileLines.map(splitHeroStatementLine);
   const getCharacterIndex = (lineIndex: number, wordIndex: number, characterIndex: number) =>
@@ -572,6 +578,7 @@ export function HeroIntro({
   return (
     <section ref={rootRef} className="hero-stage" data-code-burst-surface style={{'--hero-progress': `${heroProgress}`} as CSSProperties}>
       <div ref={mediaRef} className="hero-media">
+        <div ref={depthPlaneRef} className="hero-depth-plane" aria-hidden="true" />
         <div ref={overlayRef} className="hero-overlay" />
       </div>
       <div ref={blackoutRef} className="hero-blackout" aria-hidden="true" />

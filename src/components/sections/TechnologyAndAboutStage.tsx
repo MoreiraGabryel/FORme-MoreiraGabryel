@@ -8,6 +8,8 @@ import type {Locale} from '../../i18n/useTranslation';
 import {TECHNOLOGIES, TECHNOLOGIES_SECTION_COPY, TECHNOLOGY_UI_COPY, type Technology} from '../../config/technologies';
 import {TECHNOLOGY_SCENE, TECHNOLOGY_SCENE_REDUCED_MOTION} from '../../config/scenes';
 import {useIsMobile} from '../../hooks/useIsMobile';
+import {usePointerDepth} from '../../hooks/usePointerDepth';
+import {getPointerDepthStrength} from '../../utils/pointerDepthMotion';
 import {getStableViewportHeight} from '../../utils/stableViewport';
 import {getTechnologyFrameSequence} from '../../utils/technologyFrameSequence';
 import {TECHNOLOGY_EXIT_PROGRESS} from '../../utils/technologyStageProgress';
@@ -123,6 +125,7 @@ export function TechnologyAndAboutStage({
   const stageSectionRef = useRef<HTMLElement | null>(null);
   const pinnedShellRef = useRef<HTMLDivElement | null>(null);
   const sceneBackgroundRef = useRef<HTMLDivElement | null>(null);
+  const depthPlaneRef = useRef<HTMLDivElement | null>(null);
   const frameLayerRefs = useRef<HTMLImageElement[]>([]);
   const stageBackdropRef = useRef<HTMLDivElement | null>(null);
   const titleTextRef = useRef<HTMLSpanElement | null>(null);
@@ -144,6 +147,7 @@ export function TechnologyAndAboutStage({
   const rawStageProgressRef = useRef(rawStageProgress);
   const onProgressRef = useRef(onProgress);
   const OUTRO_DURATION = 680;
+  usePointerDepth(pinnedShellRef, depthPlaneRef, getPointerDepthStrength('technology', rawStageProgress, !activeTechnologyId));
 
   const sectionCopy = TECHNOLOGIES_SECTION_COPY[locale];
   const frameSequence = useMemo(() => getTechnologyFrameSequence(reducedMotion), [reducedMotion]);
@@ -534,6 +538,7 @@ export function TechnologyAndAboutStage({
     >
       <div ref={pinnedShellRef} className="technologies-pin-shell">
         <div ref={sceneBackgroundRef} className="transition-scene-background" aria-hidden="true">
+          <div ref={depthPlaneRef} className="technology-depth-plane">
           {frameSequence.frames.map((frame, index) => (
             <img
               key={frame.src}
@@ -546,6 +551,7 @@ export function TechnologyAndAboutStage({
               decoding="async"
             />
           ))}
+          </div>
         </div>
 
         <div ref={stageBackdropRef} className="transition-backdrop technologies-backdrop" aria-hidden="true">

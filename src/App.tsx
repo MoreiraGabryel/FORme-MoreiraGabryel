@@ -339,6 +339,7 @@ export default function App() {
           setLocale={setLocale}
           phraseIndex={phraseIndex}
           heroProgress={heroProgress}
+          pointerReady={loaded}
         />
 
         <div ref={journeySectionRef} className="technology-flow">
@@ -368,6 +369,7 @@ export default function App() {
             ambientPlaying={portalHandoff >= 1}
             footerProgress={fakeFooterProgress}
             statementRotationActive={canRotateFooterPhrase}
+            effectsActive={documentVisible}
             stageStyle={{
               '--fake-footer-progress': `${fakeFooterProgress}`,
               '--fake-footer-ease': `${fakeFooterEase}`,

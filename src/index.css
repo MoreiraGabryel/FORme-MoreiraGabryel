@@ -171,12 +171,21 @@ button {
 }
 
 .hero-media {
+  background: #000;
+  overflow: hidden;
+  transform-origin: 50% 45%;
+  will-change: transform, opacity, filter;
+}
+
+.hero-depth-plane {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
   background:
     linear-gradient(180deg, rgba(5, 6, 8, 0.12), rgba(5, 6, 8, 0.24)),
     url('/media/scene-0.webp') center / cover no-repeat,
     #000;
-  transform-origin: 50% 45%;
-  will-change: transform, opacity, filter;
+  transform-origin: center;
 }
 
 .hero-media::after {
@@ -1513,7 +1522,6 @@ button {
   display: grid;
   place-items: center;
   width: 100%;
-  perspective: 1400px;
 }
 
 .fake-footer-statement-parallax {
@@ -1523,13 +1531,11 @@ button {
   will-change: transform;
 }
 
-.fake-footer-statement-drum {
+.fake-footer-statement-layers {
   display: grid;
   grid-template-areas: 'statement';
   place-items: center;
   width: 100%;
-  perspective: 1400px;
-  transform-style: preserve-3d;
 }
 
 .fake-footer-cta-block .fake-footer-statement-line {
@@ -1546,8 +1552,6 @@ button {
   letter-spacing: -0.055em;
   text-wrap: balance;
   text-align: center;
-  backface-visibility: hidden;
-  transform-style: preserve-3d;
   will-change: transform, opacity;
 }
 
@@ -2221,6 +2225,13 @@ button {
   overflow: hidden;
   pointer-events: none;
   background: #000;
+}
+
+.technology-depth-plane {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  transform-origin: center;
 }
 
 .technology-scene-image,
