@@ -13,11 +13,7 @@ import {getFakeFooterHandoffOverlap} from '../../utils/fakeFooterHandoff';
 import {getStableViewportHeight} from '../../utils/stableViewport';
 import {getFooterStatementMotion} from '../../utils/footerStatementMotion';
 import {getFooterStatementLines} from '../../utils/footerStatementLines';
-import {
-  footerStatementIncomingFrom,
-  getFooterStatementParallax,
-  getFooterStatementRollMotion,
-} from '../../utils/footerStatementRollMotion';
+import {getFooterStatementParallax} from '../../utils/footerStatementRollMotion';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -54,6 +50,8 @@ type Props = {
   ambientPlaying: boolean;
   footerProgress: number;
   statementRotationActive: boolean;
+  /** Suspend automatic motion while the document is hidden. */
+  effectsActive?: boolean;
   onProgress: (progress: number) => void;
 };
 
@@ -132,6 +130,7 @@ export function FakeFooterStage({
   ambientPlaying,
   footerProgress,
   statementRotationActive,
+  effectsActive = true,
   onProgress,
 }: Props) {
   const onProgressRef = useRef(onProgress);
@@ -146,6 +145,10 @@ export function FakeFooterStage({
   const [isCompactViewport, setIsCompactViewport] = useState(false);
   const [displayedPhraseIndex, setDisplayedPhraseIndex] = useState(footerPhraseIndex);
   const [outgoingPhraseIndex, setOutgoingPhraseIndex] = useState<number | null>(null);
+  const entranceCompletedRef = useRef(false);
+  const entranceAtStart = footerProgress <= 0.01;
+  const entranceVisible = effectsActive && footerProgress >= 0.04 && footerProgress < 0.92;
+  const phraseTransitionActive = outgoingPhraseIndex !== null && entranceVisible && statementRotationActive && !reducedMotion;
 
   useEffect(() => {
     const media = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -164,57 +167,66 @@ export function FakeFooterStage({
   }, []);
 
   useLayoutEffect(() => {
+    if (footerPhraseIndex === displayedPhraseIndex) return;
+
+    const canTransition = entranceVisible && statementRotationActive && !reducedMotion;
+    setOutgoingPhraseIndex(canTransition ? displayedPhraseIndex : null);
+    setDisplayedPhraseIndex(footerPhraseIndex);
+  }, [displayedPhraseIndex, entranceVisible, footerPhraseIndex, reducedMotion, statementRotationActive]);
+
+  useLayoutEffect(() => {
     const statement = incomingStatementRef.current;
     if (!statement) return;
 
     const characters = Array.from(statement.querySelectorAll<HTMLElement>('.fake-footer-statement-char'));
-    const motion = getFooterStatementMotion(reducedMotion);
-    const ctx = gsap.context(() => {
-      gsap.set(characters, motion.from);
-      if (motion.to) gsap.to(characters, motion.to);
-    }, statement);
-
-    return () => ctx.revert();
-  }, [isCompactViewport, locale, reducedMotion]);
-
-  useLayoutEffect(() => {
-    if (footerPhraseIndex === displayedPhraseIndex) return;
-
-    if (reducedMotion || !statementRotationActive) {
-      setOutgoingPhraseIndex(null);
-      setDisplayedPhraseIndex(footerPhraseIndex);
-      return;
-    }
-
-    setOutgoingPhraseIndex(displayedPhraseIndex);
-    setDisplayedPhraseIndex(footerPhraseIndex);
-  }, [displayedPhraseIndex, footerPhraseIndex, reducedMotion, statementRotationActive]);
-
-  useLayoutEffect(() => {
     const outgoing = outgoingStatementRef.current;
-    const incoming = incomingStatementRef.current;
-    const motion = getFooterStatementRollMotion(reducedMotion);
-    const outgoingMotion = motion.out;
-    const incomingMotion = motion.in;
-    if (outgoingPhraseIndex === null || !outgoing || !incoming || !outgoingMotion || !incomingMotion || !statementRotationActive) {
-      return;
-    }
+    const outgoingCharacters = outgoing
+      ? Array.from(outgoing.querySelectorAll<HTMLElement>('.fake-footer-statement-char'))
+      : [];
+    if (entranceAtStart) entranceCompletedRef.current = false;
+    const motion = getFooterStatementMotion(reducedMotion, isCompactViewport);
+    const stable = {autoAlpha: 1, y: 0, filter: 'blur(0px)'};
+    let cancelled = false;
+    const completeEntrance = () => {
+      if (!cancelled) entranceCompletedRef.current = true;
+    };
 
+    // One context owns both character layers, including the initial entrance.
+    // Dependency cleanup kills it before hidden-tab / blackout state is applied.
     const ctx = gsap.context(() => {
-      gsap.set(incoming, footerStatementIncomingFrom);
-      gsap
-        .timeline({onComplete: () => setOutgoingPhraseIndex(null)})
-        .to(outgoing, outgoingMotion, 0)
-        .to(incoming, incomingMotion, 0.04);
-    });
+      if (phraseTransitionActive && outgoingCharacters.length && motion.to && motion.out) {
+        gsap.set(outgoingCharacters, stable);
+        gsap.set(characters, motion.from);
+        gsap.timeline({onComplete: () => {
+          if (cancelled) return;
+          completeEntrance();
+          setOutgoingPhraseIndex((current) => current === outgoingPhraseIndex ? null : current);
+        }})
+          .to(outgoingCharacters, motion.out, 0)
+          .to(characters, motion.to, motion.out.duration + motion.out.stagger.amount + motion.phraseGap);
+        return;
+      }
 
-    return () => ctx.revert();
-  }, [outgoingPhraseIndex, reducedMotion, statementRotationActive]);
+      if (reducedMotion || entranceCompletedRef.current) {
+        gsap.set(characters, stable);
+        return;
+      }
+      gsap.set(characters, motion.from);
+      if (entranceVisible && motion.to) {
+        gsap.to(characters, {...motion.to, onComplete: completeEntrance});
+      }
+    }, stickyRef);
+
+    return () => {
+      cancelled = true;
+      ctx.revert();
+    };
+  }, [displayedPhraseIndex, entranceAtStart, entranceVisible, isCompactViewport, locale, outgoingPhraseIndex, phraseTransitionActive, reducedMotion]);
 
   useLayoutEffect(() => {
-    if (statementRotationActive || outgoingPhraseIndex === null) return;
+    if (entranceVisible && statementRotationActive && !reducedMotion || outgoingPhraseIndex === null) return;
     setOutgoingPhraseIndex(null);
-  }, [outgoingPhraseIndex, statementRotationActive]);
+  }, [entranceVisible, outgoingPhraseIndex, reducedMotion, statementRotationActive]);
 
   useLayoutEffect(() => {
     onProgressRef.current = onProgress;
@@ -343,7 +355,7 @@ export function FakeFooterStage({
               <div className="fake-footer-cta-block fake-footer-cta-block-centered">
                 <div className="fake-footer-statement-wrap" aria-live="polite">
                   <div className="fake-footer-statement-parallax" style={statementParallaxStyle}>
-                    <div className="fake-footer-statement-drum">
+                    <div className="fake-footer-statement-layers">
                       {outgoingStatementLines && outgoingPhraseIndex !== null && (
                         <h2
                           ref={outgoingStatementRef}
