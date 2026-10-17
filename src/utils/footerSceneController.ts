@@ -1,5 +1,5 @@
 import {FOOTER_MAX_VISITS, isFooterSceneFullyVisible} from './footerScenePolicy';
-import type {createFooterVisitCounter} from './footerScenePolicy';
+import type {createFooterVisitCounter, FooterPlaybackReservation} from './footerScenePolicy';
 
 export type FooterSceneState = 'idle' | 'loading' | 'playing' | 'blackout' | 'revealing' | 'exhausted' | 'disposed';
 export type FooterSceneLock = {returnToTop: (signal?: AbortSignal) => void | Promise<void>; release: () => void};
@@ -24,6 +24,8 @@ export function createFooterSceneController(options: Options) {
   let armed = true;
   let counted = false;
   let admission: AbortController | undefined;
+  let reservation: FooterPlaybackReservation | undefined;
+  let confirmingPresentation = false;
   let restoration: AbortController | undefined;
   let retryRestoration: (() => void) | undefined;
   let restorationDeadline: {remaining: number; due: number; callback: () => void; handle?: unknown} | undefined;
@@ -49,7 +51,11 @@ export function createFooterSceneController(options: Options) {
   let lastProgressAt = 0;
   const active = () => state === 'loading' || state === 'playing' || state === 'blackout' || state === 'revealing';
   const setState = (next: FooterSceneState) => {state = next;options.onState(next);};
-  const abortAdmission = () => {admission?.abort();admission = undefined;};
+  const abortAdmission = () => {
+    admission?.abort();admission = undefined;
+    reservation?.release();reservation = undefined;
+    confirmingPresentation = false;
+  };
   const release = () => {
     clock.clear(restorationDeadline?.handle);restorationDeadline = undefined;retryRestoration = undefined;
     restoration?.abort();restoration = undefined;lock?.release();lock = undefined;
@@ -90,11 +96,25 @@ export function createFooterSceneController(options: Options) {
   };
   const reportTime = (mediaTime: number) => {
     if (!visible || state !== 'playing' || !Number.isFinite(mediaTime)) return;
-    if (mediaTime > lastMediaTime + .001) {
+    const advanced = mediaTime > lastMediaTime + .001;
+    if (advanced) {
       lastMediaTime = mediaTime;
-      lastProgressAt = clock.now();
+      if (counted) lastProgressAt = clock.now();
     }
     options.onTime?.(Math.max(0, mediaTime));
+    if (!counted && !confirmingPresentation && reservation && admission && advanced && mediaTime > 0 &&
+      video.readyState >= 2 && video.videoWidth > 0 && video.videoHeight > 0 && !video.paused && !video.seeking) {
+      confirmingPresentation = true;
+      const owner = admission;
+      void reservation.confirm().then(confirmed => {
+        if (admission !== owner || owner.signal.aborted || !visible || state !== 'playing') return;
+        confirmingPresentation = false;
+        if (!confirmed) {finish();return;}
+        counted = true;
+        admission = undefined;
+        reservation = undefined;
+      });
+    }
   };
   const queueFrame = () => {
     if (!visible || state !== 'playing' || frame !== undefined || !video.requestVideoFrameCallback) return;
@@ -159,34 +179,10 @@ export function createFooterSceneController(options: Options) {
   };
   const playing = () => {
     if (!visible || (state !== 'loading' && state !== 'playing')) return;
-    if (counted && !admission) {setState('playing');queueFrame();return;}
-    // The playing event proves actual playback (not buffering). Keep it hidden
-    // and paused until serialized admission completes, even if another tab waits.
-    video.pause();
-    if (admission) return;
-    const request = new AbortController();
-    admission = request;
-    const admitted = (allowed: boolean) => {
-      if (admission !== request || request.signal.aborted || !visible || state !== 'loading') return;
-      admission = undefined;
-      if (!allowed) {
-        playAttempt++;
-        stopWatchdog();
-        stopFrames();
-        video.pause();
-        release();
-        setState('exhausted');
-        return;
-      }
-      lastProgressAt = clock.now();
-      setState('playing');
-      play();
-      queueFrame();
-    };
-    counter.consume(request.signal, () => {
-      // Ownership survives hiding; this acknowledgment must not play or publish UI.
-      if (admission === request && state === 'loading') counted = true;
-    }).then(admitted, () => admitted(false));
+    if (!counted && !reservation) return;
+    // A reserved slot allows presentation; playing alone never spends a visit.
+    setState('playing');
+    queueFrame();
   };
   const play = () => {
     const attempt = ++playAttempt;
@@ -200,6 +196,31 @@ export function createFooterSceneController(options: Options) {
     try {video.play().catch(rejected);}
     catch (error) {rejected(error);}
   };
+  const startPlayback = () => {
+    if (counted) {play();startWatchdog();return;}
+    if (admission) return;
+    lastMediaTime = video.currentTime;
+    const request = new AbortController();
+    admission = request;
+    const reserved = (slot: FooterPlaybackReservation | null) => {
+      if (admission !== request || request.signal.aborted || !visible || state !== 'loading') {
+        slot?.release();return;
+      }
+      if (!slot) {
+        abortAdmission();stopWatchdog();stopFrames();video.pause();release();
+        setState(counter.read() >= FOOTER_MAX_VISITS ? 'exhausted' : 'idle');
+        return;
+      }
+      reservation = slot;
+      lastProgressAt = clock.now();
+      play();
+    };
+    void counter.reserve(request.signal, () => {
+      // Preserve committed ownership if hiding happens before promise settlement.
+      if (admission === request && state === 'playing') {counted = true;lastProgressAt = clock.now();}
+    }).then(reserved, () => reserved(null));
+    startWatchdog();
+  };
   video.addEventListener('playing', playing);
   video.addEventListener('ended', finish);
   video.addEventListener('error', finish);
@@ -208,6 +229,7 @@ export function createFooterSceneController(options: Options) {
     getState: () => state,
     checkViewport(rect: {top: number; bottom: number}, viewportHeight: number) {
       const full = isFooterSceneFullyVisible(rect, viewportHeight);
+      if (state === 'exhausted' && counter.read() < FOOTER_MAX_VISITS) setState('idle');
       if (!full) {if (!active()) armed = true;return;}
       if (!visible || state !== 'idle' || !armed) return;
       if (counter.read() >= FOOTER_MAX_VISITS) {setState('exhausted');return;}
@@ -223,8 +245,7 @@ export function createFooterSceneController(options: Options) {
       video.playbackRate = 1;
       lastMediaTime = 0;
       lastProgressAt = clock.now();
-      play();
-      startWatchdog();
+      startPlayback();
     },
     setVisible(next: boolean) {
       if (state === 'disposed' || next === visible) return;
@@ -233,6 +254,7 @@ export function createFooterSceneController(options: Options) {
         abortAdmission();
         playAttempt++;
         if (active()) video.pause();
+        if (state === 'playing' && !counted) setState('loading');
         stopFrames();
         stopWatchdog();
         pausePhase();
@@ -243,8 +265,7 @@ export function createFooterSceneController(options: Options) {
         }
       } else if (state === 'loading' || state === 'playing') {
         lastProgressAt = clock.now();
-        play();
-        startWatchdog();
+        startPlayback();
       }
       else {
         if (state === 'blackout') resumeRestorationDeadline();
