@@ -1,5 +1,6 @@
-import {useEffect, useRef} from 'react';
+import {useEffect, useLayoutEffect, useRef} from 'react';
 import type {RefObject} from 'react';
+import {createMobileVideoScrubber} from '../utils/mobileVideoScrubber';
 
 // Meio quadro a 24 fps: abaixo disso o seek não muda a imagem, só gasta decoder.
 const SEEK_EPSILON = 1 / 48;
@@ -26,17 +27,43 @@ function clamp01(value: number) {
 export function useScrubbedVideo(
   ref: RefObject<HTMLVideoElement | null>,
   progress: number,
-  {enabled = true}: {enabled?: boolean} = {},
+  {enabled = true, maxSeekStep, onPresented}: {
+    enabled?: boolean;
+    maxSeekStep?: number;
+    onPresented?: (progress: number | null) => void;
+  } = {},
 ) {
   const targetRef = useRef(progress);
   const enabledRef = useRef(enabled);
   const pendingSeekRef = useRef(false);
   const primedRef = useRef(false);
   const flushRef = useRef<() => void>(() => undefined);
+  const mobileRef = useRef<ReturnType<typeof createMobileVideoScrubber> | null>(null);
+  const presentedCallbackRef = useRef(onPresented);
+  const ownerRef = useRef(0);
+
+  // Retire passive work before replacement layout effects can claim the video.
+  useLayoutEffect(() => () => {ownerRef.current++;}, [ref, maxSeekStep]);
+  useLayoutEffect(() => {presentedCallbackRef.current = onPresented;}, [onPresented]);
+  useLayoutEffect(() => {
+    if (maxSeekStep === undefined || !ref.current) return;
+    const scrubber = createMobileVideoScrubber(ref.current, maxSeekStep, value => presentedCallbackRef.current?.(value));
+    mobileRef.current = scrubber;
+    return () => {mobileRef.current = null;scrubber.dispose();};
+  }, [ref, maxSeekStep]);
+  useLayoutEffect(() => {
+    targetRef.current = progress;
+    enabledRef.current = enabled;
+    mobileRef.current?.update(progress, enabled);
+  }, [progress, enabled, ref, maxSeekStep]);
 
   useEffect(() => {
+    if (maxSeekStep !== undefined) return;
     const video = ref.current;
     if (!video) return;
+    let disposed = false;
+    const owner = ownerRef.current;
+    const retired = () => disposed || owner !== ownerRef.current;
 
     video.muted = true;
     video.defaultMuted = true;
@@ -58,6 +85,7 @@ export function useScrubbedVideo(
       }
       played
         .then(() => {
+          if (retired()) return;
           video.pause();
           flush();
         })
@@ -65,7 +93,7 @@ export function useScrubbedVideo(
     };
 
     const flush = () => {
-      if (!enabledRef.current) return;
+      if (retired() || !enabledRef.current) return;
 
       if (!primedRef.current) {
         primedRef.current = true;
@@ -92,7 +120,7 @@ export function useScrubbedVideo(
     flushRef.current = flush;
 
     const handleSeeked = () => {
-      if (!pendingSeekRef.current) return;
+      if (retired() || !pendingSeekRef.current) return;
       pendingSeekRef.current = false;
       flush();
     };
@@ -104,16 +132,18 @@ export function useScrubbedVideo(
     flush();
 
     return () => {
+      disposed = true;
       video.removeEventListener('seeked', handleSeeked);
       video.removeEventListener('loadedmetadata', flush);
       video.removeEventListener('loadeddata', flush);
       flushRef.current = () => undefined;
     };
-  }, [ref]);
+  }, [ref, maxSeekStep]);
 
   useEffect(() => {
+    if (maxSeekStep !== undefined) return;
     targetRef.current = progress;
     enabledRef.current = enabled;
     flushRef.current();
-  }, [progress, enabled]);
+  }, [progress, enabled, maxSeekStep]);
 }

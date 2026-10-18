@@ -13,6 +13,8 @@ Portfolio estatico em React + Vite + TypeScript, preparado para deploy no Cloudf
 ## Scripts
 
 - `npm run dev` inicia o Vite em `http://127.0.0.1:3000`
+- `npm run dev:counter` inicia a API/D1 local do contador em `http://127.0.0.1:8788`; mantenha junto do Vite para revisar o contador sem build
+- `npm run test:counter` verifica o contador, sua integração e a política de uma entrada por documento
 - `npm run dev:fresh` libera a porta 3000, limpa o cache do Vite e inicia o servidor
 - `npm run dev:stop` encerra um processo Node/Vite ouvindo na porta 3000
 - `npm run lint` valida o código com ESLint
@@ -32,6 +34,7 @@ Observacao:
 - Node version: 22+ (alinhar com o CI em `.github/workflows/quality-gate.yml`)
 - `public/_redirects` faz o fallback SPA (`/* /index.html 200`) para as rotas legais funcionarem em acesso direto
 - `public/_headers` define cabecalhos de seguranca e cache dos assets
+- O contador da Hero usa `_worker.js` e um binding D1 chamado `VISITOR_COUNTER_DB`. Configuração única e prévia sem build: [docs/hero-visitor-counter.md](docs/hero-visitor-counter.md).
 
 ## Estrutura
 

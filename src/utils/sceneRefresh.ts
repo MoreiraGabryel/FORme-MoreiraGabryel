@@ -22,7 +22,8 @@ export function flushSceneRefresh() {
     const target = Math.min(1, Math.max(0, (pin.scroll() - pin.start) / (pin.end - pin.start)));
     // Completing an old scrub target would faithfully render the wrong scene.
     if (!Number.isFinite(target) || Math.abs(pin.progress - target) > 0.0001) throw new Error('Scene pin target is not reconciled');
-    pin.getTween()?.progress(1);
+    const scrubTween = pin.getTween();
+    if (scrubTween) scrubTween.progress(1);
     if (pin.animation && Math.abs(pin.animation.totalProgress() - pin.progress) > 0.0001) throw new Error('Scene scrub target is not reconciled');
   }
   window.dispatchEvent(new Event('scroll'));

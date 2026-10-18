@@ -20,10 +20,13 @@ function mount({compact = false, reduced = false} = {}) {
   const harness = createHarness({
     gsap: {gsap}, 'gsap/ScrollTrigger': {ScrollTrigger: {create() {}}},
     '../../utils/sceneRefresh': {requestSceneRefresh() {}},
+    '../../utils/stableViewport': {getStableViewportHeight: () => 700},
     '../../hooks/useAmbientVideo': {useAmbientVideo() {}},
     '../../hooks/useScrubbedVideo': {useScrubbedVideo() {}},
   }, {window: {matchMedia: (query: string) => ({matches: query.includes('max-width') ? compact : reduced,
-    addEventListener() {}, removeEventListener() {}})}});
+    addEventListener() {}, removeEventListener() {}})},
+    IntersectionObserver: class {observe() {} disconnect() {}},
+  });
   const Component = harness.load(fileURLToPath(new URL('../src/components/sections/FakeFooterStage.tsx', import.meta.url))).FakeFooterStage;
   const props = {copy: HOME_COPY.pt, locale: 'pt', footerPhraseIndex: 0, stageStyle: {}, shellStyle: {},
     portalLayerStyle: {}, entryProgress: 0, entryOpacity: 0, ambientOpacity: 0, ambientPlaying: false,

@@ -1,0 +1,123 @@
+@media (max-width: 767.98px), (max-width: 1024px) and (hover: none) and (pointer: coarse) {
+  .fake-footer-flow {
+    --fake-footer-handoff-overlap: clamp(72px, calc(var(--stable-vh) * 0.13), 128px);
+    margin-bottom: calc(var(--fake-footer-handoff-overlap) * -1);
+  }
+
+  /* Reserve the large viewport before GSAP captures the pin's inline dimensions. */
+  .fake-footer-stage,
+  .fake-footer-sticky {
+    min-height: max(var(--stable-vh), 100lvh);
+  }
+
+  .fake-footer-surface {
+    height: calc(var(--mobile-visual-vh, var(--stable-vh)) + var(--mobile-visual-top, 0px));
+    min-height: 0;
+    row-gap: clamp(0.9rem, calc(var(--stable-vh) * 0.022), 1.45rem);
+    padding-top: clamp(4.5rem, calc(var(--stable-vh) * 0.09), 6rem);
+  }
+
+  .fake-footer-sticky {
+    --fake-footer-entry-feather: max(1px, calc((1 - var(--fake-footer-entrance, 1)) * var(--stable-vh) * 0.18));
+  }
+
+  .fake-footer-left-column .fake-footer-cta-block {
+    transform: translate3d(0, calc(var(--stable-vh) * -0.01 + var(--fake-footer-reverse, 0) * 1.45rem), 0);
+  }
+
+  /* No independent fade may lag behind unpinning or a reverse scroll. */
+  .fake-footer-exit-blackout {
+    z-index: 8;
+    transition: none;
+  }
+
+  .fake-footer-stage[data-mobile-exited] .fake-footer-sticky {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+
+  /* Only the background covers the extra area exposed by retracting browser UI. */
+  .fake-footer-media {
+    height: max(var(--stable-vh), 100lvh);
+    bottom: auto;
+  }
+
+  .fake-footer-layout {
+    top: var(--mobile-visual-top, 0px);
+    bottom: auto;
+    height: var(--mobile-visual-vh, var(--stable-vh));
+  }
+
+  .fake-footer-media-well {
+    top: var(--mobile-visual-top, 0px);
+    bottom: auto;
+    height: var(--mobile-visual-vh, var(--stable-vh));
+    min-height: 0;
+  }
+
+  .fake-footer-left-column,
+  .fake-footer-cta-block,
+  .fake-footer-statement-wrap,
+  .fake-footer-statement-layers {min-width: 0;}
+
+  .fake-footer-left-column .fake-footer-cta-block .fake-footer-statement-line {
+    font-size: clamp(1.5rem, min(12vw, calc(var(--stable-vh) * 0.075)), 4.1rem);
+    width: 100%;
+    min-width: 0;
+    transform: scale(var(--footer-statement-fit, 1));
+    transform-origin: center;
+  }
+
+  .fake-footer-statement-editorial-line {width: max-content; max-width: none;}
+
+  .fake-footer-utility-row-reference {
+    position: absolute;
+    right: 1rem;
+    bottom: max(0.5rem, var(--stable-safe-area-bottom, 0px));
+    left: 1rem;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: 'social' 'legal' 'copyright';
+    width: auto;
+    min-height: 0;
+    gap: clamp(0.45rem, calc(var(--stable-vh) * 0.012), 0.9rem);
+    padding: 0;
+  }
+
+  .fake-footer-utility-center-icons {grid-area: social; justify-self: center;}
+  .fake-footer-social-row-centered {display: flex; flex-wrap: nowrap; justify-content: center; gap: clamp(0.35rem, 2.2vw, 0.95rem);}
+  .fake-footer-social-link {width: 44px; height: 44px;}
+  .fake-footer-copyright-row-inline {grid-area: copyright; justify-self: center; min-width: 0; max-width: 100%; font-size: 0.65rem; text-align: center;}
+  .fake-footer-bottom-row-legal-only {grid-area: legal; justify-self: stretch; width: 100%; min-width: 0;}
+  .fake-footer-right-meta, .fake-footer-link-group-inline {width: 100%; align-items: stretch;}
+  .fake-footer-group-label {display: none;}
+
+  .fake-footer-legal-row-right {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.65rem;
+    width: 100%;
+  }
+
+  .fake-footer-legal-row-right::after {
+    content: '';
+    order: 1;
+    flex: 1;
+    height: 1px;
+    background: rgba(191, 226, 255, 0.24);
+  }
+
+  .fake-footer-legal-link {padding-block: 0.35rem; font-size: clamp(0.62rem, 2.5vw, 0.78rem); white-space: nowrap;}
+  .fake-footer-legal-link:first-child {order: 0;}
+  .fake-footer-legal-link:last-child {order: 2;}
+}
+
+@media (max-width: 640px) {
+  .fake-footer-surface {
+    padding-top: calc(var(--stable-vh) * 0.08);
+  }
+}

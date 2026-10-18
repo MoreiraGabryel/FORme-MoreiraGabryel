@@ -131,9 +131,17 @@
 .footer-scene-code-stream[data-stream="6"] {left: 24%; top: 10%; width: 56vw;}
 .footer-scene-code-stream[data-stream="7"] {left: 35%; bottom: -10%; width: 50vw;}
 
-@media (max-width: 767px) {
-  .footer-scene-character, .footer-scene-torn-frame {height: 60dvh; max-height: 60dvh;}
-  .footer-scene-code-stream {width: 78vw; max-height: 34dvh; font-size: 0.5rem;}
+@media (max-width: 767.98px), (max-width: 1024px) and (hover: none) and (pointer: coarse) {
+  .footer-scene-overlay[data-state="playing"]:not([data-frame-ready="true"]) .footer-scene-character,
+  .footer-scene-overlay[data-state="playing"]:not([data-frame-ready="true"]) .footer-scene-torn-frame {opacity: 0;}
+  .footer-scene-character {background: #000;}
+  .footer-scene-composition, .footer-scene-effects {height: var(--stable-vh); bottom: auto;}
+  .footer-scene-character, .footer-scene-torn-frame {height: calc(var(--stable-vh) * 0.6); max-height: calc(var(--stable-vh) * 0.6);}
+  .footer-scene-code-stream {width: 78vw; max-height: calc(var(--stable-vh) * 0.34); font-size: 0.5rem;}
+  .footer-scene-collapse-line {top: calc(var(--stable-vh) * 0.5);}
+  .footer-scene-rupture {height: clamp(1.2rem, calc(var(--stable-vh) * 0.06), 4rem);}
+  .footer-scene-rupture:nth-child(2) {height: calc(var(--stable-vh) * 0.03);}
+  .footer-scene-rupture:nth-child(4) {height: calc(var(--stable-vh) * 0.02);}
   .footer-scene-code-stream[data-stream="0"] {left: -9%; top: -6%;}
   .footer-scene-code-stream[data-stream="1"] {right: -18%; top: 12%;}
   .footer-scene-code-stream[data-stream="2"] {left: -12%; top: 39%;}

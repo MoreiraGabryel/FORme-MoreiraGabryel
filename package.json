@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:counter": "node scripts/dev-visitor-counter.mjs",
+    "test:counter": "node --test tests/heroVisitorCounterClient.test.mts tests/heroVisitorCounterUI.test.mts tests/heroVisitorCounterWorker.test.mjs",
     "dev:fresh": "node scripts/dev-fresh.cjs",
     "dev:stop": "node scripts/stop-dev.cjs",
     "build": "node scripts/build-fresh.cjs",
@@ -23,6 +25,12 @@
     "react": "^19.2.8",
     "react-dom": "^19.2.8"
   },
+  "overrides": {
+    "miniflare": {
+      "undici": "7.29.1",
+      "sharp": "0.35.5"
+    }
+  },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@tailwindcss/vite": "^4.3.3",
@@ -34,6 +42,7 @@
     "eslint-plugin-react-refresh": "^0.5.5",
     "fake-indexeddb": "6.2.5",
     "globals": "^17.11.0",
+    "miniflare": "4.20260730.0",
     "tailwindcss": "^4.1.12",
     "typescript": "~6.0.3",
     "typescript-eslint": "^8.68.0",

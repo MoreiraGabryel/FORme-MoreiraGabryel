@@ -13,6 +13,9 @@ import {getStableViewportHeight} from '../../utils/stableViewport';
 import {getPointerDepthStrength} from '../../utils/pointerDepthMotion';
 import {usePointerDepth} from '../../hooks/usePointerDepth';
 import {LanguageSwitch} from '../common/LanguageSwitch';
+import {HeroVisitorCounter} from '../common/HeroVisitorCounter';
+import {useIsMobile} from '../../hooks/useIsMobile';
+import './HeroIntro.mobile.css';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -126,7 +129,7 @@ export function HeroIntro({
   const displayedPhraseMobileLines = getHeroPhraseMobileLines(displayedPhrase);
   const prefersReducedMotion =
     typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const isMobileViewport = typeof window !== 'undefined' && window.matchMedia('(max-width: 640px)').matches;
+  const isMobileViewport = useIsMobile();
   const isHeroScrollExitActive = shouldLockHeroStatementExit({
     heroProgress,
     isMobile: isMobileViewport,
@@ -238,7 +241,6 @@ export function HeroIntro({
 
     const ctx = gsap.context(() => {
       const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      const isMobileViewport = window.matchMedia('(max-width: 640px)').matches;
       const statementMotion = getHeroStatementMotion(prefersReducedMotion);
       const scrollExitMotion = getHeroScrollExitMotion({isMobile: isMobileViewport, prefersReducedMotion});
       const setIdle = () => {
@@ -263,6 +265,22 @@ export function HeroIntro({
       };
 
       setIdle();
+      let handoffTl: gsap.core.Timeline | null = null;
+      let handoffResetCall: gsap.core.Tween | null = null;
+      let handoffFrame = 0;
+      const interruptMobileHandoff = (self: ScrollTrigger) => {
+        if (self.progress <= 0 || !handoffTl && !handoffResetCall && !handoffFrame) return;
+        window.cancelAnimationFrame(handoffFrame);
+        handoffFrame = 0;
+        handoffTl?.eventCallback('onInterrupt', null);
+        handoffTl?.kill();
+        handoffTl = null;
+        handoffResetCall?.kill();
+        handoffResetCall = null;
+        // The gesture takes ownership immediately, including during the loading reveal.
+        setIdle();
+        self.animation?.invalidate().totalProgress(self.progress, true);
+      };
       const heroScrollTimeline = gsap.timeline({
         defaults: {ease: 'none'},
         scrollTrigger: {
@@ -273,11 +291,12 @@ export function HeroIntro({
               getStableViewportHeight() *
                 (prefersReducedMotion ? HERO_SCENE_REDUCED_MOTION : HERO_SCENE).lengthInViewports,
             )}`,
-          scrub: prefersReducedMotion ? 0.12 : 0.6,
+          scrub: isMobileViewport ? true : prefersReducedMotion ? 0.12 : 0.6,
           pin: root,
           refreshPriority: 3,
           anticipatePin: 1,
           invalidateOnRefresh: true,
+          onUpdate: isMobileViewport ? interruptMobileHandoff : undefined,
         },
       });
 
@@ -327,10 +346,6 @@ export function HeroIntro({
           autoAlpha: 0,
           duration: scrollExitMotion.blackout.end - scrollExitMotion.blackout.start,
         }, scrollExitMotion.blackout.start);
-
-      let handoffTl: gsap.core.Timeline | null = null;
-      let handoffResetCall: gsap.core.Tween | null = null;
-      let handoffFrame = 0;
 
       const finishHandoff = () => {
         handoffResetCall?.kill();
@@ -477,6 +492,7 @@ export function HeroIntro({
       };
 
       const handleHandoff = (event: Event) => {
+        if (isMobileViewport && heroScrollTimeline.scrollTrigger && heroScrollTimeline.scrollTrigger.progress > 0) return;
         const detail = (event as CustomEvent<{reducedMotion?: boolean}>).detail ?? {};
         window.cancelAnimationFrame(handoffFrame);
         handoffFrame = window.requestAnimationFrame(() => {
@@ -501,7 +517,7 @@ export function HeroIntro({
       ctx.revert();
       requestSceneRefresh();
     };
-  }, [displayedPhrase, statementCharacterCount]);
+  }, [displayedPhrase, isMobileViewport, statementCharacterCount]);
 
   useLayoutEffect(() => {
     if (isHeroScrollExitActive) return;
@@ -605,6 +621,7 @@ export function HeroIntro({
         </div>
 
         <footer ref={footerRef} className="hero-footer">
+          <HeroVisitorCounter active={pointerReady && heroProgress < 0.58} locale={locale} />
           <p ref={cueRef} className="scroll-cue" aria-label={copy.scrollCue}>
             <span className="scroll-cue-arrows" aria-hidden="true">
               <span />

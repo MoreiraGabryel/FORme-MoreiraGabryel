@@ -17,6 +17,7 @@ import {getTechnologyPages, getTechnologyFloatPoints} from '../../utils/technolo
 import {TechnologyIcon} from '../technology/TechnologyIcon';
 import {TechnologyDialog} from '../technology/TechnologyDialog';
 import {TechnologyHoverCard} from '../technology/TechnologyHoverCard';
+import './TechnologyAndAboutStage.mobile.css';
 
 gsap.registerPlugin(ScrollTrigger, SplitText);
 
@@ -32,6 +33,9 @@ type FloatingTechnologySpec = {
   driftOffset: number;
   depth: number;
   zIndex: number;
+  iconScale: number;
+  iconOffsetX: number;
+  iconOffsetY: number;
 };
 
 function randomBetween(min: number, max: number) {
@@ -61,7 +65,7 @@ function shuffleArray<T>(items: readonly T[]) {
   return nextItems;
 }
 
-function getSafeSpawnOrigin(targetX: number, targetY: number, rect: DOMRect, isMobile: boolean) {
+function getSafeSpawnOrigin(targetX: number, targetY: number, rect: {width: number; height: number}, isMobile: boolean) {
   const minCenterDistance = Math.min(rect.width, rect.height) * (isMobile ? 0.28 : 0.24);
   const boundsPaddingX = rect.width * (isMobile ? 0.16 : 0.12);
   const boundsPaddingY = rect.height * (isMobile ? 0.14 : 0.1);
@@ -92,12 +96,15 @@ function createFloatingSpecs(items: Technology[], isMobile: boolean): FloatingTe
       left,
       top,
       revealOrder: orderedItems.length <= 1 ? 0 : index / (orderedItems.length - 1),
-      driftAmplitudeX: lerp(3, isMobile ? 7 : 12, depth),
-      driftAmplitudeY: lerp(4, isMobile ? 8 : 13, depth),
+      driftAmplitudeX: lerp(isMobile ? 8 : 3, isMobile ? 22 : 12, depth),
+      driftAmplitudeY: lerp(isMobile ? 6 : 4, isMobile ? 16 : 13, depth),
       driftSpeed: lerp(0.00055, 0.0014, depth),
       driftOffset: randomBetween(0, Math.PI * 2),
       depth,
       zIndex: Math.round(lerp(2, 8, depth)),
+      iconScale: item.iconScale ?? 1,
+      iconOffsetX: item.iconOffsetX ?? 0,
+      iconOffsetY: item.iconOffsetY ?? 0,
     };
   });
 }
@@ -122,6 +129,7 @@ export function TechnologyAndAboutStage({
   const [tooltipTechnologyIds, setTooltipTechnologyIds] = useState<string[]>([]);
   const [activeTechnologyId, setActiveTechnologyId] = useState<string | null>(null);
   const [mobilePageIndex, setMobilePageIndex] = useState(0);
+  const mobilePageRevealedRef = useRef(false);
   const stageSectionRef = useRef<HTMLElement | null>(null);
   const pinnedShellRef = useRef<HTMLDivElement | null>(null);
   const sceneBackgroundRef = useRef<HTMLDivElement | null>(null);
@@ -135,6 +143,8 @@ export function TechnologyAndAboutStage({
   const stageOneLayerRef = useRef<HTMLDivElement | null>(null);
 
   const stageFieldRef = useRef<HTMLDivElement | null>(null);
+  const copyInnerRef = useRef<HTMLDivElement | null>(null);
+  const paginationRef = useRef<HTMLElement | null>(null);
   const anchorRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const buttonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const animationFrameRef = useRef<number | null>(null);
@@ -165,6 +175,8 @@ export function TechnologyAndAboutStage({
 
   // O campo de ícones permanece vivo até a saída direta para o Fake Footer.
   const stageActive = rawStageProgress > 0.02 && rawStageProgress < TECHNOLOGY_EXIT_PROGRESS;
+  const mobileIconsInScene = isMobile && rawStageProgress > 0.02 && rawStageProgress < 1;
+  const iconAnimationActive = isMobile ? mobileIconsInScene : stageActive;
   const stageExitProgress = clamp(
     (rawStageProgress - TECHNOLOGY_EXIT_PROGRESS) / TECHNOLOGY_EXIT_DURATION,
     0,
@@ -193,6 +205,21 @@ export function TechnologyAndAboutStage({
     media.addEventListener('change', update);
     return () => media.removeEventListener('change', update);
   }, []);
+
+  useEffect(() => {
+    const section = stageSectionRef.current;
+    if (!isMobile || !section) return;
+    const observer = new IntersectionObserver(entries => {
+      if (!entries.some(entry => entry.isIntersecting)) return;
+      // Prepare the existing frames ahead of the handoff without waiting on decode.
+      frameLayerRefs.current.slice(0, frameSequence.frames.length).forEach(frame => {
+        if (typeof frame.decode === 'function') void frame.decode().catch(() => undefined);
+      });
+      observer.disconnect();
+    }, {rootMargin: `${getStableViewportHeight()}px 0px`, threshold: 0});
+    observer.observe(section);
+    return () => observer.disconnect();
+  }, [frameSequence, isMobile]);
 
   useLayoutEffect(() => {
     const section = stageSectionRef.current;
@@ -271,6 +298,11 @@ export function TechnologyAndAboutStage({
 
       const timeline = gsap.timeline({
         defaults: {ease: 'none'},
+        // Mobile UI and the receiving scene follow the frame actually drawn by scrub.
+        onUpdate: isMobile ? function (this: gsap.core.Timeline) {
+          rawStageProgressRef.current = this.progress();
+          onProgressRef.current(rawStageProgressRef.current);
+        } : undefined,
         scrollTrigger: {
           trigger: section,
           start: 'top top',
@@ -281,15 +313,22 @@ export function TechnologyAndAboutStage({
                   ? TECHNOLOGY_SCENE_REDUCED_MOTION.lengthInViewports
                   : TECHNOLOGY_SCENE.lengthInViewports),
             )}`,
-          scrub: reducedMotion ? 0.18 : 0.72,
+          // Native touch owns the pace; do not leave the visual clock behind its pin.
+          scrub: isMobile ? true : reducedMotion ? 0.18 : 0.72,
           pin: pinnedShell,
           refreshPriority: 2,
           anticipatePin: 1,
           invalidateOnRefresh: true,
           // Recarregar no meio da cena não dispara `onUpdate`: sem isto o `App`
           // ficaria em progresso 0 com a cena já rolada.
-          onRefresh: (self) => onProgressRef.current(self.progress),
-          onUpdate: (self) => onProgressRef.current(self.progress),
+          onRefresh: (self) => {
+            const progress = isMobile && self.animation ? self.animation.progress() : self.progress;
+            if (isMobile) rawStageProgressRef.current = progress;
+            onProgressRef.current(progress);
+          },
+          onUpdate: (self) => {
+            if (!isMobile) onProgressRef.current(self.progress);
+          },
         },
       });
 
@@ -377,8 +416,8 @@ export function TechnologyAndAboutStage({
   }, [activeTechnologyId]);
 
   useEffect(() => {
-    rawStageProgressRef.current = rawStageProgress;
-  }, [rawStageProgress]);
+    if (!isMobile) rawStageProgressRef.current = rawStageProgress;
+  }, [isMobile, rawStageProgress]);
 
   // Via ref porque o timeline só remonta em [isMobile, locale, reducedMotion];
   // a prop não pode entrar nas dependências sem rebuildar a cena a cada render.
@@ -387,6 +426,8 @@ export function TechnologyAndAboutStage({
   }, [onProgress]);
 
   useEffect(() => {
+    // Returning from the frames keeps the selected mobile group revealed.
+    if (!isMobile || rawStageProgressRef.current <= 0.02) mobilePageRevealedRef.current = false;
     if (stageActive && !previousStageActiveRef.current) {
       introStartRef.current = null;
       outroStartRef.current = null;
@@ -394,15 +435,15 @@ export function TechnologyAndAboutStage({
     }
 
     if (!stageActive) {
-      outroStartRef.current = performance.now();
+      outroStartRef.current = isMobile ? null : performance.now();
       setHoveredTechnologyId(null);
     }
 
     previousStageActiveRef.current = stageActive;
-  }, [stageActive]);
+  }, [isMobile, stageActive]);
 
   useEffect(() => {
-    if (!stageActive && outroStartRef.current === null) {
+    if (!isMobile && !iconAnimationActive && outroStartRef.current === null) {
       if (animationFrameRef.current) {
         window.cancelAnimationFrame(animationFrameRef.current);
         animationFrameRef.current = null;
@@ -412,6 +453,7 @@ export function TechnologyAndAboutStage({
 
     let previousTime: number | null = null;
     let driftTime = 0;
+    const mobilePositions = new Map<string, {left: number; top: number}>();
     const animate = (time: number) => {
       const field = stageFieldRef.current;
       if (!field) {
@@ -424,13 +466,54 @@ export function TechnologyAndAboutStage({
       previousTime = time;
       if (!document.hidden && !reducedMotion && !hoveredTechnologyIdRef.current && !activeTechnologyIdRef.current) driftTime += delta;
       const rect = field.getBoundingClientRect();
+      const fieldBounds = isMobile ? {width: field.clientWidth, height: field.clientHeight} : rect;
+      if (isMobile && (fieldBounds.width <= 0 || fieldBounds.height <= 0)) {
+        if (!iconAnimationActive) {animationFrameRef.current = null; return;}
+        animationFrameRef.current = window.requestAnimationFrame(animate);
+        return;
+      }
+      const scaleX = rect.width / fieldBounds.width || 1;
+      const scaleY = rect.height / fieldBounds.height || 1;
+      const copyRect = isMobile ? copyInnerRef.current?.getBoundingClientRect() : undefined;
+      const paginationRect = isMobile ? paginationRef.current?.getBoundingClientRect() : undefined;
+      const protectedAreas = [copyRect, paginationRect]
+        .filter((area): area is DOMRect => area !== undefined)
+        .map(area => ({
+          left: (area.left - rect.left) / scaleX - fieldBounds.width / 2 - 12,
+          right: (area.right - rect.left) / scaleX - fieldBounds.width / 2 + 12,
+          top: (area.top - rect.top) / scaleY - fieldBounds.height / 2 - 12,
+          bottom: (area.bottom - rect.top) / scaleY - fieldBounds.height / 2 + 12,
+        }));
+      // Batch layout reads before writes, including the SVG's own scale/offset.
+      const buttonSizes = isMobile ? floatingSpecs.map(spec => {
+        const button = buttonRefs.current[spec.id];
+        const width = button?.offsetWidth ?? 0;
+        const height = button?.offsetHeight ?? 0;
+        return {
+          width: Math.max(width, width * 0.82 * spec.iconScale + Math.abs(spec.iconOffsetX) * 2),
+          height: Math.max(height, height * 0.82 * spec.iconScale + Math.abs(spec.iconOffsetY) * 2),
+        };
+      }) : [];
+      const mobilePoints = isMobile ? getTechnologyFloatPoints(floatingSpecs.length, true, {
+        ...fieldBounds,
+        iconSize: Math.max(...buttonSizes.map(size => Math.max(size.width, size.height))) * 1.25 + 4,
+        content: copyRect ? {
+          left: (copyRect.left - rect.left) / scaleX,
+          right: (copyRect.right - rect.left) / scaleX,
+          top: (copyRect.top - rect.top) / scaleY,
+          bottom: (copyRect.bottom - rect.top) / scaleY,
+        } : undefined,
+      }) : null;
       const motionFactor = reducedMotion ? 0 : 1;
       const scrollProgress = rawStageProgressRef.current;
-      const iconIntroProgress = clamp((scrollProgress - 0.045) / 0.5, 0, 1);
+      // Manual mobile selection must not wait for more vertical scrolling.
+      const iconIntroProgress = isMobile && mobilePageRevealedRef.current
+        ? 1
+        : clamp((scrollProgress - 0.045) / 0.5, 0, 1);
       const iconExitProgress = clamp((scrollProgress - 0.74) / 0.22, 0, 1);
       const scrollExitEase = iconExitProgress * iconExitProgress * iconExitProgress;
 
-      floatingSpecs.forEach((spec) => {
+      floatingSpecs.forEach((spec, index) => {
         const anchor = anchorRefs.current[spec.id];
         const button = buttonRefs.current[spec.id];
         if (!anchor || !button) return;
@@ -443,12 +526,19 @@ export function TechnologyAndAboutStage({
         const revealWindow = isMobile ? 0.42 : 0.28;
         const revealProgress = easeOutCubic(clamp((iconIntroProgress - revealOffset) / revealWindow, 0, 1));
         const driftProgress = easeOutCubic(clamp((iconIntroProgress - revealOffset + (isMobile ? 0.06 : 0.08)) / (isMobile ? 0.36 : 0.42), 0, 1));
-        const targetX = (spec.left - 0.5) * rect.width;
-        const targetY = (spec.top - 0.5) * rect.height;
+        let point = mobilePoints?.[index] ?? spec;
+        if (isMobile) {
+          const previous = mobilePositions.get(spec.id) ?? point;
+          const reflow = reducedMotion ? 1 : 1 - Math.exp(-delta / 90);
+          point = {left: lerp(previous.left, point.left, reflow), top: lerp(previous.top, point.top, reflow)};
+          mobilePositions.set(spec.id, point);
+        }
+        const targetX = (point.left - 0.5) * fieldBounds.width;
+        const targetY = (point.top - 0.5) * fieldBounds.height;
         const targetDistance = Math.hypot(targetX, targetY) || 1;
         const directionX = targetX / targetDistance;
         const directionY = targetY / targetDistance;
-        const spawnOrigin = getSafeSpawnOrigin(targetX, targetY, rect, isMobile);
+        const spawnOrigin = getSafeSpawnOrigin(targetX, targetY, fieldBounds, isMobile);
         const tangentX = -directionY;
         const tangentY = directionX;
         const waveX = Math.sin(driftTime * spec.driftSpeed + spec.driftOffset) * spec.driftAmplitudeX * motionFactor * driftDamping;
@@ -459,8 +549,8 @@ export function TechnologyAndAboutStage({
         const swirlDrift = reducedMotion ? 0 : Math.sin(driftTime * (spec.driftSpeed * 1.08) + spec.driftOffset * 1.6) * lerp(3, 9, spec.depth) * driftProgress * driftDamping;
         const driftX = (waveX + microX) * driftProgress + directionX * ejectionPulse + tangentX * swirlDrift;
         const driftY = (waveY + microY) * driftProgress + directionY * ejectionPulse + tangentY * swirlDrift;
-        const baseX = lerp(spawnOrigin.x, targetX, revealProgress) + driftX;
-        const baseY = lerp(spawnOrigin.y, targetY, revealProgress) + driftY;
+        const baseX = (isMobile ? targetX : lerp(spawnOrigin.x, targetX, revealProgress)) + driftX;
+        const baseY = (isMobile ? targetY : lerp(spawnOrigin.y, targetY, revealProgress)) + driftY;
 
         const depthScale = lerp(0.9, 1.18, spec.depth);
         const finalX = baseX;
@@ -470,24 +560,58 @@ export function TechnologyAndAboutStage({
         const rotation = Math.sin(driftTime * (spec.driftSpeed * 0.74) + spec.driftOffset) * lerp(0.7, 2.4, spec.depth) * motionFactor * driftDamping;
 
         let outroProgress = scrollExitEase;
-        if (outroStartRef.current !== null) {
+        if (!isMobile && outroStartRef.current !== null) {
           outroProgress = Math.max(outroProgress, clamp((time - outroStartRef.current) / OUTRO_DURATION, 0, 1));
         }
         const easeIn = outroProgress * outroProgress * outroProgress;
-        let displayX = lerp(finalX, 0, easeIn);
-        let displayY = lerp(finalY, 0, easeIn);
+        let displayX = isMobile ? finalX : lerp(finalX, 0, easeIn);
+        let displayY = isMobile ? finalY : lerp(finalY, 0, easeIn);
         if (isMobile) {
           // Clamp the actual centered, scaled/rotated button after all drift
           // and intro/outro offsets, not just its normalized spawn point.
           const radians = rotation * Math.PI / 180;
           const cosine = Math.abs(Math.cos(radians));
           const sine = Math.abs(Math.sin(radians));
-          const halfWidth = (button.offsetWidth * cosine + button.offsetHeight * sine) * scale / 2;
-          const halfHeight = (button.offsetHeight * cosine + button.offsetWidth * sine) * scale / 2;
-          const limitX = Math.max(0, rect.width / 2 - halfWidth);
-          const limitY = Math.max(0, rect.height / 2 - halfHeight);
-          displayX = clamp(displayX, -limitX, limitX);
-          displayY = clamp(displayY, -limitY, limitY);
+          const size = buttonSizes[index];
+          const halfWidth = (size.width * cosine + size.height * sine) * scale / 2;
+          const halfHeight = (size.height * cosine + size.width * sine) * scale / 2;
+          const viewport = window.visualViewport;
+          const normalZoom = !viewport || Math.abs(viewport.scale - 1) <= 0.01;
+          const left = normalZoom ? viewport?.offsetLeft ?? 0 : 0;
+          const top = normalZoom ? viewport?.offsetTop ?? 0 : 0;
+          const width = normalZoom ? viewport?.width ?? document.documentElement.clientWidth : window.innerWidth;
+          const height = normalZoom ? viewport?.height ?? window.innerHeight : window.innerHeight;
+          const centerX = rect.left + rect.width / 2;
+          const centerY = rect.top + rect.height / 2;
+          const minX = Math.max(-fieldBounds.width / 2 + halfWidth, (left + 8 - centerX) / scaleX + halfWidth);
+          const maxX = Math.min(fieldBounds.width / 2 - halfWidth, (left + width - 8 - centerX) / scaleX - halfWidth);
+          const minY = Math.max(-fieldBounds.height / 2 + halfHeight, (top + 8 - centerY) / scaleY + halfHeight);
+          const maxY = Math.min(fieldBounds.height / 2 - halfHeight, (top + height - 8 - centerY) / scaleY - halfHeight);
+          displayX = minX <= maxX ? clamp(displayX, minX, maxX) : 0;
+          displayY = minY <= maxY ? clamp(displayY, minY, maxY) : 0;
+          const overlaps = (x: number, y: number) => protectedAreas.some(area =>
+            x + halfWidth > area.left && x - halfWidth < area.right &&
+            y + halfHeight > area.top && y - halfHeight < area.bottom);
+          let canPlace = minX <= maxX && minY <= maxY;
+          if (canPlace && overlaps(displayX, displayY)) {
+            const candidates = protectedAreas.flatMap(area => [
+              {x: displayX, y: area.top - halfHeight - 1},
+              {x: displayX, y: area.bottom + halfHeight + 1},
+              {x: area.left - halfWidth - 1, y: displayY},
+              {x: area.right + halfWidth + 1, y: displayY},
+            ]);
+            candidates.push({x: targetX, y: targetY});
+            let safe: {x: number; y: number} | undefined;
+            let nearest = Infinity;
+            for (const candidate of candidates) {
+              if (candidate.x < minX || candidate.x > maxX || candidate.y < minY || candidate.y > maxY || overlaps(candidate.x, candidate.y)) continue;
+              const distance = Math.hypot(candidate.x - displayX, candidate.y - displayY);
+              if (distance < nearest) {nearest = distance;safe = candidate;}
+            }
+            if (safe) {displayX = safe.x;displayY = safe.y;}
+            else canPlace = false;
+          }
+          anchor.toggleAttribute('data-mobile-blocked', !canPlace);
         }
         const displayOpacity = opacity * (1 - easeIn);
 
@@ -496,7 +620,12 @@ export function TechnologyAndAboutStage({
         button.style.transform = `translate3d(0, 0, 0) rotate(${rotation.toFixed(2)}deg) scale(${scale.toFixed(3)})`;
       });
 
-      if (!stageActive && outroStartRef.current !== null) {
+      if (isMobile && !iconAnimationActive) {
+        animationFrameRef.current = null;
+        return;
+      }
+
+      if (!isMobile && !iconAnimationActive && outroStartRef.current !== null) {
         const outroProgress = clamp((time - outroStartRef.current) / OUTRO_DURATION, 0, 1);
         if (outroProgress >= 1) {
           outroStartRef.current = null;
@@ -519,7 +648,13 @@ export function TechnologyAndAboutStage({
         animationFrameRef.current = null;
       }
     };
-  }, [floatingSpecs, isMobile, reducedMotion, stageActive]);
+  }, [floatingSpecs, iconAnimationActive, isMobile, reducedMotion]);
+
+  const selectMobilePage = (index: number) => {
+    mobilePageRevealedRef.current = true;
+    setHoveredTechnologyId(null);
+    setMobilePageIndex(index);
+  };
 
   const handleStagePointerLeave = () => {
     hideTechnologyTooltip();
@@ -635,7 +770,7 @@ export function TechnologyAndAboutStage({
             </div>
 
             <div className="transition-copy technologies-copy">
-              <div className="technologies-copy-inner">
+              <div ref={copyInnerRef} className="technologies-copy-inner">
                 <div ref={titleGlowRef} className="technologies-title-glow" aria-hidden="true" />
                 <div className="technologies-heading-stack">
                   <h2 className="technologies-title" aria-live="polite">
@@ -650,25 +785,18 @@ export function TechnologyAndAboutStage({
                   <p ref={subtitleRef} className="technologies-subtitle">{sectionCopy.subtitle}</p>
                 </div>
                 <p ref={instructionRef} className="technologies-instruction">{sectionCopy.instruction}</p>
-                {isMobile && technologyPages.length > 1 ? (
-                  <nav className="technology-mobile-pagination" aria-label={locale === 'pt' ? 'Grupos de tecnologias' : 'Technology groups'} inert={!stageActive || Boolean(activeTechnology)}>
-                    <button type="button" aria-label={uiCopy.previous} disabled={currentPageIndex === 0} onClick={() => {
-                      setHoveredTechnologyId(null);
-                      setMobilePageIndex(currentPageIndex - 1);
-                    }}>
-                      <svg aria-hidden="true" viewBox="0 0 24 24" fill="none"><path d="m14 6-6 6 6 6" stroke="currentColor" strokeWidth="1.5" /></svg>
-                    </button>
-                    <span aria-live="polite" aria-atomic="true">{uiCopy.group} {currentPageIndex + 1} / {technologyPages.length}</span>
-                    <button type="button" aria-label={uiCopy.next} disabled={currentPageIndex === technologyPages.length - 1} onClick={() => {
-                      setHoveredTechnologyId(null);
-                      setMobilePageIndex(currentPageIndex + 1);
-                    }}>
-                      <svg aria-hidden="true" viewBox="0 0 24 24" fill="none"><path d="m10 6 6 6-6 6" stroke="currentColor" strokeWidth="1.5" /></svg>
-                    </button>
-                  </nav>
-                ) : null}
               </div>
             </div>
+            {isMobile && technologyPages.length > 1 ? (
+              <nav ref={paginationRef} className="technology-mobile-pagination" aria-label={locale === 'pt' ? 'Navegar entre tecnologias' : 'Browse technologies'} inert={!stageActive || Boolean(activeTechnology)}>
+                <button type="button" aria-label={uiCopy.previous} disabled={currentPageIndex === 0} onClick={() => selectMobilePage(currentPageIndex - 1)}>
+                  <svg aria-hidden="true" viewBox="0 0 24 24" fill="none"><path d="m14 6-6 6 6 6" stroke="currentColor" strokeWidth="1.5" /></svg>
+                </button>
+                <button type="button" aria-label={uiCopy.next} disabled={currentPageIndex === technologyPages.length - 1} onClick={() => selectMobilePage(currentPageIndex + 1)}>
+                  <svg aria-hidden="true" viewBox="0 0 24 24" fill="none"><path d="m10 6 6 6-6 6" stroke="currentColor" strokeWidth="1.5" /></svg>
+                </button>
+              </nav>
+            ) : null}
           </div>
         </div>
 
