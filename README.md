@@ -25,7 +25,7 @@ Portfolio estatico em React + Vite + TypeScript, preparado para deploy no Cloudf
 
 Observacao:
 - `dev:fresh` e `dev:stop` agora funcionam em Linux e Windows
-- em Linux, rode o projeto a partir de um filesystem nativo (ex.: `/home/...`); evitar `node_modules` em particoes exFAT/NTFS montadas externamente
+- em Linux, rode o projeto a partir de um filesystem nativo; evitar `node_modules` em particoes exFAT/NTFS montadas externamente
 
 ## Cloudflare Pages
 
@@ -35,6 +35,8 @@ Observacao:
 - `public/_redirects` faz o fallback SPA (`/* /index.html 200`) para as rotas legais funcionarem em acesso direto
 - `public/_headers` define cabecalhos de seguranca e cache dos assets
 - O contador da Hero usa `_worker.js` e um binding D1 chamado `VISITOR_COUNTER_DB`. Configuração única e prévia sem build: [docs/hero-visitor-counter.md](docs/hero-visitor-counter.md).
+- `main-build` contém apenas o pacote final, sem fontes ou documentação interna. Empacotamento, domínio e configuração do banco: [docs/cloudflare-deployment.md](docs/cloudflare-deployment.md).
+- Para gerar uma pasta nova e mínima após `npm run verify`: `npm run release:cloudflare -- build/cloudflare-release`.
 
 ## Estrutura
 

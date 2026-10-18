@@ -83,3 +83,18 @@ test('restarting the Worker preserves the total in the same database', async () 
     assert.deepEqual(await (await visit(worker)).json(), {previous: 1, total: 2});
   } finally {await worker?.dispose(); await rm(directory, {recursive: true, force: true});}
 });
+
+test('API success and failures send their own security headers instead of relying on static asset rules', async () => {
+  const worker = createWorker();
+  const unconfigured = createWorker({d1Databases: []});
+  try {
+    const responses = [await visit(worker), await worker.dispatchFetch(`${origin}/api/visits`),
+      await worker.dispatchFetch(`${origin}/api/visits`, {method: 'POST'}), await visit(unconfigured)];
+    assert.deepEqual(responses.map(response => response.status), [200, 405, 403, 503]);
+    for (const response of responses) {
+      assert.equal(response.headers.get('X-Content-Type-Options'), 'nosniff');
+      assert.equal(response.headers.get('Cross-Origin-Resource-Policy'), 'same-origin');
+      assert.equal(response.headers.get('Referrer-Policy'), 'no-referrer');
+    }
+  } finally {await worker.dispose(); await unconfigured.dispose();}
+});

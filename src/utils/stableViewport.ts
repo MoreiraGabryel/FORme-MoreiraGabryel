@@ -1,4 +1,4 @@
-import {readIsMobileViewport} from './mobileViewport';
+import {readIsMobileViewport} from './mobileViewport.ts';
 
 type ViewportEvent = 'resize' | 'orientationchange';
 type ViewportListener = () => void;
