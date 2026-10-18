@@ -5,7 +5,8 @@ import {ScrollTrigger} from 'gsap/ScrollTrigger';
 import {requestSceneRefresh} from '../../utils/sceneRefresh';
 import type {HomeCopy} from '../../config/homeContent';
 import {CONTACT_LINKS} from '../../config/contact';
-import {FAKE_FOOTER_SCENE} from '../../config/scenes';
+import {getFakeFooterScrollDistance} from '../../config/scenes';
+import {useIsMobile} from '../../hooks/useIsMobile';
 import {useAmbientVideo} from '../../hooks/useAmbientVideo';
 import {useScrubbedVideo} from '../../hooks/useScrubbedVideo';
 import type {Locale} from '../../i18n/useTranslation';
@@ -14,6 +15,7 @@ import {getStableViewportHeight} from '../../utils/stableViewport';
 import {getFooterStatementMotion} from '../../utils/footerStatementMotion';
 import {getFooterStatementLines} from '../../utils/footerStatementLines';
 import {getFooterStatementParallax} from '../../utils/footerStatementRollMotion';
+import './FakeFooterStage.mobile.css';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -133,6 +135,7 @@ export function FakeFooterStage({
   effectsActive = true,
   onProgress,
 }: Props) {
+  const isMobile = useIsMobile();
   const onProgressRef = useRef(onProgress);
   const sectionRef = useRef<HTMLElement | null>(null);
   const stickyRef = useRef<HTMLDivElement | null>(null);
@@ -142,7 +145,6 @@ export function FakeFooterStage({
   const ambientVideoRef = useRef<HTMLVideoElement | null>(null);
   const [isNearViewport, setIsNearViewport] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
-  const [isCompactViewport, setIsCompactViewport] = useState(false);
   const [displayedPhraseIndex, setDisplayedPhraseIndex] = useState(footerPhraseIndex);
   const [outgoingPhraseIndex, setOutgoingPhraseIndex] = useState<number | null>(null);
   const entranceCompletedRef = useRef(false);
@@ -158,13 +160,42 @@ export function FakeFooterStage({
     return () => media.removeEventListener('change', update);
   }, []);
 
-  useEffect(() => {
-    const media = window.matchMedia('(max-width: 640px)');
-    const update = () => setIsCompactViewport(media.matches);
-    update();
-    media.addEventListener('change', update);
-    return () => media.removeEventListener('change', update);
-  }, []);
+  useLayoutEffect(() => {
+    if (!isMobile) return;
+    const section = sectionRef.current;
+    const column = section?.querySelector<HTMLElement>('.fake-footer-left-column');
+    const layout = section?.querySelector<HTMLElement>('.fake-footer-layout');
+    const utilities = section?.querySelector<HTMLElement>('.fake-footer-utility-row-reference');
+    if (!column || !layout || !utilities) return;
+    const headings = [incomingStatementRef.current, outgoingStatementRef.current]
+      .filter((heading): heading is HTMLHeadingElement => heading !== null);
+    let cancelled = false;
+    const fit = () => {
+      if (cancelled) return;
+      const width = Math.max(1, column.clientWidth - 16);
+      const center = layout.clientHeight / 2;
+      const clearance = Math.max(16, getStableViewportHeight() * 0.04);
+      const height = Math.max(1, Math.min(center - clearance, utilities.offsetTop - layout.offsetTop - center - clearance) * 2);
+      const updates = headings.map(heading => {
+        const lines = Array.from(heading.querySelectorAll<HTMLElement>('.fake-footer-statement-editorial-line'));
+        const textWidth = Math.max(1, ...lines.map(line => line.offsetWidth));
+        return {heading, scale: Math.min(1, width / (textWidth * 1.03), height / Math.max(1, heading.offsetHeight * 1.03))};
+      });
+      updates.forEach(({heading, scale}) => heading.style.setProperty('--footer-statement-fit', String(scale)));
+    };
+    const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(fit);
+    [column, layout, utilities, ...headings.flatMap(heading => Array.from(heading.querySelectorAll<HTMLElement>('.fake-footer-statement-editorial-line')))]
+      .forEach(element => observer?.observe(element));
+    window.addEventListener('resize', fit, {passive: true});
+    document.fonts?.ready.then(fit).catch(() => undefined);
+    fit();
+    return () => {
+      cancelled = true;
+      observer?.disconnect();
+      window.removeEventListener('resize', fit);
+      headings.forEach(heading => heading.style.removeProperty('--footer-statement-fit'));
+    };
+  }, [displayedPhraseIndex, isMobile, locale, outgoingPhraseIndex]);
 
   useLayoutEffect(() => {
     if (footerPhraseIndex === displayedPhraseIndex) return;
@@ -184,7 +215,7 @@ export function FakeFooterStage({
       ? Array.from(outgoing.querySelectorAll<HTMLElement>('.fake-footer-statement-char'))
       : [];
     if (entranceAtStart) entranceCompletedRef.current = false;
-    const motion = getFooterStatementMotion(reducedMotion, isCompactViewport);
+    const motion = getFooterStatementMotion(reducedMotion, isMobile);
     const stable = {autoAlpha: 1, y: 0, filter: 'blur(0px)'};
     let cancelled = false;
     const completeEntrance = () => {
@@ -221,7 +252,7 @@ export function FakeFooterStage({
       cancelled = true;
       ctx.revert();
     };
-  }, [displayedPhraseIndex, entranceAtStart, entranceVisible, isCompactViewport, locale, outgoingPhraseIndex, phraseTransitionActive, reducedMotion]);
+  }, [displayedPhraseIndex, entranceAtStart, entranceVisible, isMobile, locale, outgoingPhraseIndex, phraseTransitionActive, reducedMotion]);
 
   useLayoutEffect(() => {
     if (entranceVisible && statementRotationActive && !reducedMotion || outgoingPhraseIndex === null) return;
@@ -237,35 +268,43 @@ export function FakeFooterStage({
     const sticky = stickyRef.current;
     if (!section || !sticky) return;
 
+    const publishProgress = (self: ScrollTrigger) => {
+      // Update before paint: React state and video pause must not expose an unpinned frame.
+      section.toggleAttribute('data-mobile-exited', isMobile && self.progress >= 1);
+      onProgressRef.current(self.progress);
+    };
+
     // Publish this pin's progress to App: video, entrance and blackout all
     // follow the same boundaries, including the handoff overlap offset.
     const ctx = gsap.context(() => {
       ScrollTrigger.create({
         trigger: section,
         start: () => `top top+=${Math.round(getFakeFooterHandoffOverlap(getStableViewportHeight()))}`,
-        end: () => `+=${Math.round(getStableViewportHeight() * FAKE_FOOTER_SCENE.lengthInViewports)}`,
+        end: () => `+=${getFakeFooterScrollDistance(getStableViewportHeight())}`,
         pin: sticky,
         refreshPriority: 1,
         anticipatePin: 1,
         invalidateOnRefresh: true,
-        onRefresh: (self) => onProgressRef.current(self.progress),
-        onUpdate: (self) => onProgressRef.current(self.progress),
+        onRefresh: publishProgress,
+        onUpdate: publishProgress,
       });
     }, section);
 
     requestSceneRefresh();
     return () => {
       ctx.revert();
+      section.removeAttribute('data-mobile-exited');
       requestSceneRefresh();
     };
-  }, []);
+  }, [isMobile]);
 
   // Nada de decodificar vídeo enquanto a cena está longe. Uma vez que ela
   // encosta no viewport o observador se desliga: daí para frente quem decide o
   // que roda é o progresso do scroll.
   useEffect(() => {
     const mediaWell = ambientVideoRef.current?.parentElement;
-    if (!mediaWell) return;
+    const target = isMobile ? sectionRef.current : mediaWell;
+    if (!target) return;
 
     const observer = new IntersectionObserver(
       ([entry]) => {
@@ -274,16 +313,22 @@ export function FakeFooterStage({
           observer.disconnect();
         }
       },
-      {threshold: 0.1},
+      isMobile ? {threshold: 0, rootMargin: `${getStableViewportHeight()}px 0px`} : {threshold: 0.1},
     );
 
-    observer.observe(mediaWell);
+    observer.observe(target);
 
     return () => observer.disconnect();
-  }, []);
+  }, [isMobile]);
 
-  useScrubbedVideo(entryVideoRef, entryProgress, {enabled: isNearViewport});
-  useAmbientVideo(ambientVideoRef, {active: isNearViewport && ambientPlaying});
+  // Same scroll target and handoff as desktop, including reverse seeks.
+  const mediaEnabled = isNearViewport && (!isMobile || effectsActive && footerProgress < 1);
+  useScrubbedVideo(entryVideoRef, entryProgress, {
+    enabled: mediaEnabled,
+  });
+  useAmbientVideo(ambientVideoRef, {
+    active: mediaEnabled && ambientPlaying,
+  });
 
   const socialLinks: FooterLink[] = [
     {label: copy.socialInstagram, href: CONTACT_LINKS.instagram, icon: 'instagram'},
@@ -297,12 +342,16 @@ export function FakeFooterStage({
     {label: copy.privacyLabel, href: withLocale('/privacy-policy', locale)},
     {label: copy.termsLabel, href: withLocale('/terms-of-service', locale)},
   ];
-  const statementLines = getFooterStatementLines(copy.footerPhrases[displayedPhraseIndex], isCompactViewport);
+  const orderedLegalLinks = isMobile ? [legalLinks[1], legalLinks[0]] : legalLinks;
+  const statementLines = getFooterStatementLines(copy.footerPhrases[displayedPhraseIndex], isMobile);
   const outgoingStatementLines =
-    outgoingPhraseIndex === null ? null : getFooterStatementLines(copy.footerPhrases[outgoingPhraseIndex], isCompactViewport);
+    outgoingPhraseIndex === null ? null : getFooterStatementLines(copy.footerPhrases[outgoingPhraseIndex], isMobile);
   const statementParallax = getFooterStatementParallax(footerProgress, reducedMotion);
+  const statementOffset = isMobile
+    ? `${statementParallax.yVh * getStableViewportHeight() / 100}px`
+    : `${statementParallax.yVh}vh`;
   const statementParallaxStyle: CSSProperties = {
-    transform: `translate3d(0, ${statementParallax.yVh}vh, 0) scale(${statementParallax.scale})`,
+    transform: `translate3d(0, ${statementOffset}, 0) scale(${statementParallax.scale})`,
   };
   const renderStatementLines = (lines: readonly string[], phraseIndex: number) =>
     lines.map((line, lineIndex) => (
@@ -408,9 +457,9 @@ export function FakeFooterStage({
             <div className="fake-footer-bottom-row fake-footer-bottom-row-legal-only">
               <div className="fake-footer-right-meta">
                 <div className="fake-footer-link-group fake-footer-link-group-inline">
-                  <span className="fake-footer-group-label">{copy.footerLegalLabel}</span>
+                  {!isMobile && <span className="fake-footer-group-label">{copy.footerLegalLabel}</span>}
                   <div className="fake-footer-legal-row fake-footer-legal-row-right">
-                    {legalLinks.map((item) => (
+                    {orderedLegalLinks.map((item) => (
                       <a key={item.label} href={item.href} className="fake-footer-legal-link">
                         {item.label}
                       </a>

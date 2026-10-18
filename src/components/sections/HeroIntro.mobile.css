@@ -1,0 +1,50 @@
+@media (max-width: 767.98px), (max-width: 1024px) and (hover: none) and (pointer: coarse) {
+  /* The pin and its effects keep one pixel basis while browser UI moves. */
+  .hero-stage {
+    min-height: max(var(--stable-vh), 100lvh);
+  }
+
+  .hero-frame {
+    height: calc(var(--mobile-visual-vh, var(--stable-vh)) + var(--mobile-visual-top, 0px));
+    min-height: 0;
+    padding-block: clamp(0.65rem, calc(var(--stable-vh) * 0.025), 1rem);
+  }
+
+  /* The background alone covers the area exposed by retracting browser UI. */
+  .hero-media,
+  .hero-blackout {
+    height: max(var(--stable-vh), 100lvh);
+    bottom: auto;
+  }
+
+  .hero-depth-plane {
+    top: var(--mobile-visual-top, 0px);
+    bottom: auto;
+    height: var(--mobile-visual-vh, var(--stable-vh));
+  }
+
+  .hero-center {
+    position: absolute;
+    top: var(--mobile-visual-top, 0px);
+    right: 0;
+    left: 0;
+    width: 100%;
+    height: var(--mobile-visual-vh, var(--stable-vh));
+    padding-inline: 1rem;
+    pointer-events: none;
+  }
+
+  .hero-statement-handshake {pointer-events: auto;}
+  .hero-footer {margin-top: auto;}
+
+  .hero-statement-wrap {min-height: min(20rem, calc(var(--stable-vh) * 0.6));}
+  .hero-statement-line {
+    max-width: min(94vw, 36rem);
+    font-size: clamp(1.75rem, min(11vw, calc(var(--stable-vh) * 0.09)), 3.5rem);
+    line-height: 1.02;
+    letter-spacing: -0.055em;
+  }
+  .hero-statement-phrase {display: inline-flex; flex-direction: column; align-items: center; gap: 0.04em;}
+  .hero-statement-phrase-line {display: block; white-space: nowrap;}
+  .hero-statement-phrase-line:not(:last-child)::after {content: none;}
+}

@@ -8,6 +8,9 @@ export default defineConfig({
     host: '127.0.0.1',
     port: 3000,
     strictPort: true,
+    proxy: {
+      '/api/visits': {target: 'http://127.0.0.1:8788', changeOrigin: false},
+    },
     watch: {
       ignored: ['**/.omo/**'],
     },

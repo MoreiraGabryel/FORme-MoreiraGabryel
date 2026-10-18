@@ -7,6 +7,7 @@ import {createFooterSceneController} from '../../utils/footerSceneController';
 import type {FooterSceneState} from '../../utils/footerSceneController';
 import {acquireFooterSceneInputLock} from '../../utils/footerSceneInputLock';
 import './FinalFooterStage.css';
+import {readIsMobileViewport} from '../../utils/mobileViewport';
 
 type Props = {enabled: boolean; locale: Locale; onRestore?: (signal: AbortSignal) => Promise<void>};
 const isActive = (state: FooterSceneState) => state === 'loading' || state === 'playing' || state === 'blackout' || state === 'revealing';
@@ -24,6 +25,8 @@ const codeStreams = [
 
 /** The black section remains in the journey; playback lives outside the inert app. */
 export function FinalFooterStage({enabled, locale, onRestore}: Props) {
+  // Prefer the existing black composite on mobile; keep the decoder stable through orientation changes.
+  const [preferMobileMedia] = useState(readIsMobileViewport);
   const restoreRef = useRef(onRestore);
   useLayoutEffect(() => {restoreRef.current = onRestore;}, [onRestore]);
   const sectionRef = useRef<HTMLElement | null>(null);
@@ -150,7 +153,7 @@ export function FinalFooterStage({enabled, locale, onRestore}: Props) {
         // The presented video frame is the only clock; no free-running glitch timers.
         interference?.time(time, true);
         drawRupture(time);
-        overlay.dataset.frameReady = 'true';
+        overlay.dataset.frameReady = String(!preferMobileMedia || time > 0 && video.readyState >= 2 && !video.seeking);
         const phase = time < 2.8 ? 'entrance' : time < 6.4 ? 'character' : time < 9.1 ? 'interference' : 'collapse';
         if (overlay.dataset.mediaPhase !== phase) overlay.dataset.mediaPhase = phase;
       },
@@ -201,7 +204,7 @@ export function FinalFooterStage({enabled, locale, onRestore}: Props) {
       delete document.documentElement.dataset.footerSceneReturning;
       overlay.hidden = true;
     };
-  }, [enabled]);
+  }, [enabled, preferMobileMedia]);
 
   const active = enabled && isActive(state);
   return (
@@ -228,8 +231,8 @@ export function FinalFooterStage({enabled, locale, onRestore}: Props) {
             disableRemotePlayback
             aria-hidden="true"
           >
-            <source src="/media/footer-character.webm" type="video/webm" />
-            <source src="/media/footer-character.mp4" type="video/mp4" />
+            <source src={preferMobileMedia ? '/media/footer-character-mobile.mp4' : '/media/footer-character.webm'} type={preferMobileMedia ? 'video/mp4' : 'video/webm'} />
+            <source src={preferMobileMedia ? '/media/footer-character.webm' : '/media/footer-character.mp4'} type={preferMobileMedia ? 'video/webm' : 'video/mp4'} />
           </video>
           <canvas className="footer-scene-torn-frame" width={720} height={1148} aria-hidden="true" />
           <div className="footer-scene-effects" aria-hidden="true">

@@ -1,19 +1,13 @@
 import {useEffect, useState} from 'react';
-
-const MOBILE_BREAKPOINT = 768;
-
-function readIsMobile() {
-  if (typeof window === 'undefined') return false;
-  return window.innerWidth < MOBILE_BREAKPOINT;
-}
+import {MOBILE_VIEWPORT_QUERY, readIsMobileViewport} from '../utils/mobileViewport';
 
 export function useIsMobile() {
-  const [isMobile, setIsMobile] = useState(readIsMobile);
+  const [isMobile, setIsMobile] = useState(readIsMobileViewport);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    const mediaQuery = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 0.02}px)`);
+    const mediaQuery = window.matchMedia(MOBILE_VIEWPORT_QUERY);
     const update = () => setIsMobile(mediaQuery.matches);
 
     update();

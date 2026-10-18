@@ -94,3 +94,7 @@ export const FAKE_FOOTER_SCENE: SceneGeometry = {
   lengthInViewports: 3.8,
   leadInViewports: 0,
 };
+
+export function getFakeFooterScrollDistance(viewportHeight: number) {
+  return Math.round(FAKE_FOOTER_SCENE.lengthInViewports * viewportHeight);
+}

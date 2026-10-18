@@ -13,6 +13,7 @@ import {HOME_COPY} from './config/homeContent';
 import {HERO_SCENE, HERO_SCENE_REDUCED_MOTION} from './config/scenes';
 import {useTranslation} from './i18n/useTranslation';
 import {useSmoothScroll} from './hooks/useSmoothScroll';
+import {useIsMobile} from './hooks/useIsMobile';
 import {getStableViewportHeight} from './utils/stableViewport';
 import {shouldRotateHeroPhrase} from './utils/heroStatementMotion';
 import {getTechnologyStageProgress} from './utils/technologyStageProgress';
@@ -69,10 +70,20 @@ export default function App() {
   // Scroll suave (Lenis) entra só depois do Loading, que trava o scroll
   // enquanto está montado. Ver `useSmoothScroll`.
   useSmoothScroll(loaded);
+  const isMobile = useIsMobile();
   const pathname = typeof window === 'undefined' ? '/' : window.location.pathname.replace(/\/+$/, '') || '/';
   const copy = HOME_COPY[locale];
   const [phraseIndex, setPhraseIndex] = useState(0);
   const [footerPhraseIndex, setFooterPhraseIndex] = useState(0);
+  const [scrollState, setScrollState] = useState({
+    heroProgress: 0,
+    rawStageProgress: 0,
+    rawStageApproach: 0,
+    rawFakeFooterProgress: 0,
+    scrollDirectionBias: 0,
+    isLargeViewport: false,
+    prefersReducedMotion: false,
+  });
   const [documentVisible, setDocumentVisible] = useState(() => typeof document === 'undefined' || !document.hidden);
   const footerLockedRef = useRef(false);
   const [footerLocked, setFooterLocked] = useState(false);
@@ -103,15 +114,6 @@ export default function App() {
     document.addEventListener('visibilitychange', updateVisibility);
     return () => document.removeEventListener('visibilitychange', updateVisibility);
   }, []);
-  const [scrollState, setScrollState] = useState({
-    heroProgress: 0,
-    rawStageProgress: 0,
-    rawStageApproach: 0,
-    rawFakeFooterProgress: 0,
-    scrollDirectionBias: 0,
-    isLargeViewport: false,
-    prefersReducedMotion: false,
-  });
   const {
     heroProgress,
     rawStageProgress,
@@ -320,6 +322,8 @@ export default function App() {
     fakeFooterSettle * 0.008 -
     fakeFooterReverseEase * 0.04;
 
+  const sceneUnit = isMobile ? getStableViewportHeight() / 100 : 1;
+  const sceneOffset = (value: number) => `${value * sceneUnit}${isMobile ? 'px' : 'vh'}`;
 
   if (pathname === '/privacy-policy') return <LegalPage kind="privacy" locale={locale} setLocale={setLocale} />;
   if (pathname === '/terms-of-service') return <LegalPage kind="terms" locale={locale} setLocale={setLocale} />;
@@ -381,11 +385,11 @@ export default function App() {
               '--fake-footer-entrance': `${fakeFooterEntrance}`,
             } as CSSProperties}
             shellStyle={{
-              transform: `translate3d(0, ${(1 - fakeFooterEase) * 0.24 - fakeFooterTunnelEase * 0.44 + fakeFooterReverseEase * 1.4 + fakeFooterSettle * 0.04}vh, 0) scale(${1.038 + fakeFooterTunnelEase * 0.03 - fakeFooterSettle * 0.002 - fakeFooterReverseEase * 0.012})`,
+              transform: `translate3d(0, ${sceneOffset((1 - fakeFooterEase) * 0.24 - fakeFooterTunnelEase * 0.44 + fakeFooterReverseEase * 1.4 + fakeFooterSettle * 0.04)}, 0) scale(${1.038 + fakeFooterTunnelEase * 0.03 - fakeFooterSettle * 0.002 - fakeFooterReverseEase * 0.012})`,
               opacity: 0.82 + fakeFooterEase * 0.06 - fakeFooterReverseEase * 0.02,
             }}
             portalLayerStyle={{
-              transform: `translate3d(0, ${(1 - fakeFooterTunnelEase) * 2.5 - fakeFooterTunnelEase * 2.7 - fakeFooterSettle * 0.14 + fakeFooterReverseEase * 3.4}vh, 0) scale(${isLargeViewport ? 1.12 - fakeFooterTunnelEase * 0.12 - fakeFooterReverseEase * 0.03 : 1.2 - fakeFooterTunnelEase * 0.19 - fakeFooterSettle * 0.004 - fakeFooterReverseEase * 0.05})`,
+              transform: `translate3d(0, ${sceneOffset((1 - fakeFooterTunnelEase) * 2.5 - fakeFooterTunnelEase * 2.7 - fakeFooterSettle * 0.14 + fakeFooterReverseEase * 3.4)}, 0) scale(${isLargeViewport ? 1.12 - fakeFooterTunnelEase * 0.12 - fakeFooterReverseEase * 0.03 : 1.2 - fakeFooterTunnelEase * 0.19 - fakeFooterSettle * 0.004 - fakeFooterReverseEase * 0.05})`,
               filter: isLargeViewport
                 ? `brightness(${0.8 + fakeFooterTunnelEase * 0.05 - fakeFooterReverseEase * 0.03}) contrast(${1.03 + fakeFooterTunnelEase * 0.02 - fakeFooterReverseEase * 0.02})`
                 : `saturate(${1.02 + fakeFooterTunnelEase * 0.12 - fakeFooterSettle * 0.008 - fakeFooterReverseEase * 0.05}) brightness(${0.78 + fakeFooterTunnelEase * 0.1 - fakeFooterSettle * 0.002 - fakeFooterReverseEase * 0.05}) contrast(${1.1 + fakeFooterTunnelEase * 0.05 - fakeFooterReverseEase * 0.02}) blur(${(1 - fakeFooterTunnelEase) * 0.52 + fakeFooterSettle * 0.1 + fakeFooterReverseEase * 0.82}px)`,
