@@ -39,6 +39,7 @@ npm run verify
 Esse gate executa:
 
 - lint;
+- testes focados do viewport, contador e pacote Cloudflare;
 - auditoria de dependências com `npm audit --audit-level=moderate`;
 - typecheck e build de produção.
 
@@ -47,3 +48,9 @@ Esse gate executa:
 Arquivos `.env*`, credenciais, certificados e chaves privadas são ignorados pelo Git.
 
 O arquivo `.env.example` deve conter apenas exemplos sem valor real.
+
+## Pacote de publicação
+
+O pacote da branch `main-build` não deve conter Markdown interno, fontes, source maps, bancos locais, credenciais ou relatórios de auditoria. O D1 é vinculado no servidor da Cloudflare, sem chave de administração no frontend. Os comandos de regeneração e os limites do contador público estão em `docs/cloudflare-deployment.md`.
+
+Manter o pacote limpo não elimina informações que já estejam em commits antigos ou outras branches públicas. Se um segredo real for encontrado, revogue/rotacione a credencial antes de avaliar uma reescrita coordenada do histórico; apagar um arquivo não revoga acesso.
