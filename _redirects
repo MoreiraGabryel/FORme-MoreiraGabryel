@@ -1,3 +1,0 @@
-# SPA fallback - App.tsx roteia /privacy-policy e /terms-of-service pelo pathname.
-# Sem esta regra, acesso direto ou refresh nessas rotas retorna 404 no Cloudflare Pages.
-/*    /index.html    200
