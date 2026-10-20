@@ -8,7 +8,7 @@
 
 ## O que entra no pacote
 
-`index.html`, chunks JS/CSS em `assets/`, arquivos públicos efetivamente referenciados pelo código/HTML/CSS, favicon, `_headers`, `_redirects`, `_routes.json`, `_worker.js` e `THIRD_PARTY_NOTICES.txt`.
+`index.html`, chunks JS/CSS em `assets/`, arquivos públicos efetivamente referenciados pelo código/HTML/CSS, favicon, `_headers`, `_worker.js` e `THIRD_PARTY_NOTICES.txt`.
 
 Não entram fontes TypeScript/TSX, testes, documentação Markdown, dependências de desenvolvimento, bancos locais, `.env`, mapas de código-fonte, referências de produção de mídia e vídeos originais não usados. A seleção preserva caminhos dinâmicos de mídia e não modifica o conteúdo dos assets escolhidos. Nenhum arquivo pode ultrapassar 25 MiB. O empacotador recusa links simbólicos, dependências ausentes, referências a source maps, travessia de diretórios e destinos já existentes.
 

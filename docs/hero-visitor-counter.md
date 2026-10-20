@@ -20,7 +20,7 @@ A aplicação cria automaticamente uma tabela `visitor_count` com uma única lin
 
 A contagem começa com o primeiro POST válido ao banco configurado; não recupera visitas históricas. Novos deploys devem reutilizar o mesmo banco. Não apague a linha ou troque de banco para publicar uma nova versão.
 
-`public/_routes.json` restringe a função ao endpoint do contador; os demais caminhos continuam estáticos. O Worker também preserva o encaminhamento `env.ASSETS.fetch(request)` como fallback. Nenhuma chave é incluída no frontend ou exigida para compilar.
+`run_worker_first: ["/api/*"]` em `wrangler.jsonc` restringe o Worker ao endpoint do contador; os demais caminhos continuam estáticos. O Worker também preserva o encaminhamento `env.ASSETS.fetch(request)` como fallback. Nenhuma chave é incluída no frontend ou exigida para compilar.
 
 ## Prévia sem build
 
@@ -43,7 +43,7 @@ Miniflare é somente uma dependência de desenvolvimento. Os overrides de `undic
 1. Crie um banco D1 na sua conta, por exemplo `portfolio-visitor-counter`.
 2. No projeto Pages, abra Settings > Bindings > Add > D1 database binding.
 3. Use exatamente `VISITOR_COUNTER_DB` como nome da variável e selecione o banco criado para o ambiente de produção.
-4. Depois da aprovação visual, gere o build habitual. O Vite copia `_worker.js` e `_routes.json` de `public/` para a raiz de `dist/` junto aos assets.
+4. Depois da aprovação visual, gere o build habitual. O Vite copia `_worker.js` de `public/` para a raiz de `dist/` junto aos assets.
 5. Publique o conteúdo completo de `dist/`, incluindo esses dois arquivos. O `_worker.js` em advanced mode é compatível com a integração Git, Wrangler e upload direto pelo painel; não é uma pasta `functions/` que precise ser compilada durante o upload.
 6. Refaça o deploy após adicionar ou alterar o binding, para que ele entre em vigor. O domínio personalizado usa a mesma API de origem da página.
 7. Abra o site e confira a primeira entrada. A tabela será criada pelo Worker; não é necessário executar SQL de inicialização.

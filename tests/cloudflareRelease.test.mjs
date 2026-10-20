@@ -14,8 +14,7 @@ async function fixture() {
   const output = join(root, 'payload');
   const files = {
     'index.html': '<script type="module" src="/assets/app.js"></script>',
-    '_headers': '/*\n  X-Content-Type-Options: nosniff', '_redirects': '/* /index.html 200',
-    '_routes.json': '{"version":1,"include":["/api/visits"],"exclude":[]}',
+    '_headers': '/*\n  X-Content-Type-Options: nosniff',
     '_worker.js': 'export default {fetch(){return new Response("test worker fixture")}}',
     'favicon.ico': 'test icon fixture',
     'assets/app.js': 'const icon="/icons/react.svg"; const flag="/flags/br.svg"; const frame=n=>`/media/entry_${n}.webp`;',
@@ -49,7 +48,7 @@ test('release contains runtime dependencies but no source, maps, private docs or
     const result = spawnSync(process.execPath, [script, host.input, host.output], {encoding: 'utf8'});
     assert.equal(result.status, 0, result.stderr);
     assert.deepEqual(await list(host.output), [
-      'THIRD_PARTY_NOTICES.txt', '_headers', '_redirects', '_routes.json', '_worker.js',
+      'THIRD_PARTY_NOTICES.txt', '_headers', '_worker.js',
       'assets/app.css', 'assets/app.js', 'favicon.ico', 'flags/br.svg', 'icons/react.svg',
       'index.html', 'media/entry_1.webp', 'media/entry_2.webp', 'media/hero.webp',
     ].sort());

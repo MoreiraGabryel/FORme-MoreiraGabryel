@@ -19,7 +19,7 @@ async function walk(directory) {
   }
 }
 await walk(input);
-const selected = new Set(['index.html', '_headers', '_redirects', '_routes.json', '_worker.js']);
+const selected = new Set(['index.html', '_headers', '_worker.js']);
 for (const name of selected) if (!files.has(name)) throw new Error(`Missing build entry: ${name}`);
 if (files.has('favicon.ico')) selected.add('favicon.ico');
 const runtimeFile = /\.(?:avif|css|gif|ico|jpe?g|js|json|mjs|mp3|mp4|ogg|png|svg|ttf|wasm|webm|webp|woff2?)$/i;
