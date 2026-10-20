@@ -8,6 +8,7 @@ import type {HomeCopy} from '../../config/homeContent';
 import {HERO_SCENE, HERO_SCENE_REDUCED_MOTION} from '../../config/scenes';
 import {getLoadingHeroZoomMotion} from '../../utils/loadingHeroZoomMotion';
 import {getHeroScrollExitMotion, shouldLockHeroStatementExit} from '../../utils/heroScrollExitMotion';
+import {replaceHeroStatementExit} from '../../utils/heroStatementExitTween';
 import {getHeroStatementMotion, splitHeroStatementLine} from '../../utils/heroStatementMotion';
 import {getStableViewportHeight} from '../../utils/stableViewport';
 import {getPointerDepthStrength} from '../../utils/pointerDepthMotion';
@@ -150,6 +151,10 @@ export function HeroIntro({
   const characterRefs = useRef<HTMLSpanElement[]>([]);
   const shouldAnimatePhraseEntryRef = useRef(false);
   const phraseTransitionRef = useRef<gsap.core.Timeline | null>(null);
+  const statementCharacterCountRef = useRef(0);
+  const heroScrollTimelineRef = useRef<gsap.core.Timeline | null>(null);
+  const heroContextRef = useRef<gsap.Context | null>(null);
+  const statementExitTweenRef = useRef<gsap.core.Tween | null>(null);
   const isHeroScrollExitActiveRef = useRef(isHeroScrollExitActive);
   const footerRef = useRef<HTMLElement>(null);
   const cueRef = useRef<HTMLParagraphElement>(null);
@@ -194,6 +199,10 @@ export function HeroIntro({
   }, [isHeroScrollExitActive]);
 
   useLayoutEffect(() => {
+    statementCharacterCountRef.current = statementCharacterCount;
+  }, [statementCharacterCount]);
+
+  useLayoutEffect(() => {
     if (!isHeroScrollExitActive) return;
 
     phraseTransitionRef.current?.kill();
@@ -219,7 +228,7 @@ export function HeroIntro({
     const titleReal = titleRealRef.current;
     const footer = footerRef.current;
     const cue = cueRef.current;
-    const chars = characterRefs.current.slice(0, statementCharacterCount);
+    const getChars = () => characterRefs.current.slice(0, statementCharacterCountRef.current);
 
     if (
       !root ||
@@ -234,7 +243,7 @@ export function HeroIntro({
       !titleReal ||
       !footer ||
       !cue ||
-      chars.length !== statementCharacterCount
+      getChars().length !== statementCharacterCountRef.current
     ) {
       return;
     }
@@ -259,7 +268,7 @@ export function HeroIntro({
           scale: 1,
           filter: 'blur(0px)',
         });
-        gsap.set(chars, {autoAlpha: 1, x: 0, y: 0, filter: 'blur(0px)'});
+        gsap.set(getChars(), {autoAlpha: 1, x: 0, y: 0, filter: 'blur(0px)'});
         gsap.set(footer, {autoAlpha: 1, y: 0, filter: 'blur(0px)'});
         gsap.set(cue, {autoAlpha: 1, y: 0, filter: 'blur(0px)'});
       };
@@ -324,14 +333,6 @@ export function HeroIntro({
           duration: prefersReducedMotion ? 0.06 : 0.09,
           force3D: true,
         }, prefersReducedMotion ? 0.58 : 0.61)
-        .to(chars, {
-          autoAlpha: 0,
-          y: scrollExitMotion.statement.y,
-          duration: scrollExitMotion.statement.duration,
-          ease: 'power3.in',
-          force3D: true,
-          stagger: {amount: scrollExitMotion.statement.staggerAmount, from: scrollExitMotion.statement.from},
-        }, scrollExitMotion.statement.start)
         .to(topBar, {
           autoAlpha: 0,
           y: prefersReducedMotion ? 0 : -14,
@@ -346,6 +347,8 @@ export function HeroIntro({
           autoAlpha: 0,
           duration: scrollExitMotion.blackout.end - scrollExitMotion.blackout.start,
         }, scrollExitMotion.blackout.start);
+
+      heroScrollTimelineRef.current = heroScrollTimeline;
 
       const finishHandoff = () => {
         handoffResetCall?.kill();
@@ -399,6 +402,7 @@ export function HeroIntro({
           scale: reducedMotion ? 1 : 0.986,
           filter: `blur(${reducedMotion ? 0.9 : 3.4}px)`,
         });
+        const chars = getChars();
         gsap.set(chars, {
           autoAlpha: 0,
           y: handoffStatementMotion.entry.y,
@@ -504,6 +508,8 @@ export function HeroIntro({
       window.addEventListener('mg:loading-handoff', handleHandoff as EventListener);
 
       return () => {
+        heroScrollTimelineRef.current = null;
+        statementExitTweenRef.current = null;
         window.removeEventListener('mg:loading-handoff', handleHandoff as EventListener);
         window.cancelAnimationFrame(handoffFrame);
         handoffTl?.kill();
@@ -512,11 +518,32 @@ export function HeroIntro({
       };
     }, root);
 
+    heroContextRef.current = ctx;
     requestSceneRefresh();
     return () => {
+      heroContextRef.current = null;
       ctx.revert();
       requestSceneRefresh();
     };
+  }, [isMobileViewport]);
+
+  useLayoutEffect(() => {
+    const timeline = heroScrollTimelineRef.current;
+    const ctx = heroContextRef.current;
+    const chars = characterRefs.current.slice(0, statementCharacterCount);
+    if (!timeline || !ctx || chars.length !== statementCharacterCount) return;
+
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const scrollExitMotion = getHeroScrollExitMotion({isMobile: isMobileViewport, prefersReducedMotion});
+    // Same pinned ScrollTrigger and no global refresh; only the character targets change.
+    ctx.add(() => {
+      statementExitTweenRef.current = replaceHeroStatementExit({
+        timeline,
+        previous: statementExitTweenRef.current,
+        chars,
+        motion: scrollExitMotion.statement,
+      });
+    });
   }, [displayedPhrase, isMobileViewport, statementCharacterCount]);
 
   useLayoutEffect(() => {

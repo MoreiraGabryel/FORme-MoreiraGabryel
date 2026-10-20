@@ -2,10 +2,11 @@ import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import test from 'node:test';
 
-const [app, hero, css] = await Promise.all([
+const [app, hero, css, statementExitTween] = await Promise.all([
   readFile(new URL('../src/App.tsx', import.meta.url), 'utf8'),
   readFile(new URL('../src/components/sections/HeroIntro.tsx', import.meta.url), 'utf8'),
   readFile(new URL('../src/index.css', import.meta.url), 'utf8'),
+  readFile(new URL('../src/utils/heroStatementExitTween.ts', import.meta.url), 'utf8'),
 ]);
 
 test('troca as faixas douradas por caracteres GSAP e pausa a rotação fora da Hero', () => {
@@ -15,7 +16,7 @@ test('troca as faixas douradas por caracteres GSAP e pausa a rotação fora da H
   assert.match(hero, /splitHeroStatementLine/);
   assert.match(hero, /hero-statement-character/);
   assert.match(hero, /stagger: \{each: statementMotion\.entry\.stagger, from: statementMotion\.entry\.from\}/);
-  assert.match(hero, /stagger: \{amount: scrollExitMotion\.statement\.staggerAmount, from: scrollExitMotion\.statement\.from\}/);
+  assert.match(statementExitTween, /stagger: \{amount: motion\.staggerAmount, from: motion\.from\}/);
   assert.doesNotMatch(hero, /HERO_SLICE_SEGMENTS|titleSliceRefs|hero-exit-sweep|hero-title-glow|hero-title-mask/);
 
   assert.match(css, /\.hero-statement-word \{/);
