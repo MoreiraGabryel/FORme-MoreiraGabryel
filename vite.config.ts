@@ -2,8 +2,19 @@ import {defineConfig} from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 
+const copyrightBanner = {
+  name: 'copyright-banner',
+  generateBundle(_options: unknown, bundle: Record<string, {type: string; code?: string}>) {
+    for (const chunk of Object.values(bundle)) {
+      if (chunk.type === 'chunk' && chunk.code !== undefined) {
+        chunk.code = `/*! Copyright (c) 2026 MoreiraGabryel. All rights reserved. */\n${chunk.code}`;
+      }
+    }
+  },
+};
+
 export default defineConfig({
-  plugins: [react(), tailwindcss()],
+  plugins: [react(), tailwindcss(), copyrightBanner],
   build: {sourcemap: false},
   server: {
     host: '127.0.0.1',

@@ -1,21 +1,52 @@
-MIT License
+Copyright (c) 2026 MoreiraGabryel. All rights reserved.
 
-Copyright (c) 2026 MoreiraGabryel
+PROPRIETARY LICENSE - SOURCE AVAILABLE FOR VIEWING ONLY
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+This repository, including its source code, design, layout, animations, text,
+images, video, audio, icons, configuration, documentation, and build output
+(collectively, the "Work"), is the exclusive property of MoreiraGabryel
+("the Author"). The Work is made publicly visible for portfolio, evaluation,
+and educational purposes only. No license or right is granted except as
+expressly stated below.
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+1. Permitted use
+   You may view the Work and read its source code, and you may fork the
+   repository on GitHub solely as GitHub's Terms of Service permit, for the
+   sole purpose of personal, non-commercial study.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+2. Restrictions
+   Without the prior written permission of the Author, you may not:
+   a. copy, reproduce, or redistribute the Work or any substantial part of it;
+   b. modify, adapt, translate, or create derivative works from the Work;
+   c. publish, host, deploy, sublicense, sell, or otherwise commercialize the
+      Work, or present it or any part of it as your own;
+   d. reproduce the visual identity, layout, animations, branding, or text of
+      the Work in another website, product, or service;
+   e. remove, alter, or obscure any copyright, authorship, or attribution
+      notice contained in the Work;
+   f. use the Work, in whole or in part, to train, fine-tune, or evaluate
+      machine learning models, or to build datasets, without written consent.
+
+3. Third-party components
+   The Work depends on open-source packages that are licensed separately by
+   their respective authors. Those licenses are listed in
+   THIRD_PARTY_NOTICES.txt where applicable and are not affected by this
+   license.
+
+4. Trademarks and personal identity
+   The name "MoreiraGabryel", associated logos, and the personal images
+   contained in the Work are not licensed for any use.
+
+5. Termination
+   Any use in breach of this license automatically terminates the limited
+   permission in Section 1.
+
+6. No warranty
+   THE WORK IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+   FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT. IN NO EVENT SHALL
+   THE AUTHOR BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY ARISING
+   FROM, OUT OF, OR IN CONNECTION WITH THE WORK OR ITS USE.
+
+For permission requests, contact the Author through the channels listed on
+the portfolio website.

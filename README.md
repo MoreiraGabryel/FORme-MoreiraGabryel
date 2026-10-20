@@ -48,3 +48,7 @@ Observacao:
 - `public/media/` guarda imagens e videos usados nas cenas
 
 
+
+## Licença
+
+Copyright © 2026 MoreiraGabryel. Todos os direitos reservados. O código é público apenas para visualização e estudo pessoal; cópia, modificação, redistribuição, uso comercial e treinamento de modelos de IA exigem autorização por escrito. Detalhes em [LICENSE](LICENSE).

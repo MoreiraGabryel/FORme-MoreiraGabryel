@@ -1,3 +1,7 @@
+/**
+ * Copyright (c) 2026 MoreiraGabryel. All rights reserved.
+ * Proprietary source, see the LICENSE file at the repository root.
+ */
 import './index.css';
 import 'lenis/dist/lenis.css';
 import React from 'react';
