@@ -1,0 +1,71 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build outputs
+dist/
+.next/
+out/
+build/
+.vercel/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.log
+
+# Environment / secrets - nunca subir chaves ou tokens
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+*.jks
+*.keystore
+secrets/
+credentials/
+*.secret.*
+
+# OS / editors
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# Local caches
+.turbo/
+.cache/
+coverage/
+.tmp-*/
+*.tsbuildinfo
+.eslintcache
+vite.config.*.timestamp-*
+
+# Local agent/session state - nunca faz parte do deploy
+.hermes/
+.omo/
+.codegraph
+.impeccable/
+
+# Local visual/source references
+backups/
+referencia-canva/
+scrool-image/
+OFICIAL_VIDEO/
+svg_icons/
+fundo_site*.mp4
+
+# Cloudflare local output
+.wrangler/
+.dev.vars
+
+# Local working notes - fora do repo publico
+ISSUES.MD
+.docs/

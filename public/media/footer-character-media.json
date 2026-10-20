@@ -1,0 +1,367 @@
+{
+  "source": {
+    "sha256": "eba6cc99bf1cdef028a6710db80438e52bb52855120d6ae9a8367a44fd3973da",
+    "frames": 362,
+    "fps": 36,
+    "width": 1080,
+    "height": 1722,
+    "durationSeconds": 10.056,
+    "videoStartSeconds": 0,
+    "audioCodec": "opus",
+    "audioSampleRate": 48000,
+    "audioChannels": 2,
+    "file": "footer.webm"
+  },
+  "output": {
+    "frames": 362,
+    "fps": 36,
+    "width": 720,
+    "height": 1148,
+    "videoDurationSeconds": 10.055555555555555,
+    "sourceFrameRangeInclusive": [
+      0,
+      361
+    ],
+    "sourceFrameMapping": "output frame N uses original source frame N; no cuts, interpolation, retiming or invented RGB",
+    "webmContainerDurationSeconds": 10.056,
+    "mp4ContainerDurationSeconds": 10.055556,
+    "posterSourceFrame": 234,
+    "posterSourceTimeSeconds": 6.5
+  },
+  "method": {
+    "segmentation": "BiRefNet-general full model, not lite; normalized RGB 1024x1024; sigmoid + min-max; Lanczos alpha",
+    "modelMD5": "7a35a0141cbbc80de11d9c9a28f52697",
+    "flow": "bidirectional DIS medium at approved 540x862 working resolution; semantic anchors every nine source frames plus sample endpoints",
+    "outputSpatialResize": "source RGB directly scaled 1080x1722 -> 720x1148; matte Lanczos 540x862 -> 720x1148",
+    "entrance": "source-constrained approved refine() for frames 0..89, exact approved refined alpha reuse for source frames 18..89; smoothstep taper over 2.5..3.0 seconds",
+    "refinementRGB": "no RGB reconstruction, global white key, brightness key removal, new particles, new motion or source retiming",
+    "ending": "near-black/no-subject frames 342..361 have zero alpha; no min-max semantic inference on absent subjects; source RGB is retained",
+    "webm": "libvpx-vp9 CRF25 yuva420p + original Opus stream copy",
+    "mp4": "libx264 CRF18 yuv420p black composite + AAC160k transcoding of complete source audio without filters",
+    "poster": "lossless WebP with alpha from actual original frame 234 at 6.5s",
+    "anchorCount": 44,
+    "newInferences": 21,
+    "reusedApprovedAnchors": 19,
+    "blackGuardAnchors": 4,
+    "anchors": [
+      {
+        "sourceFrame": 0,
+        "sourceTimeSeconds": 0.0,
+        "method": "BiRefNet-general CPU 1024x1024 semantic inference",
+        "processingSeconds": 21.865
+      },
+      {
+        "sourceFrame": 9,
+        "sourceTimeSeconds": 0.25,
+        "method": "BiRefNet-general CPU 1024x1024 semantic inference",
+        "processingSeconds": 18.215
+      },
+      {
+        "sourceFrame": 18,
+        "sourceTimeSeconds": 0.5,
+        "method": "reused approved full-model semantic anchor",
+        "processingSeconds": 0.03
+      },
+      {
+        "sourceFrame": 27,
+        "sourceTimeSeconds": 0.75,
+        "method": "reused approved full-model semantic anchor",
+        "processingSeconds": 0.121
+      },
+      {
+        "sourceFrame": 36,
+        "sourceTimeSeconds": 1.0,
+        "method": "reused approved full-model semantic anchor",
+        "processingSeconds": 0.117
+      },
+      {
+        "sourceFrame": 45,
+        "sourceTimeSeconds": 1.25,
+        "method": "reused approved full-model semantic anchor",
+        "processingSeconds": 0.056
+      },
+      {
+        "sourceFrame": 54,
+        "sourceTimeSeconds": 1.5,
+        "method": "reused approved full-model semantic anchor",
+        "processingSeconds": 0.008
+      },
+      {
+        "sourceFrame": 63,
+        "sourceTimeSeconds": 1.75,
+        "method": "reused approved full-model semantic anchor",
+        "processingSeconds": 0.008
+      },
+      {
+        "sourceFrame": 72,
+        "sourceTimeSeconds": 2.0,
+        "method": "reused approved full-model semantic anchor",
+        "processingSeconds": 0.009
+      },
+      {
+        "sourceFrame": 81,
+        "sourceTimeSeconds": 2.25,
+        "method": "reused approved full-model semantic anchor",
+        "processingSeconds": 0.01
+      },
+      {
+        "sourceFrame": 89,
+        "sourceTimeSeconds": 2.4722222222222223,
+        "method": "reused approved full-model semantic anchor",
+        "processingSeconds": 0.009
+      },
+      {
+        "sourceFrame": 90,
+        "sourceTimeSeconds": 2.5,
+        "method": "reused approved full-model semantic anchor",
+        "processingSeconds": 0.022
+      },
+      {
+        "sourceFrame": 99,
+        "sourceTimeSeconds": 2.75,
+        "method": "BiRefNet-general CPU 1024x1024 semantic inference",
+        "processingSeconds": 12.157
+      },
+      {
+        "sourceFrame": 108,
+        "sourceTimeSeconds": 3.0,
+        "method": "BiRefNet-general CPU 1024x1024 semantic inference",
+        "processingSeconds": 12.071
+      },
+      {
+        "sourceFrame": 117,
+        "sourceTimeSeconds": 3.25,
+        "method": "BiRefNet-general CPU 1024x1024 semantic inference",
+        "processingSeconds": 12.051
+      },
+      {
+        "sourceFrame": 126,
+        "sourceTimeSeconds": 3.5,
+        "method": "BiRefNet-general CPU 1024x1024 semantic inference",
+        "processingSeconds": 12.212
+      },
+      {
+        "sourceFrame": 135,
+        "sourceTimeSeconds": 3.75,
+        "method": "BiRefNet-general CPU 1024x1024 semantic inference",
+        "processingSeconds": 12.428
+      },
+      {
+        "sourceFrame": 144,
+        "sourceTimeSeconds": 4.0,
+        "method": "BiRefNet-general CPU 1024x1024 semantic inference",
+        "processingSeconds": 12.333
+      },
+      {
+        "sourceFrame": 153,
+        "sourceTimeSeconds": 4.25,
+        "method": "BiRefNet-general CPU 1024x1024 semantic inference",
+        "processingSeconds": 12.33
+      },
+      {
+        "sourceFrame": 162,
+        "sourceTimeSeconds": 4.5,
+        "method": "BiRefNet-general CPU 1024x1024 semantic inference",
+        "processingSeconds": 11.946
+      },
+      {
+        "sourceFrame": 171,
+        "sourceTimeSeconds": 4.75,
+        "method": "BiRefNet-general CPU 1024x1024 semantic inference",
+        "processingSeconds": 12.062
+      },
+      {
+        "sourceFrame": 180,
+        "sourceTimeSeconds": 5.0,
+        "method": "BiRefNet-general CPU 1024x1024 semantic inference",
+        "processingSeconds": 12.215
+      },
+      {
+        "sourceFrame": 189,
+        "sourceTimeSeconds": 5.25,
+        "method": "BiRefNet-general CPU 1024x1024 semantic inference",
+        "processingSeconds": 12.245
+      },
+      {
+        "sourceFrame": 198,
+        "sourceTimeSeconds": 5.5,
+        "method": "reused approved full-model semantic anchor",
+        "processingSeconds": 0.01
+      },
+      {
+        "sourceFrame": 207,
+        "sourceTimeSeconds": 5.75,
+        "method": "reused approved full-model semantic anchor",
+        "processingSeconds": 0.01
+      },
+      {
+        "sourceFrame": 216,
+        "sourceTimeSeconds": 6.0,
+        "method": "reused approved full-model semantic anchor",
+        "processingSeconds": 0.01
+      },
+      {
+        "sourceFrame": 225,
+        "sourceTimeSeconds": 6.25,
+        "method": "reused approved full-model semantic anchor",
+        "processingSeconds": 0.009
+      },
+      {
+        "sourceFrame": 234,
+        "sourceTimeSeconds": 6.5,
+        "method": "reused approved full-model semantic anchor",
+        "processingSeconds": 0.008
+      },
+      {
+        "sourceFrame": 243,
+        "sourceTimeSeconds": 6.75,
+        "method": "reused approved full-model semantic anchor",
+        "processingSeconds": 0.009
+      },
+      {
+        "sourceFrame": 252,
+        "sourceTimeSeconds": 7.0,
+        "method": "reused approved full-model semantic anchor",
+        "processingSeconds": 0.008
+      },
+      {
+        "sourceFrame": 261,
+        "sourceTimeSeconds": 7.25,
+        "method": "reused approved full-model semantic anchor",
+        "processingSeconds": 0.009
+      },
+      {
+        "sourceFrame": 269,
+        "sourceTimeSeconds": 7.472222222222222,
+        "method": "reused approved full-model semantic anchor",
+        "processingSeconds": 0.009
+      },
+      {
+        "sourceFrame": 270,
+        "sourceTimeSeconds": 7.5,
+        "method": "BiRefNet-general CPU 1024x1024 semantic inference",
+        "processingSeconds": 12.219
+      },
+      {
+        "sourceFrame": 279,
+        "sourceTimeSeconds": 7.75,
+        "method": "BiRefNet-general CPU 1024x1024 semantic inference",
+        "processingSeconds": 12.296
+      },
+      {
+        "sourceFrame": 288,
+        "sourceTimeSeconds": 8.0,
+        "method": "BiRefNet-general CPU 1024x1024 semantic inference",
+        "processingSeconds": 12.031
+      },
+      {
+        "sourceFrame": 297,
+        "sourceTimeSeconds": 8.25,
+        "method": "BiRefNet-general CPU 1024x1024 semantic inference",
+        "processingSeconds": 12.046
+      },
+      {
+        "sourceFrame": 306,
+        "sourceTimeSeconds": 8.5,
+        "method": "BiRefNet-general CPU 1024x1024 semantic inference",
+        "processingSeconds": 12.288
+      },
+      {
+        "sourceFrame": 315,
+        "sourceTimeSeconds": 8.75,
+        "method": "BiRefNet-general CPU 1024x1024 semantic inference",
+        "processingSeconds": 12.065
+      },
+      {
+        "sourceFrame": 324,
+        "sourceTimeSeconds": 9.0,
+        "method": "BiRefNet-general CPU 1024x1024 semantic inference",
+        "processingSeconds": 12.48
+      },
+      {
+        "sourceFrame": 333,
+        "sourceTimeSeconds": 9.25,
+        "method": "BiRefNet-general CPU 1024x1024 semantic inference",
+        "processingSeconds": 12.111
+      },
+      {
+        "sourceFrame": 342,
+        "sourceTimeSeconds": 9.5,
+        "method": "no-subject near-black source guard; no model normalization",
+        "processingSeconds": 0.01
+      },
+      {
+        "sourceFrame": 351,
+        "sourceTimeSeconds": 9.75,
+        "method": "no-subject near-black source guard; no model normalization",
+        "processingSeconds": 0.005
+      },
+      {
+        "sourceFrame": 360,
+        "sourceTimeSeconds": 10.0,
+        "method": "no-subject near-black source guard; no model normalization",
+        "processingSeconds": 0.005
+      },
+      {
+        "sourceFrame": 361,
+        "sourceTimeSeconds": 10.027777777777779,
+        "method": "no-subject near-black source guard; no model normalization",
+        "processingSeconds": 0.005
+      }
+    ]
+  },
+  "verification": {
+    "sourceUnchanged": true,
+    "fullDecodePassed": true,
+    "audioTrack": true,
+    "alphaRange": [
+      0,
+      255
+    ],
+    "actualDecodedVP9AlphaFrames": 362,
+    "decodedVideoFrames": {
+      "footer-character.webm": 362,
+      "footer-character.mp4": 362
+    },
+    "maxVideoTimestampDifferenceFromSourceSeconds": {
+      "footer-character.webm": 0.0,
+      "footer-character.mp4": 0.00044400000000011097
+    },
+    "sourceAndApprovedFilesSHA256UnchangedCount": 852,
+    "approvedRefinedAlphaFramesReusedExactlyBeforeEncode": 72,
+    "unchangedRGBFramesBeforeEncode": 362,
+    "opusPacketCount": 501,
+    "opusPacketsHashesTimestampsSideDataIdentical": true,
+    "decodedOpusPCMIdentical": true,
+    "decodedAudioPCMFormat": "f32le, 48000 Hz, stereo",
+    "sourceAndWebmPCMSHA256": "2878bee8220118ac080d44af43addc95589ca3e5212f97439ded138bd66af0f1",
+    "sourceAndWebmPCMSamplesPerChannel": 480375,
+    "aacDecodedSamplesPerChannel": 480375,
+    "aacSourceCorrelationZeroLag": 0.9986903463198897,
+    "aacEncoderTailPaddingSamples": 0,
+    "decodedAlphaMeanAbsoluteErrorFromPreencode": 0.26349140844407654,
+    "decodedAlphaMaxAbsoluteErrorFromPreencode": 45,
+    "last20DecodedAlphaFramesAllZero": true,
+    "posterExactSourceRGBAFrame": true
+  },
+  "limitations": [
+    "Semantic matting and DIS propagation remain approximate; this is not an exact recovery of all dissolved particles.",
+    "The approved entrance preserves original flattened texture inside protected body pixels to avoid erasing white clothing.",
+    "VP9/H.264 exports are lossy; pre-encode RGB and approved cached alpha are exact but video-decoded pixels can differ.",
+    "MP4 has black background and AAC audio transcoding; see measured decoded sample padding in verification. Original Opus remains packet- and PCM-identical in WebM."
+  ],
+  "files": {
+    "footer-character.webm": {
+      "bytes": 22739632,
+      "sha256": "5c85735a89447cb2e2a1497203277d0dea9c3358a676fde109d437db5e20fa77"
+    },
+    "footer-character.mp4": {
+      "bytes": 10422847,
+      "sha256": "e6da85c536de9885ea5ffcf6c501a54666cdc7698a621f50150db194dc11e136"
+    },
+    "footer-character-poster.webp": {
+      "bytes": 708158,
+      "sha256": "24f877260ba5a0ae83186f87ca1fade7ccc1ef75071f5ae187611e8b3a59e8da"
+    }
+  }
+}

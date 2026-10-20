@@ -1,0 +1,404 @@
+import {startTransition, useCallback, useEffect, useRef, useState} from 'react';
+import type {CSSProperties} from 'react';
+import {gsap} from 'gsap';
+import {flushSync} from 'react-dom';
+import {LoadingScreen} from './components/sections/LoadingScreen';
+import {HeroIntro} from './components/sections/HeroIntro';
+import {TechnologyAndAboutStage} from './components/sections/TechnologyAndAboutStage';
+import {FakeFooterStage} from './components/sections/FakeFooterStage';
+import {FinalFooterStage} from './components/sections/FinalFooterStage';
+import {CodeBurstLayer} from './components/effects/CodeBurstLayer';
+import {LegalPage} from './components/legal/LegalPage';
+import {HOME_COPY} from './config/homeContent';
+import {HERO_SCENE, HERO_SCENE_REDUCED_MOTION} from './config/scenes';
+import {useTranslation} from './i18n/useTranslation';
+import {useSmoothScroll} from './hooks/useSmoothScroll';
+import {useIsMobile} from './hooks/useIsMobile';
+import {getStableViewportHeight} from './utils/stableViewport';
+import {shouldRotateHeroPhrase} from './utils/heroStatementMotion';
+import {getTechnologyStageProgress} from './utils/technologyStageProgress';
+import {flushSceneRefresh, requestSceneRefresh} from './utils/sceneRefresh';
+import {restoreFooterScene} from './utils/footerSceneRestoration';
+
+function clamp(value: number, min: number, max: number) {
+  return Math.min(Math.max(value, min), max);
+}
+
+function smoothstep(value: number) {
+  return value * value * (3 - 2 * value);
+}
+
+// Beats do rodapé falso, em fração de `fakeFooterProgress`. Vinham de um timeline
+// GSAP com `scrub`, que corria 0,65s atrás das CSS custom properties calculadas
+// aqui. Agora saem do mesmo progresso que o resto da cena — os valores foram
+// convertidos da escala do timeline para esta, então o disparo continua no mesmo
+// ponto do scroll; só o atraso desapareceu.
+const FAKE_FOOTER_BLACKOUT_START = 0.92;
+
+// As duas peças do portal, em fração de `fakeFooterProgress`.
+//
+// A entrada é um plano único scrubbado: a posição do scroll escreve
+// `currentTime`, então ela anda na descida e volta na subida. Ela ocupa os
+// primeiros 63% da cena.
+//
+// Essa fração é o que torna o comprimento da cena mensurável, e não uma questão
+// de gosto: num viewport de ~1040px, 63% de 3,8 alturas dão ~2490px para 123
+// quadros, ou ~20px de rolagem por quadro. Como um entalhe de roda de mouse anda
+// ~100px, cada entalhe avança 5 quadros — 0,2s de vídeo, que ainda lê como
+// movimento. Com os 2,65 anteriores eram 14px/quadro: 7 quadros por entalhe, e
+// aí a passagem lê como salto. Ver `config/scenes`.
+//
+// A troca para o loop do túnel começa exatamente onde a entrada acaba, e não
+// antes: durante a dissolve inteira a entrada segura o último quadro e o túnel
+// mostra o primeiro. Esses dois quadros são o mesmo por construção — os clipes
+// foram gerados travando um como o outro, e a diferença medida entre eles é RMSE
+// 0,0201, metade de um passo comum entre quadros vizinhos dentro da entrada.
+// Misturar quadros ainda em movimento com o início do túnel desperdiçaria isso.
+//
+// A janela é curta de propósito. Como os quadros coincidem, até um corte seco
+// passaria despercebido; a dissolve existe só para cobrir o tempo do decoder.
+const PORTAL_ENTRY_SPAN = 0.63;
+const PORTAL_HANDOFF_START = 0.63;
+const PORTAL_HANDOFF_END = 0.665;
+
+export default function App() {
+  const [loaded, setLoaded] = useState(false);
+  const {locale, setLocale} = useTranslation();
+  const handleLoadingDone = useCallback(() => {
+    setLoaded(true);
+  }, []);
+  // Scroll suave (Lenis) entra só depois do Loading, que trava o scroll
+  // enquanto está montado. Ver `useSmoothScroll`.
+  useSmoothScroll(loaded);
+  const isMobile = useIsMobile();
+  const pathname = typeof window === 'undefined' ? '/' : window.location.pathname.replace(/\/+$/, '') || '/';
+  const copy = HOME_COPY[locale];
+  const [phraseIndex, setPhraseIndex] = useState(0);
+  const [footerPhraseIndex, setFooterPhraseIndex] = useState(0);
+  const [scrollState, setScrollState] = useState({
+    heroProgress: 0,
+    rawStageProgress: 0,
+    rawStageApproach: 0,
+    rawFakeFooterProgress: 0,
+    scrollDirectionBias: 0,
+    isLargeViewport: false,
+    prefersReducedMotion: false,
+  });
+  const [documentVisible, setDocumentVisible] = useState(() => typeof document === 'undefined' || !document.hidden);
+  const footerLockedRef = useRef(false);
+  const [footerLocked, setFooterLocked] = useState(false);
+  const reconcileScrollRef = useRef<(() => void) | null>(null);
+  const restoreScene = useCallback((signal: AbortSignal) => restoreFooterScene(signal, () => {
+    if (!reconcileScrollRef.current) throw new Error('Scene geometry is not mounted');
+    flushSync(() => {
+      flushSceneRefresh();
+      signal.throwIfAborted();
+      document.dispatchEvent(new CustomEvent('footer-scene-scroll-state', {detail: {active: true, resetToTop: true}}));
+      reconcileScrollRef.current!();
+    });
+  }), []);
+
+  useEffect(() => {
+    const sync = () => {
+      footerLockedRef.current = document.documentElement?.dataset.footerSceneActive === 'true';
+      setFooterLocked(footerLockedRef.current);
+    };
+    sync();
+    document.addEventListener('footer-scene-scroll-state', sync);
+    return () => document.removeEventListener('footer-scene-scroll-state', sync);
+  }, []);
+
+  useEffect(() => {
+    const updateVisibility = () => setDocumentVisible(!document.hidden);
+    updateVisibility();
+    document.addEventListener('visibilitychange', updateVisibility);
+    return () => document.removeEventListener('visibilitychange', updateVisibility);
+  }, []);
+  const {
+    heroProgress,
+    rawStageProgress,
+    rawStageApproach,
+    rawFakeFooterProgress,
+    scrollDirectionBias,
+    isLargeViewport,
+    prefersReducedMotion,
+  } = scrollState;
+  const journeySectionRef = useRef<HTMLDivElement | null>(null);
+  const fakeFooterSectionRef = useRef<HTMLDivElement | null>(null);
+  const codeBurstHostRef = useRef<HTMLElement | null>(null);
+
+  // O progresso da cena de tecnologia vem do ScrollTrigger dela, não de uma
+  // segunda medição aqui: era daí que saía o descompasso entre as duas fases.
+  const handleStageProgress = useCallback((progress: number) => {
+    if (footerLockedRef.current && document.documentElement.dataset.footerSceneRestoring !== 'true') return;
+    setScrollState((current) =>
+      current.rawStageProgress === progress ? current : {...current, rawStageProgress: progress},
+    );
+  }, []);
+
+  const handleFakeFooterProgress = useCallback((progress: number) => {
+    if (footerLockedRef.current && document.documentElement.dataset.footerSceneRestoring !== 'true') return;
+    setScrollState((current) =>
+      current.rawFakeFooterProgress === progress ? current : {...current, rawFakeFooterProgress: progress},
+    );
+  }, []);
+
+  useEffect(() => {
+    setPhraseIndex(0);
+    setFooterPhraseIndex(0);
+  }, [locale]);
+
+  useEffect(() => {
+    const phraseCount = copy.phrases.length;
+    if (footerLocked) return;
+    if (phraseCount <= 1) return;
+    if (!shouldRotateHeroPhrase(heroProgress)) return;
+
+    const intervalId = window.setInterval(() => {
+      if (footerLockedRef.current) return;
+      startTransition(() => {
+        setPhraseIndex((current) => (current + 1) % phraseCount);
+      });
+    }, 4200);
+
+    return () => window.clearInterval(intervalId);
+  }, [copy.phrases, heroProgress, footerLocked]);
+
+
+  useEffect(() => {
+    const preloadImages = [
+      '/media/scene-0.webp',
+      '/media/scene-1.webp',
+    ];
+
+    preloadImages.forEach((src) => {
+      const img = new Image();
+      img.src = src;
+    });
+  }, []);
+
+  useEffect(() => {
+    const transitionSection = journeySectionRef.current;
+    const fakeFooterSection = fakeFooterSectionRef.current;
+    if (!transitionSection || !fakeFooterSection) return;
+
+    let lastScrollY = window.scrollY;
+    let directionBias = 0;
+    const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+    // Both scene progress values come from their pins, not a second geometry clock.
+
+  
+    const resolveApproach = (section: HTMLElement) => {
+      const viewportHeight = getStableViewportHeight();
+      return clamp(1 - section.getBoundingClientRect().top / viewportHeight, 0, 1);
+    };
+
+    const updateProgress = (restoring = false) => {
+      if (footerLockedRef.current && !restoring) return;
+      const viewportHeight = getStableViewportHeight();
+      const currentScrollY = window.scrollY;
+      const delta = currentScrollY - lastScrollY;
+      lastScrollY = currentScrollY;
+      const directionalImpulse = clamp(delta / Math.max(viewportHeight * 0.08, 48), -1, 1);
+      directionBias = clamp(directionBias * 0.72 + directionalImpulse * 0.28, -1, 1);
+
+      
+      const heroScene = reducedMotionQuery.matches ? HERO_SCENE_REDUCED_MOTION : HERO_SCENE;
+      const rawHero = currentScrollY / (viewportHeight * heroScene.lengthInViewports);
+      setScrollState((current) => ({
+        ...current,
+        heroProgress: clamp(rawHero, 0, 1),
+        rawStageApproach: resolveApproach(transitionSection),
+        scrollDirectionBias: directionBias,
+        isLargeViewport: window.innerWidth >= 1500 || viewportHeight >= 920,
+        prefersReducedMotion: reducedMotionQuery.matches,
+      }));
+    };
+
+    // No ticker do GSAP em vez de um rAF próprio: assim este update e o
+    // `onUpdate` do ScrollTrigger caem no mesmo tick e o React agrupa os dois
+    // num único render por frame. O flag evita trabalho em frame parado.
+    let pending = false;
+    const reconcile = () => {
+      lastScrollY = window.scrollY;
+      directionBias = 0;
+      pending = false;
+      updateProgress(true);
+    };
+    reconcileScrollRef.current = reconcile;
+    const sceneStateChanged = () => {
+      if (document.documentElement.dataset.footerSceneActive !== 'true') {
+        reconcile();
+        requestSceneRefresh();
+      }
+    };
+    document.addEventListener('footer-scene-scroll-state', sceneStateChanged);
+    const requestUpdate = () => {
+      pending = true;
+    };
+    const tick = () => {
+      if (!pending) return;
+      pending = false;
+      updateProgress();
+    };
+
+    updateProgress();
+    gsap.ticker.add(tick);
+    window.addEventListener('scroll', requestUpdate, {passive: true});
+    window.addEventListener('resize', requestUpdate);
+    reducedMotionQuery.addEventListener('change', requestUpdate);
+
+    return () => {
+      reconcileScrollRef.current = null;
+      document.removeEventListener('footer-scene-scroll-state', sceneStateChanged);
+      gsap.ticker.remove(tick);
+      window.removeEventListener('scroll', requestUpdate);
+      window.removeEventListener('resize', requestUpdate);
+      reducedMotionQuery.removeEventListener('change', requestUpdate);
+    };
+  }, []);
+
+  const {stageProgress, releaseProgress: stageReleaseProgress} = getTechnologyStageProgress(rawStageProgress);
+
+  const stageApproach = clamp(rawStageApproach / 0.86, 0, 1);
+  const stageApproachEase = 1 - Math.pow(1 - stageApproach, 3);
+  const stageEase = 1 - Math.pow(1 - stageProgress, 3);
+  const stageSettleEase = smoothstep(stageReleaseProgress);
+
+  // The stack finishes its frame sequence into black before the footer enters.
+  // Reveal only after the footer's own pin starts, never on the moving approach.
+  const fakeFooterGate = rawStageProgress >= 0.995 ? 1 : 0;
+  const fakeFooterProgress = fakeFooterGate === 0 ? 0 : clamp((rawFakeFooterProgress - 0.01) / 0.99, 0, 1);
+  const fakeFooterEntrance = smoothstep(clamp(fakeFooterProgress / 0.08, 0, 1));
+  const fakeFooterEase = 1 - Math.pow(1 - fakeFooterProgress, 3);
+  const fakeFooterTunnel = clamp((fakeFooterProgress - 0.01) / 0.62, 0, 1);
+  const fakeFooterTunnelEase = smoothstep(fakeFooterTunnel);
+  const fakeFooterSettle = clamp((fakeFooterProgress - 0.78) / 0.22, 0, 1);
+  const fakeFooterVideoActivation = clamp((fakeFooterProgress - 0.02) / 0.24, 0, 1);
+  const upwardScrollBias = clamp(-scrollDirectionBias, 0, 1);
+  const fakeFooterReverseWindow =
+    clamp((fakeFooterProgress - 0.05) / 0.24, 0, 1) * clamp((1 - fakeFooterProgress) / 0.88, 0, 1);
+  const fakeFooterReverse = upwardScrollBias * fakeFooterReverseWindow;
+  const fakeFooterReverseEase = smoothstep(fakeFooterReverse);
+  const fakeFooterExitBlackout = smoothstep(
+    clamp((fakeFooterProgress - FAKE_FOOTER_BLACKOUT_START) / (1 - FAKE_FOOTER_BLACKOUT_START), 0, 1),
+  );
+  const canRotateFooterPhrase =
+    !footerLocked && documentVisible && !prefersReducedMotion && fakeFooterProgress >= 0.12 && fakeFooterProgress < FAKE_FOOTER_BLACKOUT_START;
+
+  useEffect(() => {
+    const phraseCount = copy.footerPhrases.length;
+    if (phraseCount <= 1 || !canRotateFooterPhrase) return;
+
+    const intervalId = window.setInterval(() => {
+      if (footerLockedRef.current) return;
+      startTransition(() => {
+        setFooterPhraseIndex((current) => {
+          let next = current;
+          while (next === current) next = Math.floor(Math.random() * phraseCount);
+          return next;
+        });
+      });
+    }, 3200);
+
+    return () => window.clearInterval(intervalId);
+  }, [canRotateFooterPhrase, copy.footerPhrases]);
+
+  const portalEntryProgress = clamp(fakeFooterProgress / PORTAL_ENTRY_SPAN, 0, 1);
+  const portalHandoff = smoothstep(
+    clamp(
+      (fakeFooterProgress - PORTAL_HANDOFF_START) / (PORTAL_HANDOFF_END - PORTAL_HANDOFF_START),
+      0,
+      1,
+    ),
+  );
+  
+  // Exposure rises with the pinned entrance; the portal stays hidden pre-pin.
+  const portalExposure =
+    fakeFooterEntrance * 0.22 +
+    fakeFooterVideoActivation * 0.48 +
+    fakeFooterTunnelEase * 0.08 -
+    fakeFooterSettle * 0.008 -
+    fakeFooterReverseEase * 0.04;
+
+  const sceneUnit = isMobile ? getStableViewportHeight() / 100 : 1;
+  const sceneOffset = (value: number) => `${value * sceneUnit}${isMobile ? 'px' : 'vh'}`;
+
+  if (pathname === '/privacy-policy') return <LegalPage kind="privacy" locale={locale} setLocale={setLocale} />;
+  if (pathname === '/terms-of-service') return <LegalPage kind="terms" locale={locale} setLocale={setLocale} />;
+
+  return (
+    <>
+      {!loaded && <LoadingScreen onDone={handleLoadingDone} />}
+      <div className="persistent-brand-lockup brand-lockup" aria-label={`MoreiraGabryel - ${copy.heroTag}`}>
+        <a className="brand-mark" href="#home">MoreiraGabryel</a>
+        <span className="brand-caption">{copy.heroTag}</span>
+      </div>
+      <main ref={codeBurstHostRef} id="home" className="site-shell">
+        <CodeBurstLayer hostRef={codeBurstHostRef} />
+        <HeroIntro
+          copy={copy}
+          locale={locale}
+          setLocale={setLocale}
+          phraseIndex={phraseIndex}
+          heroProgress={heroProgress}
+          pointerReady={loaded}
+        />
+
+        <div ref={journeySectionRef} className="technology-flow">
+          <TechnologyAndAboutStage
+            locale={locale}
+            rawStageProgress={rawStageProgress}
+            onProgress={handleStageProgress}
+            stageStyle={{
+              '--stage-progress': `${stageProgress}`,
+              '--stage-ease': `${stageEase}`,
+              '--hero-handoff': `${stageApproachEase}`,
+              '--stage-entry-y': `${(1 - stageApproachEase) * 6}`,
+              '--stage-settle': `${stageSettleEase}`,
+            } as CSSProperties}
+          />
+        </div>
+
+        <div ref={fakeFooterSectionRef} className="fake-footer-flow">
+          <FakeFooterStage
+            onProgress={handleFakeFooterProgress}
+            copy={copy}
+            locale={locale}
+            footerPhraseIndex={footerPhraseIndex}
+            entryProgress={portalEntryProgress}
+            entryOpacity={portalExposure * (1 - portalHandoff)}
+            ambientOpacity={portalExposure * portalHandoff}
+            ambientPlaying={portalHandoff >= 1}
+            footerProgress={fakeFooterProgress}
+            statementRotationActive={canRotateFooterPhrase}
+            effectsActive={documentVisible}
+            stageStyle={{
+              '--fake-footer-progress': `${fakeFooterProgress}`,
+              '--fake-footer-ease': `${fakeFooterEase}`,
+              '--fake-footer-tunnel': `${fakeFooterTunnelEase}`,
+              '--fake-footer-settle': `${fakeFooterSettle}`,
+              '--fake-footer-reverse': `${fakeFooterReverseEase}`,
+              '--fake-footer-exit-blackout': `${fakeFooterExitBlackout}`,
+              '--footer-clip': `${fakeFooterEase}`,
+              '--fake-footer-entrance': `${fakeFooterEntrance}`,
+            } as CSSProperties}
+            shellStyle={{
+              transform: `translate3d(0, ${sceneOffset((1 - fakeFooterEase) * 0.24 - fakeFooterTunnelEase * 0.44 + fakeFooterReverseEase * 1.4 + fakeFooterSettle * 0.04)}, 0) scale(${1.038 + fakeFooterTunnelEase * 0.03 - fakeFooterSettle * 0.002 - fakeFooterReverseEase * 0.012})`,
+              opacity: 0.82 + fakeFooterEase * 0.06 - fakeFooterReverseEase * 0.02,
+            }}
+            portalLayerStyle={{
+              transform: `translate3d(0, ${sceneOffset((1 - fakeFooterTunnelEase) * 2.5 - fakeFooterTunnelEase * 2.7 - fakeFooterSettle * 0.14 + fakeFooterReverseEase * 3.4)}, 0) scale(${isLargeViewport ? 1.12 - fakeFooterTunnelEase * 0.12 - fakeFooterReverseEase * 0.03 : 1.2 - fakeFooterTunnelEase * 0.19 - fakeFooterSettle * 0.004 - fakeFooterReverseEase * 0.05})`,
+              filter: isLargeViewport
+                ? `brightness(${0.8 + fakeFooterTunnelEase * 0.05 - fakeFooterReverseEase * 0.03}) contrast(${1.03 + fakeFooterTunnelEase * 0.02 - fakeFooterReverseEase * 0.02})`
+                : `saturate(${1.02 + fakeFooterTunnelEase * 0.12 - fakeFooterSettle * 0.008 - fakeFooterReverseEase * 0.05}) brightness(${0.78 + fakeFooterTunnelEase * 0.1 - fakeFooterSettle * 0.002 - fakeFooterReverseEase * 0.05}) contrast(${1.1 + fakeFooterTunnelEase * 0.05 - fakeFooterReverseEase * 0.02}) blur(${(1 - fakeFooterTunnelEase) * 0.52 + fakeFooterSettle * 0.1 + fakeFooterReverseEase * 0.82}px)`,
+            }}
+          />
+        </div>
+
+        <FinalFooterStage enabled={loaded} locale={locale} onRestore={restoreScene} />
+      </main>
+    </>
+  );
+}

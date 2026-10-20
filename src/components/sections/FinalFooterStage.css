@@ -1,0 +1,170 @@
+.final-blackout-stage {
+  min-height: max(var(--stable-vh), 100dvh);
+}
+
+.footer-scene-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 20000;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
+  place-items: center;
+  isolation: isolate;
+  overflow: clip;
+  background: #000;
+  opacity: 1;
+  user-select: none;
+  touch-action: pinch-zoom;
+  overscroll-behavior: none;
+}
+
+.footer-scene-overlay[hidden] {display: none !important;}
+
+.footer-scene-composition {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  overflow: clip;
+  transform-origin: center;
+}
+
+.footer-scene-character,
+.footer-scene-torn-frame {
+  grid-area: 1 / 1;
+  width: min(90vw, 40rem);
+  min-width: 0;
+  min-height: 0;
+  height: 65dvh;
+  max-height: 65dvh;
+  object-fit: contain;
+  object-position: center;
+  pointer-events: none;
+  opacity: 0;
+}
+
+.footer-scene-overlay[data-state="playing"] .footer-scene-character {opacity: 1;}
+.footer-scene-overlay[data-state="playing"][data-torn="true"] .footer-scene-character {opacity: 0;}
+.footer-scene-overlay[data-state="playing"][data-torn="true"] .footer-scene-torn-frame {opacity: 1;}
+
+.footer-scene-effects {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: clip;
+  pointer-events: none;
+  opacity: 0;
+  transform-origin: center;
+}
+
+.footer-scene-overlay:not([data-state="playing"]) .footer-scene-effects,
+.footer-scene-overlay:not([data-state="playing"]) .footer-scene-dropout,
+.footer-scene-overlay:not([data-state="playing"]) .footer-scene-collapse-line {display: none;}
+
+.footer-scene-signal {
+  position: absolute;
+  inset: 29% 0;
+  opacity: 0;
+  background: repeating-linear-gradient(180deg, transparent 0 17px, rgba(169, 204, 235, 0.45) 18px, transparent 19px 38px);
+}
+
+.footer-scene-ruptures {position: absolute; inset: 0;}
+.footer-scene-rupture {
+  position: absolute;
+  left: -10%;
+  width: 120%;
+  height: clamp(1.2rem, 6vh, 4rem);
+  border-block: 1px solid rgba(159, 211, 231, 0.55);
+  background: linear-gradient(90deg, rgba(143, 198, 224, 0.08), rgba(180, 90, 116, 0.25), rgba(143, 198, 224, 0.1));
+  opacity: 0;
+}
+.footer-scene-rupture:nth-child(1) {top: 23%;}
+.footer-scene-rupture:nth-child(2) {top: 39%; height: 3vh;}
+.footer-scene-rupture:nth-child(3) {top: 61%;}
+.footer-scene-rupture:nth-child(4) {top: 76%; height: 2vh;}
+
+.footer-scene-dropout {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background: #000;
+  pointer-events: none;
+  opacity: 0;
+}
+.footer-scene-collapse-line {
+  position: absolute;
+  inset: 50% 4% auto;
+  height: 2px;
+  background: #b6d4e1;
+  box-shadow: 0 0 18px rgba(143, 198, 224, 0.4);
+  pointer-events: none;
+  opacity: 0;
+}
+
+.footer-scene-code-stream {
+  position: absolute;
+  width: clamp(24rem, 44vw, 55rem);
+  max-height: 38dvh;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  overflow: clip;
+  contain: layout paint;
+  background: transparent;
+  color: #b1c4d0;
+  font: 400 clamp(0.58rem, 0.75vw, 0.78rem) / 1.5 ui-monospace, monospace;
+  text-align: left;
+  text-shadow: -1px 0 rgba(90, 165, 190, 0.4), 1px 0 rgba(181, 80, 105, 0.35);
+  white-space: pre;
+  pointer-events: none;
+  opacity: 0;
+}
+.footer-scene-code-track,
+.footer-scene-code-track > span {display: block; font: inherit; color: inherit;}
+.footer-scene-code-stream[data-stream="0"] {left: -4%; top: -8%;}
+.footer-scene-code-stream[data-stream="1"] {right: -8%; top: 2%; color: #c394a1;}
+.footer-scene-code-stream[data-stream="2"] {left: 8%; top: 29%;}
+.footer-scene-code-stream[data-stream="3"] {right: 3%; top: 39%; color: #bd96a3;}
+.footer-scene-code-stream[data-stream="4"] {left: -10%; bottom: -16%;}
+.footer-scene-code-stream[data-stream="5"] {right: -5%; bottom: -20%; color: #c394a1;}
+.footer-scene-code-stream[data-stream="6"] {left: 24%; top: 10%; width: 56vw;}
+.footer-scene-code-stream[data-stream="7"] {left: 35%; bottom: -10%; width: 50vw;}
+
+@media (max-width: 767.98px), (max-width: 1024px) and (hover: none) and (pointer: coarse) {
+  .footer-scene-overlay[data-state="playing"]:not([data-frame-ready="true"]) .footer-scene-character,
+  .footer-scene-overlay[data-state="playing"]:not([data-frame-ready="true"]) .footer-scene-torn-frame {opacity: 0;}
+  .footer-scene-character {background: #000;}
+  .footer-scene-composition, .footer-scene-effects {height: var(--stable-vh); bottom: auto;}
+  .footer-scene-character, .footer-scene-torn-frame {height: calc(var(--stable-vh) * 0.6); max-height: calc(var(--stable-vh) * 0.6);}
+  .footer-scene-code-stream {width: 78vw; max-height: calc(var(--stable-vh) * 0.34); font-size: 0.5rem;}
+  .footer-scene-collapse-line {top: calc(var(--stable-vh) * 0.5);}
+  .footer-scene-rupture {height: clamp(1.2rem, calc(var(--stable-vh) * 0.06), 4rem);}
+  .footer-scene-rupture:nth-child(2) {height: calc(var(--stable-vh) * 0.03);}
+  .footer-scene-rupture:nth-child(4) {height: calc(var(--stable-vh) * 0.02);}
+  .footer-scene-code-stream[data-stream="0"] {left: -9%; top: -6%;}
+  .footer-scene-code-stream[data-stream="1"] {right: -18%; top: 12%;}
+  .footer-scene-code-stream[data-stream="2"] {left: -12%; top: 39%;}
+  .footer-scene-code-stream[data-stream="3"] {right: -22%; top: 51%;}
+  .footer-scene-code-stream[data-stream="4"] {left: -8%; bottom: -12%;}
+  .footer-scene-code-stream[data-stream="5"] {right: -20%; bottom: -29%;}
+  .footer-scene-code-stream[data-stream="6"], .footer-scene-code-stream[data-stream="7"] {display: none;}
+}
+
+.footer-scene-overlay[data-state="revealing"] {
+  opacity: 0;
+  transition: opacity 240ms ease-out;
+}
+
+/* Individual transforms leave GSAP's scroll/pointer transform property owned. */
+html[data-footer-scene-returning="true"] .hero-depth-plane {animation: footer-origin-depth 240ms cubic-bezier(0.16, 1, 0.3, 1) both;}
+html[data-footer-scene-returning="true"] .hero-statement-handshake {animation: footer-origin-copy 240ms cubic-bezier(0.16, 1, 0.3, 1) both;}
+@keyframes footer-origin-depth {from {scale: 1.12;} to {scale: 1;}}
+@keyframes footer-origin-copy {from {translate: 0 14px;} to {translate: 0 0;}}
+
+@media (prefers-reduced-motion: reduce) {
+  .footer-scene-dropout, .footer-scene-signal, .footer-scene-ruptures {display: none;}
+  html[data-footer-scene-returning="true"] .hero-depth-plane,
+  html[data-footer-scene-returning="true"] .hero-statement-handshake {animation: none;}
+  .footer-scene-overlay[data-state="revealing"] {transition: none;}
+}

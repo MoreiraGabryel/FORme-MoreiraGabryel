@@ -1,0 +1,55 @@
+{
+  "name": "moreiragabryel-portfolio",
+  "private": true,
+  "license": "SEE LICENSE IN LICENSE",
+  "author": "MoreiraGabryel",
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "dev:counter": "node scripts/dev-visitor-counter.mjs",
+    "test:counter": "node --test tests/heroVisitorCounterClient.test.mts tests/heroVisitorCounterUI.test.mts tests/heroVisitorCounterWorker.test.mjs",
+    "dev:fresh": "node scripts/dev-fresh.cjs",
+    "dev:stop": "node scripts/stop-dev.cjs",
+    "build": "node scripts/build-fresh.cjs",
+    "release:cloudflare": "node scripts/prepare-cloudflare-release.mjs dist",
+    "test:release": "node --test tests/cloudflareRelease.test.mjs tests/cloudflareSecurity.test.mjs",
+    "preview": "vite preview --host 127.0.0.1 --port 4173",
+    "preview:fresh": "node scripts/preview-fresh.cjs",
+    "lint": "eslint .",
+    "test:viewport": "node --test tests/stableViewport.test.mts",
+    "security:audit": "npm audit --audit-level=moderate",
+    "verify": "npm run lint && npm run test:viewport && npm run test:counter && npm run test:release && npm run security:audit && npm run build"
+  },
+  "dependencies": {
+    "@gsap/react": "^2.1.2",
+    "framer-motion": "^13.1.1",
+    "gsap": "^3.13.0",
+    "lenis": "^1.3.26",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  },
+  "overrides": {
+    "miniflare": {
+      "undici": "7.29.1",
+      "sharp": "0.35.5"
+    }
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.5",
+    "@vitejs/plugin-react": "^6.1.1",
+    "eslint": "^10.9.1",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.5",
+    "fake-indexeddb": "6.2.5",
+    "globals": "^17.11.0",
+    "miniflare": "4.20260730.0",
+    "tailwindcss": "^4.1.12",
+    "typescript": "~6.0.3",
+    "typescript-eslint": "^8.68.0",
+    "vite": "^8.2.2"
+  }
+}
