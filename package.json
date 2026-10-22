@@ -13,7 +13,7 @@
     "dev:stop": "node scripts/stop-dev.cjs",
     "build": "node scripts/build-fresh.cjs",
     "release:cloudflare": "node scripts/prepare-cloudflare-release.mjs dist",
-    "test:release": "node --test tests/cloudflareRelease.test.mjs tests/cloudflareSecurity.test.mjs tests/cloudflareMediaRange.test.mjs",
+    "test:release": "node --test tests/cloudflareRelease.test.mjs tests/cloudflareSecurity.test.mjs tests/cloudflareMediaRange.test.mjs tests/robotsPolicy.test.mjs",
     "preview": "vite preview --host 127.0.0.1 --port 4173",
     "preview:fresh": "node scripts/preview-fresh.cjs",
     "lint": "eslint .",
